@@ -100,6 +100,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Final local verification passed: locked restore, Release build (0 warnings/errors), 179 tests (Core 139 + Observation 40), format and NuGet vulnerability audit.
 - Static audit found no BossMod assembly/package reference and no new movement, targeting, action, item, hook or client-struct operation. Package `0.4.5.0`, API 15, SHA-256 `6D61D5E0CBD30E75126F419B1869B85B800CFE9732E4945A3189904D7C1016A4`.
 - Exact unfinished step: final diff review, commit/push, open the stacked Draft PR against `phase4/reuse-analysis`, wait for CI, then record PR/check results and mark complete.
+- Implementation commit `fcb9602` was pushed. Draft PR #6 targets `phase4/reuse-analysis`: `https://github.com/natukimiyabi23-eng/DDCore/pull/6`.
+- Exact unfinished step: wait for the latest push/PR CI, record the check result, make the completion documentation commit, and mark this continuation complete. Do not merge PR #6 or start Phase 5.
 
 ## Phase 3.7 checkpoint
 

@@ -29,6 +29,8 @@ The package contains Core, Observation, Plugin, the BSD third-party notice and e
 
 GitHub Actions status is recorded after the branch and Draft PR checks complete.
 
+Draft PR: <https://github.com/natukimiyabi23-eng/DDCore/pull/6>, targeting `phase4/reuse-analysis`.
+
 ## Live verification
 
 Not performed. Plugin enablement/reload and in-game validation remain the user's responsibility and are not reported as successful.
