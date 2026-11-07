@@ -17,4 +17,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DDCore.Core\DDCore.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\provenance\bossmod-phase3.json" Link="TestData\bossmod-phase3.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

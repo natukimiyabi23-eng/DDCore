@@ -1,10 +1,10 @@
-name: Phase 2 build
+name: Foundation build
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, phase2/plugin-foundation]
   push:
-    branches: [phase2/plugin-foundation]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation]
 
 jobs:
   build-and-test:
@@ -37,7 +37,7 @@ jobs:
       - name: Store plugin package
         uses: actions/upload-artifact@v4
         with:
-          name: DDCore-Phase2
+          name: DDCore-Foundation
           path: src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
           if-no-files-found: error
           retention-days: 7

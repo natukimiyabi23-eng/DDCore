@@ -4,7 +4,7 @@ BossModの調査結果を参考にしつつ、実行時にBossModへ依存しな
 
 ## 現在の状態
 
-Phase 2では、将来の攻略機能を安全に追加するための独立基盤を実装しています。
+Phase 3では、Phase 2の安全基盤を維持しながら、ゲーム操作を伴わないギミック解析エンジンを実装しています。
 
 - C# / .NET 10 / Dalamud API 15
 - BossModへの実行時依存なし
@@ -15,15 +15,20 @@ Phase 2では、将来の攻略機能を安全に追加するための独立基�
 - World、Mechanics、Navigation、Combat、Resources、Decision、Executionの契約分離
 - 設定保存、設定バージョン移行、Dalamudログ
 - 自動操作を行わない`DisabledExecutionGateway`
+- 純粋C#の円・扇・矩形・ドーナツ・ドーナツ扇・十字AoE計算
+- イミュータブルな`WorldSnapshot`と未知・不完全観測の明示
+- 上限・入力検証・明示的ユーザー操作契約を持つローカルJSONリプレイ
+- 決定論的な解析Registry、Hazard、MechanicFrame
+- エウレカオルト10階・ガンカナグの3種の円形AoE解析
 
-Phase 2には、移動、戦闘、魔土器、ターゲット、オブジェクト操作、ゲーム内部フックは含まれていません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
+Phase 3にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
 
 ## プロジェクト構成
 
 ```text
-src/DDCore.Core/          ゲーム非依存のモード、安全制御、設定、責務別契約
+src/DDCore.Core/          ゲーム非依存の安全制御、World、幾何、解析、リプレイ
 src/DDCore.Plugin/        Dalamudライフサイクル、日本語UI、設定・ログアダプター
-tests/DDCore.Core.Tests/  安全制御、設定移行、無効実行経路の単体テスト
+tests/DDCore.Core.Tests/  安全制御、幾何、World、リプレイ、解析の単体テスト
 ```
 
 ## ビルドとテスト
@@ -60,7 +65,7 @@ src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
 - Dalamud: API 15 / .NET 10
 - BossModライセンス: BSD-3-Clause
 
-[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[調査報告](docs/research-report.md)、[Phase 2検証記録](docs/phase2-verification.md)を参照してください。
+[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3検証記録](docs/phase3-verification.md)を参照してください。
 
 ## 配布上の注意
 

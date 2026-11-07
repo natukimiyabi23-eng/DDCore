@@ -48,3 +48,22 @@
 - Recorded BSD-3-Clause provenance requirements and current official Dalamud publication constraints.
 - Recommended Eureka Orthos floor 10 (Gancanagh) as the first bounded vertical slice, pending user approval.
 - Phase 3 implementation, game operation and `main` merge were not performed.
+
+## 2026-11-07 — Phase 3 mechanic foundation
+
+- Created `phase3/mechanics-foundation` from the unmerged Phase 2 branch; `main` remains untouched.
+- Implemented P3.0 through P3.5 without game operations or a BossMod runtime dependency.
+- Added six pure C# AoE shapes, immutable snapshots, bounded local JSON replay, deterministic analyzer contracts and fail-closed unknown handling.
+- Implemented Gancanagh cast analysis for actions 31478, 32700 and 31479, plus interruption, disappearance, elapsed-cast and unknown-action handling.
+- Added pinned BossMod provenance and the BSD-3-Clause binary/source notice.
+- Synthetic replay tests pass; live Dalamud and live Gancanagh behavior remain unverified.
+
+## 2026-11-07 — Phase 3 accuracy review
+
+- Compared Gancanagh, `StandardAOEs`, common AoE shapes and BossMod angle conventions at fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
+- Corrected cast hazards to use cast location/rotation and cast-start ordering rather than actor position/rotation and entity ordering.
+- Made instantaneous and persistent lifetimes explicit without inventing a Gancanagh duration.
+- Retained pre-activation hazards across a missing-caster snapshot and preserved unknown analyzer assessments in registry aggregation.
+- Added time-regression, consecutive-cast, actor-generation reuse, missing/dead/destroyed actor, target location/rotation, lifetime, geometry error and replay-gap tests.
+- Bumped snapshot, mechanic-frame and replay schemas to version 2 and the plugin package to `0.2.1.0`.
+- Recorded remaining live-adapter, Mandrastorm threshold, simultaneous event-order and float/double comparison risks in `phase3-accuracy-review.md`.
