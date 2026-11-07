@@ -37,3 +37,14 @@
 - Added an execution contract requiring fresh safety revalidation inside the gateway immediately before any future external side effect.
 - Added reverse-order rollback for command, UI callback and window resources when plugin construction fails; disposal remains idempotent.
 - Expanded the test suite from 15 to 26 tests. Live Dalamud failure injection remains unverified.
+
+## 2026-11-07 — Phase 2 completion and Phase 3 preparation
+
+- Converted PR #1 to Draft and updated it with the verified 26-test result, clean Release build, dependency audit and explicit live-Dalamud verification gap.
+- Re-fetched BossMod and confirmed the analysis commit remains `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
+- Re-audited the DD inventory: 63 paths, comprising 59 C# files and 4 JSON resources.
+- Documented an immutable `WorldSnapshot`, normalized event deltas, serializable shape algebra, hazard/mechanic output, deterministic analyzer contracts and a fail-closed unknown state.
+- Defined replay/mock/golden/differential/malformed-input/architecture test layers and the Phase 3 implementation gates.
+- Recorded BSD-3-Clause provenance requirements and current official Dalamud publication constraints.
+- Recommended Eureka Orthos floor 10 (Gancanagh) as the first bounded vertical slice, pending user approval.
+- Phase 3 implementation, game operation and `main` merge were not performed.

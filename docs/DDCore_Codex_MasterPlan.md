@@ -191,10 +191,11 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 ### Phase 2 implementation status
 
 - Source/build verified: independent API 15 plugin and core assemblies compile with 0 warnings and 0 errors.
-- Unit verified: 15 tests pass for startup mode, configuration migration/persistence calls, safety transitions, emergency stop and disabled execution.
+- Unit verified: 26 tests pass for startup mode, configuration migration/persistence failures, safety transitions, emergency stop, reauthorization boundaries, initialization rollback and disabled execution.
 - Package verified: the generated manifest reports API level 15 and the archive contains DDCore plus its game-independent core assembly.
 - Dependency verified: no BossMod assembly/package reference; the core assembly also has no Dalamud reference.
 - Static safety verified: no FFXIVClientStructs, interop hook, action, target or input implementation is present.
+- Review state: PR #1 is a Draft from `phase2/plugin-foundation` to `main`; no merge has been performed.
 - Live Dalamud load, Japanese UI rendering and live reload persistence remain unverified and require user-side in-game verification.
 
 ## Phase 3 — DD mechanic migration
@@ -250,6 +251,10 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 - Every supported boss has passing replay fixtures.
 - Unknown/unsupported mechanics display a non-safe warning.
 - Observer/Advisor operation remains input-free.
+
+### Detailed Phase 3 design status
+
+The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). It defines the immutable `WorldSnapshot`, serializable geometry, time-bounded hazard output, deterministic analyzer contract, replay/mock tests, provenance gate, implementation order, official-distribution constraints, risk register and unresolved decisions. The recommended first vertical slice is Eureka Orthos floor 10 (Gancanagh), subject to user approval. No Phase 3 implementation has started.
 
 ## Phase 4 — Strategy decision engine
 

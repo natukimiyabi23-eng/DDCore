@@ -5,7 +5,7 @@ Updated: 2026-11-07 JST
 
 ## Objective
 
-`phase2/plugin-foundation` ブランチで、Phase 2コードレビュー指摘に対応する。設定読込・保存失敗時の安全復旧、SafetyController境界テスト、Execution直前再検証契約、初期化失敗時のリソース解放を追加し、全検証と既存PR更新を行う。自動操作とゲーム内部フックは実装しない。
+Phase 2 PR #1をDraftへ変更して検証結果と実機未検証を明記し、BossMod DD依存関係を再確認したうえで、ゲーム操作を伴わないPhase 3ギミック解析の詳細設計、実装順序、テスト計画、依存関係・リスク・未決事項、Dalamud配布制約を文書化する。Phase 3本実装とmainマージは行わない。
 
 ## Current state
 
@@ -48,12 +48,14 @@ Updated: 2026-11-07 JST
 - Added the mandatory execution-time safety revalidation contract.
 - Added reverse-order constructor rollback and idempotent disposal for plugin resources.
 - Re-ran Release build, all tests, format verification, static reference checks and NuGet vulnerability audit.
+- Converted PR #1 to Draft and updated it with the 26-test result and explicit live-Dalamud verification gap.
+- Reconfirmed the fixed BossMod commit and audited 63 DD paths: 59 C# files and 4 JSON resources.
+- Added the Phase 3 mechanic-analysis design covering immutable snapshots, geometry/hazards, deterministic analyzers, replay/mock tests, provenance, official distribution constraints, implementation gates, risks and unresolved decisions.
+- Re-ran the Phase 2 Release build, 26 tests, format verification and NuGet vulnerability audit after the documentation work.
 
 ## Unfinished
 
-- No required review-fix source work remains.
-- User verification remains: enable/load the plugin, confirm Japanese rendering, inject corrupt/read-only configuration failures, confirm persistence across a live reload, and confirm constructor/unload rollback behavior.
-- Review and merge PR #1 only after user approval.
+None for the requested Phase 2 completion and Phase 3 design task. Phase 3 implementation requires a separate user approval after review of the unresolved decisions.
 
 ## Files changed
 
@@ -68,6 +70,7 @@ Updated: 2026-11-07 JST
 - `docs/architecture.md`
 - `docs/dependencies.md`
 - `docs/phase2-verification.md`
+- `docs/phase3-mechanics-design.md`
 - `docs/progress.md`
 - `global.json`
 - `src/DDCore.Core/**`
@@ -89,7 +92,8 @@ Updated: 2026-11-07 JST
 
 ## Artifact hashes (SHA-256)
 
-- `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9518899C84EE86BB873F38AB19FA8EC26BC5F331AF5DA645AEE2669AAF3A55F0`
+- Latest local rebuild of `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9CFDA877FF0351D164117C82FD94204AC03DE8DF1777491914A22BF89770138B`
+- No artifact was deployed.
 
 ## Known evidence
 
@@ -100,4 +104,4 @@ Updated: 2026-11-07 JST
 
 ## Safe next step
 
-Wait for review of PR #1. The fallback heartbeat automation `DDCoreレビュー修正の再開確認` (`id=ddcore`) was created and verified ACTIVE during the work, then deleted after completion to prevent unnecessary runs. Do not merge without approval and do not claim the remaining live Dalamud checks succeeded.
+Review Draft PR #1 and decide the unresolved Phase 3 scope items, starting with approval or rejection of Gancanagh as the first vertical slice. Do not merge or begin Phase 3 implementation without the user's next instruction.
