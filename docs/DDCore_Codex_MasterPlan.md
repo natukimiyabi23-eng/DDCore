@@ -312,6 +312,10 @@ The implementation-ready, non-operating design is recorded in [phase3-mechanics-
 
 `RoomPathfinder` is the first pure strategy building block. It preserves the pinned BossMod traversal order and route contract, is compared against a source-faithful test oracle, and remains disconnected from live observation because authoritative room flags are not available. This checkpoint is not completion of the decision engine and does not authorize Phase 5.
 
+### Numbering reconciliation for the user-defined Phase 5
+
+The original plan labels this decision-engine work as Phase 4 and labels game-operation adapters as Phase 5. The explicit 2026-11-08 implementation instruction instead names the DD state and strategy engine "Phase 5". That instruction takes precedence for branch, PR and verification naming. The implementation completes a bounded decision-only subset described in `phase5-strategy-engine.md`; it does **not** begin the operation foundation below. The original operation scope remains deferred and requires a later explicit phase instruction.
+
 ## Phase 5 — Operation foundation
 
 ### Implementation target

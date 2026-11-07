@@ -4,7 +4,7 @@ BossModの調査結果を参考にしつつ、実行時にBossModへ依存しな
 
 ## 現在の状態
 
-Phase 4.5では、Phase 2〜4の安全・観測・解析基盤を維持しながら、BossModの既存IPCへ読み取り専用で到達できるかと、DD攻略データを実際に取得できるかを別々に診断します。
+ユーザー定義のPhase 5では、Phase 2〜4.5の安全・観測・解析基盤を維持しながら、ゲーム非依存のDD状態モデルと読み取り専用の決定論的攻略戦略エンジンを追加します。この番号は旧マスタープランの「Phase 4 — Strategy decision engine」を完成させる作業をPhase 5と呼ぶもので、旧「Phase 5 — Operation foundation」は実装していません。
 
 - C# / .NET 10 / Dalamud API 15
 - BossModへの実行時依存なし
@@ -31,8 +31,11 @@ Phase 4.5では、Phase 2〜4の安全・観測・解析基盤を維持しなが
 - BossMod固定コミットとの出典・比較テスト・再利用率記録
 - BossMod未導入でも起動できる、公開Dalamud IPCだけを使った任意の接続診断
 - 接続できてもDD攻略データは取得不可と明示する安全側の能力判定
+- Unknownを保持する階層・25部屋・出口・敵・罠・魔土器・残り時間の不変戦略状態
+- 理由・前提・危険度・阻害理由・対象部屋・経路を返す決定論的戦略エンジン
+- 危険回避、交戦継続、資源保全、活性出口、未探索部屋、出口再確認の安全優先判断
 
-Phase 4.5にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。BossModバイナリや内部メモリにも依存しません。経路探索は入力グラフに対する計算だけで、現在の公開API観測から部屋グラフを生成しません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
+Phase 5にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。BossModバイナリや内部メモリにも依存しません。戦略エンジンは合成または将来の正規化済み入力を計算するだけで、現在の公開API観測から部屋・出口・罠・魔土器状態を生成しません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
 
 ## プロジェクト構成
 
@@ -78,7 +81,7 @@ src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
 - Dalamud: API 15 / .NET 10
 - BossModライセンス: BSD-3-Clause
 
-[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[Phase 4再利用分析](docs/phase4-reuse-analysis.md)、[Phase 4検証記録](docs/phase4-verification.md)、[Phase 4.5 BossMod連携実証](docs/phase4.5-bossmod-integration.md)、[Phase 4.5検証記録](docs/phase4.5-verification.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)を参照してください。
+[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[Phase 4再利用分析](docs/phase4-reuse-analysis.md)、[Phase 4検証記録](docs/phase4-verification.md)、[Phase 4.5 BossMod連携実証](docs/phase4.5-bossmod-integration.md)、[Phase 4.5検証記録](docs/phase4.5-verification.md)、[Phase 5戦略設計](docs/phase5-strategy-engine.md)、[Phase 5検証記録](docs/phase5-verification.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)を参照してください。
 
 ## 配布上の注意
 

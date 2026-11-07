@@ -1,5 +1,16 @@
 # Progress
 
+## 2026-11-08 — User-defined Phase 5 DD strategy engine
+
+- Reconciled the explicit Phase 5 instruction with the original master plan: this branch completes a bounded decision-engine layer and does not start the original Phase 5 operation foundation.
+- Added immutable Unknown-preserving state for dungeon/floor, the complete 25-room graph, exploration/danger, exit, enemies, traps, pomanders, aggregate resource readiness and remaining time.
+- Added deterministic fail-closed decisions for danger retreat, engaged combat, resource preservation, hostile enemies, active exits, unexplored rooms and exit recheck.
+- Reused the Phase 4 attributed `RoomPathfinder` and excluded unsafe/unknown rooms, traps and non-defeated enemies from candidate routes.
+- Added 30 synthetic Core tests for normal, abnormal, missing, regressing, no-route and deterministic scenarios.
+- Locked restore, Release build, all 209 tests, format, dependency/reference, NuGet vulnerability and prohibited-operation audits passed.
+- Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
+- Live FFXIV/Dalamud and real-floor strategy behavior remain unverified; the public adapter still cannot populate the required DD room/resource state.
+
 ## 2026-11-08 — Phase 4.5 BossMod integration proof
 
 - Verified 37 fixed-commit BossMod IPC functions and separated technical reachability from DD strategy-data availability.

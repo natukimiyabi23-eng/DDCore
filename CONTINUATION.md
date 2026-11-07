@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 JST (Phase 4.5 BossMod integration proof complete; Draft PR review pending)
+Status: in_progress
+Updated: 2026-11-08 05:30 JST (Phase 5 DD state and strategy engine started)
 
 ## Objective
+
+Current objective: implement the user-defined Phase 5 on `phase5/strategy-engine`, based on `phase4.5/bossmod-integration-proof`: add a read-only, deterministic Deep Dungeon state model and strategy engine that preserves unknown observations, uses the Phase 4 `RoomPathfinder`, returns recommendations with reasons/preconditions/risk/blocking information, and is covered by synthetic tests and full verification. This user-defined numbering intentionally treats Phase 5 as the decision-engine phase even though the original master plan labels decision logic as Phase 4 and operation infrastructure as Phase 5. Do not add gameplay execution, BossMod runtime dependency, Phase 6 work, live FF14 operation, or a `main` merge.
 
 Current objective: implement Phase 4.5 on `phase4.5/bossmod-integration-proof`: prove separately whether DDCore can reach BossMod's fixed-commit IPC surface and whether that surface provides the Deep Dungeon strategy data DDCore needs. Add only a read-only, optional, fail-closed diagnostic probe when supported by the public Dalamud IPC mechanism; do not add BossMod runtime references, private hooks, gameplay operation, Phase 5 work, deployment, live FF14 operation, or a `main` merge. Record source-line evidence, comparison, verification, and create a stacked Draft PR targeting `phase4/reuse-analysis`.
 
@@ -20,7 +22,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 ## Current state
 
 - Repository: `https://github.com/natukimiyabi23-eng/DDCore` (public, default branch `main`)
-- Working branch: `phase4/reuse-analysis`
+- Working branch: `phase5/strategy-engine`
 - Local path: `work/DDCore`
 - BossMod source: `https://github.com/awgil/ffxiv_bossmod`
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
@@ -64,6 +66,28 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Re-ran the Phase 2 Release build, 26 tests, format verification and NuGet vulnerability audit after the documentation work.
 
 ## Unfinished
+
+- Phase 5 first unfinished step: finalize the state/decision contracts against existing Core types, then implement the pure strategy engine and synthetic tests.
+- Run the complete Release build/test/format/dependency/vulnerability/prohibited-operation verification, update design/verification/progress documents, commit/push, and open a Draft PR targeting `phase4.5/bossmod-integration-proof`.
+- Live Dalamud/FFXIV behavior remains outside this phase and must not be reported as verified.
+
+## Phase 5 checkpoint
+
+- Started: `2026-11-08T05:30:26+09:00`.
+- Authoritative preflight: five-hour window 86% remaining; weekly window 67% remaining.
+- Estimated requirement: 48% total (research 6%, implementation 17%, tests/audits 9%, documentation/PR 6%, contingency 10%); projected five-hour balance `86% - 48% = 38%`.
+- Branch: `phase5/strategy-engine`, created from clean Phase 4.5 head `07b3fd2c00cc39a0c4f2b7c59c8728345fad9764`.
+- Draft PR #6 remains open and clean, targeting `phase4/reuse-analysis`; it is not merged.
+- Five-hour continuation automation: `ddcore-phase-5-followup`, scheduled once for `2026-11-08 10:30:26 JST`, created and verified `ACTIVE`. Purpose: inspect the active goal, this file, Git state, build/test state, and remaining usage, then resume only the first unfinished step or report completion without rerunning work.
+- No source implementation has been edited at this checkpoint.
+- Implemented immutable Unknown-preserving strategy state for dungeon/floor, 25 rooms, exit, enemies, traps, pomanders, aggregate resources and remaining time.
+- Implemented deterministic, read-only strategy decisions for fail-closed stop, danger retreat, combat continuity, resource conservation, active exit, exploration and exit search. Safe routes exclude known/unknown-danger rooms, traps and non-defeated enemies.
+- Reused only the attributed Phase 4 `RoomPathfinder`; no BossMod runtime reference or operation adapter was added.
+- Added 30 Phase 5 Core tests; the final Core suite passes 169/169 and Observation passes 40/40 (209 total).
+- Added Phase 5 design documentation, numbering reconciliation and package version `0.5.0.0`.
+- Locked restore and final Release build passed with 0 warnings/errors; all 209 tests passed; format, NuGet vulnerability, project/reference and prohibited-operation audits passed.
+- Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
+- Exact unfinished step: final diff review, commit/push, open a Draft PR targeting `phase4.5/bossmod-integration-proof`, wait for CI, then record PR/check results and mark complete.
 
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
 - User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
