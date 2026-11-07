@@ -93,6 +93,12 @@ Any active state can transition to `Paused`, `EmergencyStopped`, or `Faulted`. E
 
 `AutoClear` is tightly coupled to `ZoneModule`, `WorldState`, `Service`, `AIHints`, `ActionQueue`, camera rendering, configuration, Lumina, FFXIVClientStructs, and Palantir IPC. Copying it directly would recreate BossMod internally. The migration should first extract pure models and algorithms, then replace infrastructure dependencies with DDCore interfaces.
 
+### Phase 4 proven extraction boundary
+
+Phase 4 extracted only the deterministic 5x5 room-graph BFS into `DDCore.Core.Navigation.RoomPathfinder`. The Core type accepts a DDCore-owned `RoomConnectionFlags` array and has no BossMod, Dalamud, Lumina or FFXIVClientStructs dependency. Search state is per invocation and malformed graph inputs fail explicitly.
+
+The current live observation boundary does not expose authoritative room flags, room geometry, passage/resource state or traps. Therefore this algorithm is an offline/testable building block only. No observation adapter feeds it and no decision or execution component consumes it yet.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.

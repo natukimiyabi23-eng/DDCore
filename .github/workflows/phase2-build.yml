@@ -2,9 +2,9 @@ name: DDCore build
 
 on:
   pull_request:
-    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter]
+    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording]
   push:
-    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis]
 
 jobs:
   build-and-test:

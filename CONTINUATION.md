@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 JST (Phase 3.7 finalization)
+Status: in_progress
+Updated: 2026-11-08 JST (Phase 4 locally verified; GitHub publication pending)
 
 ## Objective
+
+Current objective: implement Phase 4 on `phase4/reuse-analysis`: quantitatively analyze the pinned BossMod Deep Dungeon strategy code, map dependencies and required inputs to DDCore `WorldSnapshot`, classify direct reuse/dependency removal/reimplementation, extract the smallest viable pure C# algorithm module, compare it against the pinned implementation where executable, measure reuse using explicit definitions, and re-estimate Phase 5-8 scope/tokens. Preserve Phase 3.7, do not implement Phase 5 operation, do not merge to `main`, and create a Draft PR targeting `phase3/diagnostics-and-recording`.
 
 Current objective: implement Phase 3.7 on `phase3/diagnostics-and-recording`: bounded local diagnostics and explicit opt-in observation recording, Japanese diagnostic controls, replay-compatible export, privacy safeguards, tests, documentation, verification, and a Draft PR targeting `phase3/live-observation-adapter`. Preserve read-only operation, `DisabledExecutionGateway`, no external communication, no live FF14 operation, and no main merge.
 
@@ -16,7 +18,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 ## Current state
 
 - Repository: `https://github.com/natukimiyabi23-eng/DDCore` (public, default branch `main`)
-- Working branch: `phase3/diagnostics-and-recording`
+- Working branch: `phase4/reuse-analysis`
 - Local path: `work/DDCore`
 - BossMod source: `https://github.com/awgil/ffxiv_bossmod`
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
@@ -61,8 +63,22 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Requested Phase 3.7 source, tests, documentation, branch and Draft PR work is complete.
-- Live Dalamud loading, Japanese UI rendering, local-path permissions/performance and Gancanagh recording remain the user's responsibility and are not reported as successful.
+- Commit/push `phase4/reuse-analysis`, create a Draft PR targeting `phase3/diagnostics-and-recording`, and wait for CI.
+- Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
+
+## Phase 4 checkpoint
+
+- Start condition approved by the user using the authoritative account display: five-hour window 84% remaining and weekly window 82% remaining. Exact remaining token count is not exposed; estimated requirement is 70,000-95,000 tokens including contingency.
+- Created `phase4/reuse-analysis` from clean `phase3/diagnostics-and-recording` at `8ebc76b`; Draft PR #4 remains open/Draft with successful CI.
+- BossMod checkout is intentionally left on its current `master`; fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0` exists locally and will be read with commit-qualified Git commands.
+- Reproducible fixed-commit measurement: 67 files / 28,609 physical lines (63 DD-direct paths plus two support and two cross-cutting files); lexical dependency-family definitions are explicit in `tools/Measure-Phase4BossMod.ps1`.
+- Analyzed all eight requested components by source line and mapped exploration, combat, recovery, resources, hazards and action-selection inputs to current `WorldSnapshot` gaps.
+- Added pure-C# `RoomPathfinder`, strict 5x5 graph validation, a source-faithful BossMod oracle and deterministic/all-pairs comparison tests. No live adapter or executor consumes it.
+- Added Phase 4 provenance, BSD notice, reuse measurements (1/8 portable after dependency removal; 56/2,249 reviewed-line extraction coverage) and Phase 5-8 planning estimates.
+- Locked restore and final Release build passed with 0 warnings/errors; all 173 tests passed (Core 139, Observation 34); format and NuGet vulnerability audit passed.
+- Core has no project references. Static matches for BossMod are attribution/comments only; no BossMod/Dalamud/Lumina/FFXIVClientStructs runtime dependency was introduced into Core/Observation.
+- Package `0.4.0.0`, API 15, SHA-256 `2EDB2C5F48E0BC15992379CC0B1DEFAA83B9EB02FE7F7A44E7EF1E39D03CDB5F`; includes both provenance manifests and `THIRD-PARTY-NOTICES.md`.
+- Exact next step: review the diff, commit/push, open the Draft PR, and wait for GitHub Actions.
 
 ## Phase 3.7 checkpoint
 
@@ -160,6 +176,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Latest local rebuild of `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9CFDA877FF0351D164117C82FD94204AC03DE8DF1777491914A22BF89770138B`
 - Current Phase 3 local package: `4DF9B67F6C4BB4F9077773F72085234147C56F42631C2C886B603C6C3703EB83`
 - Accuracy review package `0.2.1.0`: `BB37604E72600FF97743B38F75E7268ACAB96AE62ECFE360771C27FB3331837E`
+- Phase 4 package `0.4.0.0`: `2EDB2C5F48E0BC15992379CC0B1DEFAA83B9EB02FE7F7A44E7EF1E39D03CDB5F`
 - No artifact was deployed.
 
 ## Known evidence

@@ -20,5 +20,6 @@
 
   <ItemGroup>
     <None Include="..\..\provenance\bossmod-phase3.json" Link="TestData\bossmod-phase3.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\provenance\bossmod-phase4.json" Link="TestData\bossmod-phase4.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

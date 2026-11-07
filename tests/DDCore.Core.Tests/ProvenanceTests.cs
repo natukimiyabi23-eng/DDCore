@@ -117,4 +117,17 @@ public sealed class ProvenanceTests
         Assert.Equal("BSD-3-Clause", entry.License);
         Assert.All(manifest.Entries, item => Assert.Equal("6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0", item.Commit));
     }
+
+    [Fact]
+    public void RepositoryPhase4ManifestIsValid()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "bossmod-phase4.json");
+        var manifest = new ProvenanceManifestCodec().Deserialize(File.ReadAllBytes(path));
+        var entry = Assert.Single(manifest.Entries);
+
+        Assert.Equal("bossmod-deep-dungeon-floor-pathfind", entry.Id);
+        Assert.Equal("6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0", entry.Commit);
+        Assert.Equal("BSD-3-Clause", entry.License);
+        Assert.Equal(DerivationKind.Adapted, entry.Derivation);
+    }
 }

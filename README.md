@@ -4,7 +4,7 @@ BossModの調査結果を参考にしつつ、実行時にBossModへ依存しな
 
 ## 現在の状態
 
-Phase 3では、Phase 2の安全基盤を維持しながら、ゲーム操作を伴わないギミック解析エンジンを実装しています。
+Phase 4では、Phase 2〜3.7の安全・観測・解析基盤を維持しながら、BossModのDD攻略コードを固定コミットで測定し、ゲーム操作を伴わない最小の経路探索アルゴリズムを抽出しています。
 
 - C# / .NET 10 / Dalamud API 15
 - BossModへの実行時依存なし
@@ -27,8 +27,10 @@ Phase 3では、Phase 2の安全基盤を維持しながら、ゲーム操作を
 - 明示開始・停止、2 MiB/1,800件/15分上限を持つローカル観測記録
 - プレイヤー/パーティ識別子を除外するプライバシーフィルター
 - 内容確認後のローカルエクスポートと確認付き削除
+- 5x5部屋グラフを対象とする純粋C#の決定論的BFS経路探索
+- BossMod固定コミットとの出典・比較テスト・再利用率記録
 
-Phase 3にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
+Phase 4にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。経路探索は入力グラフに対する計算だけで、現在の公開API観測から部屋グラフを生成しません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
 
 ## プロジェクト構成
 
@@ -74,7 +76,7 @@ src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
 - Dalamud: API 15 / .NET 10
 - BossModライセンス: BSD-3-Clause
 
-[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)、[Phase 3検証記録](docs/phase3-verification.md)を参照してください。
+[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[Phase 4再利用分析](docs/phase4-reuse-analysis.md)、[Phase 4検証記録](docs/phase4-verification.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)を参照してください。
 
 ## 配布上の注意
 
