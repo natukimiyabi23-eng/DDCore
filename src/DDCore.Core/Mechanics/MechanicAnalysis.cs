@@ -155,13 +155,14 @@ public sealed class AnalyzerRegistry
             return new(previousSession, MechanicFrame.Unknown(snapshot, "analysis.time.regressed", invalid: true));
         }
 
-        if (snapshot.Quality != ObservationQuality.Complete)
+        if (snapshot.Quality is ObservationQuality.Stale or ObservationQuality.Unsupported or ObservationQuality.Invalid)
         {
             return new(
                 previousSession with { LastSnapshotSequence = snapshot.Sequence, LastCapturedAt = snapshot.CapturedAt },
                 MechanicFrame.Unknown(snapshot, $"analysis.observation.{snapshot.Quality.ToString().ToLowerInvariant()}", invalid: snapshot.Quality == ObservationQuality.Invalid));
         }
 
+        var inputUncertain = snapshot.Quality == ObservationQuality.Partial;
         var applicable = _analyzers.Where(analyzer => analyzer.CanAnalyze(snapshot)).ToArray();
         if (applicable.Length == 0)
         {
@@ -174,6 +175,10 @@ public sealed class AnalyzerRegistry
         var hazards = ImmutableArray.CreateBuilder<HazardInstance>();
         var unsupported = ImmutableArray.CreateBuilder<UnsupportedMechanic>();
         var diagnostics = ImmutableArray.CreateBuilder<string>();
+        if (inputUncertain)
+        {
+            diagnostics.Add("analysis.observation.partial");
+        }
         var invalid = false;
         var unknown = false;
 
@@ -199,7 +204,7 @@ public sealed class AnalyzerRegistry
 
         var safety = invalid
             ? MechanicSafetyAssessment.InvalidObservation
-            : unknown || unsupported.Count > 0
+            : inputUncertain || unknown || unsupported.Count > 0
                 ? MechanicSafetyAssessment.UnknownOrUnsupported
                 : MechanicSafetyAssessment.HazardsKnown;
         var frame = new MechanicFrame(

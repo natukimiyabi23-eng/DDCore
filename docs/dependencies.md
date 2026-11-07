@@ -8,7 +8,7 @@ Analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
 |---|---|---|
 | .NET 10 SDK | BossMod `global.json`; local build used 10.0.302 | Required for API 15 baseline |
 | `Dalamud.NET.Sdk/15.0.0` | `BossMod/BossMod.csproj`; `src/DDCore.Plugin/DDCore.Plugin.csproj` | Used by the Phase 2 plugin shell |
-| Dalamud API | BossMod SDK and official API 15 docs | Keep behind plugin/adapters where possible |
+| Dalamud API | BossMod SDK, local `Dalamud.dll` 15.0.3.9/XML and official API 15 docs | Only Plugin uses public read-only services; Core/Observation have no reference |
 | Dalamud API 16 preview | Official v16 page marks it not finalized and under development for Patch 8.0 | Track as migration risk; do not target preview APIs |
 | FFXIVClientStructs | `DeepDungeonState`, `WorldStateGameSync`, `FloorPathfind` | Isolate unsafe/native reads in `DDCore.World` adapter |
 | Lumina | `DeepDungeonState`, `Rooms`, config/UI | Use for game sheets and local game files |
@@ -23,6 +23,8 @@ Analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
 The pinned module build restored, among others, DalaMock 6.2.1, DalamudPackager 15.0.0, Pictomancy 1.0.10, CsvHelper 33.1.0, Microsoft.Extensions 10.x, and transitive `SixLabors.ImageSharp 3.1.12`.
 
 The build emitted NU1902/NU1903 advisories for ImageSharp 3.1.12. This is a fact about the pinned dependency graph, not proof that DD code itself invokes a vulnerable path. DDCore should avoid inheriting the full BossMod package graph and must run dependency auditing on its own minimal set.
+
+Phase 3.6 uses `IFramework`, `IClientState`, `IDutyState`, `IObjectTable`, `IGameObject`, `ICharacter`, `IBattleNpc`, `IBattleChara` and public status wrappers. It does not use FFXIVClientStructs, signatures, interop hooks or object addresses. See `docs/phase3-live-observation.md` for field-level availability and official links.
 
 ## Deep Dungeon source inventory
 

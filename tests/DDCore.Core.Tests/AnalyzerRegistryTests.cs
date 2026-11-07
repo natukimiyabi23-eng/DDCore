@@ -46,6 +46,8 @@ public sealed class AnalyzerRegistryTests
 
         Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, result.Frame.Safety);
         Assert.Empty(result.Frame.Hazards);
+        Assert.Contains("a", result.Frame.Diagnostics);
+        Assert.Contains("analysis.observation.partial", result.Frame.Diagnostics);
     }
 
     [Fact]

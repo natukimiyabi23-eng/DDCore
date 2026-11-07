@@ -67,3 +67,15 @@
 - Added time-regression, consecutive-cast, actor-generation reuse, missing/dead/destroyed actor, target location/rotation, lifetime, geometry error and replay-gap tests.
 - Bumped snapshot, mechanic-frame and replay schemas to version 2 and the plugin package to `0.2.1.0`.
 - Recorded remaining live-adapter, Mandrastorm threshold, simultaneous event-order and float/double comparison risks in `phase3-accuracy-review.md`.
+
+## 2026-11-07 — Phase 3.6 live observation adapter
+
+- Created `phase3/live-observation-adapter` from the unmerged Phase 3 branch.
+- Verified the used API surface against local Dalamud 15.0.3.9 metadata/XML and official API 15 documentation.
+- Added a Dalamud-free observation assembly and a public-API-only Plugin adapter; no private/native access or game operation was added.
+- Added session, entity-generation and cast-lifecycle tracking, explicit nullable unknowns, stale-time handling and fail-closed partial analysis.
+- Connected live snapshots to the existing Gancanagh analyzer and added a Japanese read-only diagnostics panel.
+- Direct DD floor, cast ground location, cast-specific rotation and status stack count remain unavailable through the verified public API and are not fabricated.
+- Added 15 observation tests while retaining all 125 Core tests. Live Dalamud and encounter behavior remain unverified.
+- Extended the existing Windows CI to run the full solution tests for the Phase 3.6 branch and its Draft PR base.
+- Confirmed both the push and Draft PR full-solution GitHub Actions runs succeeded; PR #3 remains Draft and unmerged.

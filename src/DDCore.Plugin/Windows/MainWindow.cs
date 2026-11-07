@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using DDCore.Core.Modes;
+using DDCore.Observation;
 
 namespace DDCore.Plugin.Windows;
 
@@ -11,12 +12,12 @@ internal sealed class MainWindow : Window, IDisposable
     private readonly Plugin plugin;
 
     public MainWindow(Plugin plugin)
-        : base("DDCore##Main", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+        : base("DDCore##Main")
     {
         this.plugin = plugin;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(520, 390),
+            MinimumSize = new Vector2(560, 600),
             MaximumSize = new Vector2(900, 720),
         };
     }
@@ -31,6 +32,10 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+        DrawObservation();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
         DrawModes();
         ImGui.Spacing();
         ImGui.Separator();
@@ -41,7 +46,7 @@ internal sealed class MainWindow : Window, IDisposable
     private void DrawStatus()
     {
         ImGui.TextUnformatted("ディープダンジョン攻略基盤");
-        ImGui.TextDisabled("Phase 2: 独立基盤・観測・安全制御");
+        ImGui.TextDisabled("Phase 3.6: 読み取り専用観測・ギミック解析・安全制御");
         ImGui.Spacing();
 
         ImGui.TextUnformatted("現在のモード");
@@ -66,10 +71,74 @@ internal sealed class MainWindow : Window, IDisposable
         }
     }
 
+    private void DrawObservation()
+    {
+        var diagnostics = plugin.ObservationDiagnostics;
+        ImGui.TextUnformatted("観測診断（読み取り専用）");
+        ImGui.Spacing();
+        DrawValue("観測状態", ObservationStateText(diagnostics.State));
+        DrawValue("DD種別・階層", DungeonText(diagnostics));
+        DrawValue("観測した敵", $"{diagnostics.EnemyCount}体");
+        DrawValue("詠唱中の敵", $"{diagnostics.CastingEnemyCount}体");
+        DrawValue("検出したAoE", $"{diagnostics.HazardCount}件");
+        DrawValue("安全判定", diagnostics.Safety switch
+        {
+            DDCore.Core.Mechanics.MechanicSafetyAssessment.HazardsKnown => "既知の危険を解析済み",
+            DDCore.Core.Mechanics.MechanicSafetyAssessment.InvalidObservation => "観測データが無効",
+            _ => "不明・未対応（安全とは判定しません）",
+        });
+        DrawValue("最終観測", diagnostics.LastObservedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "未観測");
+
+        if (diagnostics.Reasons.Length > 0 && ImGui.TreeNode("解析不能・未対応の理由"))
+        {
+            foreach (var reason in diagnostics.Reasons.Take(12))
+            {
+                ImGui.BulletText(reason);
+            }
+
+            if (diagnostics.Reasons.Length > 12)
+            {
+                ImGui.TextDisabled($"ほか {diagnostics.Reasons.Length - 12} 件");
+            }
+
+            ImGui.TreePop();
+        }
+    }
+
+    private static void DrawValue(string label, string value)
+    {
+        ImGui.TextUnformatted(label);
+        ImGui.SameLine(170);
+        ImGui.TextWrapped(value);
+    }
+
+    private static string ObservationStateText(LiveObservationState state) => state switch
+    {
+        LiveObservationState.Waiting => "待機中",
+        LiveObservationState.Observing => "観測中",
+        LiveObservationState.Partial => "部分観測（推定・未取得あり）",
+        LiveObservationState.Unsupported => "未対応",
+        LiveObservationState.Invalid => "観測エラー",
+        _ => "不明",
+    };
+
+    private static string DungeonText(LiveObservationDiagnostics diagnostics)
+    {
+        var kind = diagnostics.DungeonKind switch
+        {
+            DDCore.Core.World.DeepDungeonKind.PalaceOfTheDead => "死者の宮殿",
+            DDCore.Core.World.DeepDungeonKind.HeavenOnHigh => "アメノミハシラ",
+            DDCore.Core.World.DeepDungeonKind.EurekaOrthos => "オルト・エウレカ",
+            DDCore.Core.World.DeepDungeonKind.None => "DD外",
+            _ => "未対応・識別不能",
+        };
+        return diagnostics.Floor is { } floor ? $"{kind} {floor}階（推定を含む）" : kind;
+    }
+
     private void DrawModes()
     {
         ImGui.TextUnformatted("動作モード");
-        ImGui.TextDisabled("AssistedとAutonomousは将来用の定義です。Phase 2では選択できません。");
+        ImGui.TextDisabled("AssistedとAutonomousは将来用の定義です。現在のビルドでは選択できません。");
         ImGui.Spacing();
 
         DrawMode(OperationMode.Observer, "状態表示のみ");
@@ -92,7 +161,7 @@ internal sealed class MainWindow : Window, IDisposable
 
         if (blocked && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip("Phase 2には実行機能が含まれていません。");
+            ImGui.SetTooltip("現在のビルドには実行機能が含まれていません。");
         }
 
         ImGui.SameLine(180);

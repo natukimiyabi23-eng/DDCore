@@ -16,6 +16,12 @@
       },
       "ddcore.core": {
         "type": "Project"
+      },
+      "ddcore.observation": {
+        "type": "Project",
+        "dependencies": {
+          "DDCore.Core": "[1.0.0, )"
+        }
       }
     }
   }

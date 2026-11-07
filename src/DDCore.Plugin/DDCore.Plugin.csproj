@@ -1,18 +1,19 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.2.1.0</Version>
+    <Version>0.3.0.0</Version>
     <AssemblyName>DDCore</AssemblyName>
     <RootNamespace>DDCore.Plugin</RootNamespace>
     <Author>natukimiyabi23-eng</Author>
     <Name>DDCore</Name>
-    <Punchline>ディープダンジョン解析基盤（Phase 3）</Punchline>
-    <Description>独立したディープダンジョン解析基盤です。Phase 3では純粋C#のAoE計算、リプレイ、ガンカナグ解析を提供しますが、ゲーム操作は行いません。</Description>
+    <Punchline>ディープダンジョン読み取り専用解析基盤（Phase 3.6）</Punchline>
+    <Description>公開Dalamud APIの観測をWorldSnapshotへ変換し、ガンカナグのAoE候補を読み取り専用で解析します。ゲーム操作は行いません。</Description>
     <RepoUrl>https://github.com/natukimiyabi23-eng/DDCore</RepoUrl>
     <Tags>deep-dungeon;utility;japanese</Tags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DDCore.Core\DDCore.Core.csproj" />
+    <ProjectReference Include="..\DDCore.Observation\DDCore.Observation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
