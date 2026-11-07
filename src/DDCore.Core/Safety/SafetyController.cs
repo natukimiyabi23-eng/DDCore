@@ -65,6 +65,10 @@ public sealed class SafetyController(bool executionAvailable) : ISafetyControlle
         }
 
         CurrentMode = requestedMode;
+        if (!requestedMode.RequiresExecution())
+        {
+            SessionArmed = false;
+        }
         return Accept(previous, $"{requestedMode.JapaneseName()}モードへ移行しました。");
     }
 
@@ -79,6 +83,12 @@ public sealed class SafetyController(bool executionAvailable) : ISafetyControlle
         if (!ExecutionAvailable)
         {
             reason = "実行機能はこのビルドに含まれていません。";
+            return false;
+        }
+
+        if (CurrentMode != OperationMode.Observer)
+        {
+            reason = "実行機能の承認は観測モードでのみ行えます。";
             return false;
         }
 
@@ -97,6 +107,12 @@ public sealed class SafetyController(bool executionAvailable) : ISafetyControlle
 
     public bool TryResetEmergencyStop(out string reason)
     {
+        if (!EmergencyStopLatched)
+        {
+            reason = "緊急停止は有効ではありません。";
+            return false;
+        }
+
         if (CurrentMode != OperationMode.Observer)
         {
             reason = "緊急停止の解除は観測モードでのみ行えます。";

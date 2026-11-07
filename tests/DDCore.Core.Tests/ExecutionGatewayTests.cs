@@ -9,8 +9,9 @@ public sealed class ExecutionGatewayTests
     {
         var gateway = new DisabledExecutionGateway();
         var intent = new ExecutionIntent(Guid.NewGuid(), "test", 1, DateTimeOffset.UtcNow.AddMinutes(1));
+        var safetyGate = new ThrowingSafetyGate();
 
-        var result = gateway.TryExecute(intent);
+        var result = gateway.TryExecute(intent, safetyGate);
 
         Assert.False(gateway.IsAvailable);
         Assert.Equal(ExecutionStatus.Disabled, result.Status);
@@ -26,5 +27,11 @@ public sealed class ExecutionGatewayTests
 
         Assert.DoesNotContain(references, name => name?.StartsWith("BossMod", StringComparison.Ordinal) == true);
         Assert.DoesNotContain(references, name => name?.StartsWith("Dalamud", StringComparison.Ordinal) == true);
+    }
+
+    private sealed class ThrowingSafetyGate : IExecutionSafetyGate
+    {
+        public ExecutionSafetyValidation RevalidateImmediatelyBeforeExecution(ExecutionIntent intent) =>
+            throw new InvalidOperationException("Disabled execution must not request authorization.");
     }
 }

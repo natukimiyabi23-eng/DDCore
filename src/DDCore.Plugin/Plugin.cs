@@ -21,61 +21,84 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static ICommandManager CommandManager { get; set; } = null!;
     [PluginService] private static IPluginLog PluginLog { get; set; } = null!;
 
-    private readonly IDDLogger logger;
-    private readonly ConfigurationService configurationService;
-    private readonly MainWindow mainWindow;
-    private readonly ConfigurationWindow configurationWindow;
+    private readonly Stack<Action> cleanupActions = new();
+    private IDDLogger logger = NullDDLogger.Instance;
+    private ConfigurationService configurationService = null!;
+    private WindowSystem? windowSystem;
+    private MainWindow? mainWindow;
+    private ConfigurationWindow? configurationWindow;
+    private bool resourcesReleased;
 
     public Plugin()
     {
-        logger = new DalamudLogger(PluginLog);
-        configurationService = new ConfigurationService(new DalamudConfigurationPersistence(PluginInterface));
-        Safety = new SafetyController(executionAvailable: false);
-        Safety.RestoreEmergencyStop(configurationService.Current.EmergencyStopLatched);
-        Execution = new DisabledExecutionGateway();
-
-        WindowSystem = new WindowSystem("DDCore");
-        mainWindow = new MainWindow(this);
-        configurationWindow = new ConfigurationWindow(this);
-        WindowSystem.AddWindow(mainWindow);
-        WindowSystem.AddWindow(configurationWindow);
-
-        CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+        try
         {
-            HelpMessage = "DDCoreを開きます。config: 設定、stop: 緊急停止、status: 状態表示",
-        });
+            logger = new DalamudLogger(PluginLog);
+            configurationService = new ConfigurationService(
+                new DalamudConfigurationPersistence(PluginInterface),
+                logger);
+            Safety = new SafetyController(executionAvailable: false);
+            Safety.RestoreEmergencyStop(configurationService.Current.EmergencyStopLatched);
+            Execution = new DisabledExecutionGateway();
 
-        PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
-        PluginInterface.UiBuilder.OpenMainUi += ToggleMainUi;
-        PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUi;
+            windowSystem = new WindowSystem("DDCore");
+            mainWindow = new MainWindow(this);
+            cleanupActions.Push(mainWindow.Dispose);
+            configurationWindow = new ConfigurationWindow(this);
+            cleanupActions.Push(configurationWindow.Dispose);
+            windowSystem.AddWindow(mainWindow);
+            windowSystem.AddWindow(configurationWindow);
+            cleanupActions.Push(windowSystem.RemoveAllWindows);
 
-        foreach (var change in configurationService.StartupChanges)
-        {
-            logger.Information(change);
+            CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "DDCoreを開きます。config: 設定、stop: 緊急停止、status: 状態表示",
+            });
+            cleanupActions.Push(() => CommandManager.RemoveHandler(CommandName));
+
+            PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+            cleanupActions.Push(() => PluginInterface.UiBuilder.Draw -= windowSystem.Draw);
+            PluginInterface.UiBuilder.OpenMainUi += ToggleMainUi;
+            cleanupActions.Push(() => PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi);
+            PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUi;
+            cleanupActions.Push(() => PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi);
+
+            foreach (var change in configurationService.StartupChanges)
+            {
+                logger.Warning(change);
+            }
+
+            LastStatusMessage = configurationService.RecoveredFromLoadFailure
+                ? "設定を読み込めなかったため、Observer＋緊急停止状態で復旧しました。"
+                : "Observerモードで安全に起動しました。";
+
+            if (!configurationService.IsPersistenceHealthy)
+            {
+                LastStatusMessage = configurationService.LastPersistenceError
+                    ?? "設定の永続化に失敗しました。安全状態は現在のセッションで維持されます。";
+            }
+
+            logger.Information("DDCore Phase 2をObserverモードで起動しました。ゲーム操作機能は含まれていません。");
         }
-
-        logger.Information("DDCore Phase 2をObserverモードで起動しました。ゲーム操作機能は含まれていません。");
+        catch (Exception exception)
+        {
+            SafeLogError("DDCoreの初期化に失敗しました。登録済みリソースを解放します。", exception);
+            ReleaseResources();
+            throw;
+        }
     }
 
-    public WindowSystem WindowSystem { get; }
-    public ISafetyController Safety { get; }
-    public IExecutionGateway Execution { get; }
+    public WindowSystem WindowSystem => windowSystem
+        ?? throw new InvalidOperationException("DDCoreのウィンドウシステムは初期化されていません。");
+    public ISafetyController Safety { get; private set; } = null!;
+    public IExecutionGateway Execution { get; private set; } = null!;
     public DDCoreConfiguration Configuration => configurationService.Current;
     public string LastStatusMessage { get; private set; } = "Observerモードで安全に起動しました。";
 
-    public void Dispose()
-    {
-        PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
-        PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
-        PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
-        CommandManager.RemoveHandler(CommandName);
-        WindowSystem.RemoveAllWindows();
-        mainWindow.Dispose();
-        configurationWindow.Dispose();
-    }
+    public void Dispose() => ReleaseResources();
 
-    public void ToggleMainUi() => mainWindow.Toggle();
-    public void ToggleConfigUi() => configurationWindow.Toggle();
+    public void ToggleMainUi() => mainWindow?.Toggle();
+    public void ToggleConfigUi() => configurationWindow?.Toggle();
 
     public void RequestMode(OperationMode mode)
     {
@@ -89,10 +112,15 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         Configuration.Mode = result.CurrentMode;
-        configurationService.Save();
+        var saved = SaveConfiguration();
         if (Configuration.LogModeChanges)
         {
             logger.Information(result.Reason);
+        }
+
+        if (saved)
+        {
+            LastStatusMessage = result.Reason;
         }
     }
 
@@ -101,8 +129,11 @@ public sealed class Plugin : IDalamudPlugin
         Safety.EmergencyStop(reason);
         Configuration.Mode = OperationMode.Observer;
         Configuration.EmergencyStopLatched = true;
-        configurationService.Save();
-        LastStatusMessage = "緊急停止しました。Observerモードへ戻しました。";
+        var saved = SaveConfiguration();
+        if (saved)
+        {
+            LastStatusMessage = "緊急停止しました。Observerモードへ戻しました。";
+        }
         logger.Warning($"緊急停止: {reason}");
     }
 
@@ -116,12 +147,24 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         Configuration.EmergencyStopLatched = false;
-        configurationService.Save();
-        LastStatusMessage = reason;
+        if (SaveConfiguration())
+        {
+            LastStatusMessage = reason;
+        }
         logger.Information(reason);
     }
 
-    public void SaveConfiguration() => configurationService.Save();
+    public bool SaveConfiguration()
+    {
+        if (configurationService.Save())
+        {
+            return true;
+        }
+
+        LastStatusMessage = configurationService.LastPersistenceError
+            ?? "設定保存に失敗しました。変更は現在のセッションだけに保持されます。";
+        return false;
+    }
 
     private void OnCommand(string command, string arguments)
     {
@@ -132,14 +175,53 @@ public sealed class Plugin : IDalamudPlugin
                 break;
             case "stop":
                 EmergencyStop("/ddcore stop が実行されました。");
-                mainWindow.IsOpen = true;
+                if (mainWindow is not null)
+                {
+                    mainWindow.IsOpen = true;
+                }
                 break;
             case "status":
-                mainWindow.IsOpen = true;
+                if (mainWindow is not null)
+                {
+                    mainWindow.IsOpen = true;
+                }
                 break;
             default:
                 ToggleMainUi();
                 break;
+        }
+    }
+
+    private void ReleaseResources()
+    {
+        if (resourcesReleased)
+        {
+            return;
+        }
+
+        resourcesReleased = true;
+        while (cleanupActions.TryPop(out var cleanup))
+        {
+            try
+            {
+                cleanup();
+            }
+            catch (Exception exception)
+            {
+                SafeLogError("DDCoreのリソース解放中にエラーが発生しました。", exception);
+            }
+        }
+    }
+
+    private void SafeLogError(string message, Exception exception)
+    {
+        try
+        {
+            logger.Error(message, exception);
+        }
+        catch
+        {
+            // Logging must never prevent initialization rollback or disposal.
         }
     }
 }

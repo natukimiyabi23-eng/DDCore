@@ -28,3 +28,12 @@
 - All 15 unit tests passed; package and manifest contents were inspected.
 - `dotnet format --verify-no-changes` passed and NuGet vulnerability audit reported no known vulnerable packages.
 - Live Dalamud loading, Japanese UI rendering and live reload persistence are explicitly unverified; the user performs those checks.
+
+## 2026-11-07 — Phase 2 review fixes
+
+- Added fail-closed recovery for configuration load exceptions: Observer mode plus a latched emergency stop, followed by one safe replacement-save attempt.
+- Added non-throwing save failure handling, error logging, persistence health state, and a session-only recovery message.
+- Tightened safety boundaries: authorization is granted only from Observer and is revoked by non-operating transitions, emergency stop, and restored stop state.
+- Added an execution contract requiring fresh safety revalidation inside the gateway immediately before any future external side effect.
+- Added reverse-order rollback for command, UI callback and window resources when plugin construction fails; disposal remains idempotent.
+- Expanded the test suite from 15 to 26 tests. Live Dalamud failure injection remains unverified.

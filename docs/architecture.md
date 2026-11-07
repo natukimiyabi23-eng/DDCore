@@ -99,6 +99,32 @@ Any active state can transition to `Paused`, `EmergencyStopped`, or `Faulted`. E
 - Record every operation and its observed result.
 - Do not silently fall back from advice to operation.
 
+### Mandatory execution-time revalidation
+
+Every future operation-capable `IExecutionGateway` implementation must call the supplied
+`IExecutionSafetyGate.RevalidateImmediatelyBeforeExecution` inside `TryExecute`, immediately
+before its first external side effect. A safety decision made by the caller, decision engine,
+or an earlier frame is stale and is not authorization.
+
+The final validation must reject at least: an expired intent, an emergency-stop latch, an
+unarmed session, a mode that does not permit execution, a missing execution adapter, and a
+world snapshot sequence that differs from the intent. Validation and the first side effect
+must remain in the same gateway call so no queue or asynchronous handoff can bypass the gate.
+The raw operation adapter must not be exposed to UI or decision code. Phase 2's
+`DisabledExecutionGateway` may return `Disabled` without invoking the gate because it cannot
+produce a side effect.
+
+### Configuration failure policy
+
+- A load exception or incompatible stored object creates a new Observer configuration with
+  the emergency-stop latch enabled. DDCore logs the exception and attempts one replacement save.
+- If any save fails, the exception is logged and the current in-memory state is retained. A
+  failed emergency-stop save therefore remains latched for the running session; every restart
+  still starts in Observer even if persistence remains unavailable.
+- Persistence failure never enables an operating mode and never falls back to an older saved
+  mode. The UI status reports that changes may be session-only.
+- Live recovery from malformed JSON and storage failures remains an in-game verification item.
+
 ## Test architecture
 
 - Unit tests for room graph, route scores, resource policy and state transitions.

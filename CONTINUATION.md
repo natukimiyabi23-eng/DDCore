@@ -5,7 +5,7 @@ Updated: 2026-11-07 JST
 
 ## Objective
 
-`phase2/plugin-foundation` ブランチで、BossMod非依存のDalamud API 15プラグイン基盤、日本語UI、5モード、安全ゲート、緊急停止、責務別インターフェース、設定保存・移行、ログ、単体テストを実装する。自動操作とゲーム内部フックは実装しない。
+`phase2/plugin-foundation` ブランチで、Phase 2コードレビュー指摘に対応する。設定読込・保存失敗時の安全復旧、SafetyController境界テスト、Execution直前再検証契約、初期化失敗時のリソース解放を追加し、全検証と既存PR更新を行う。自動操作とゲーム内部フックは実装しない。
 
 ## Current state
 
@@ -42,12 +42,18 @@ Updated: 2026-11-07 JST
 - Added a permanently disabled Phase 2 execution gateway; no movement, combat, target, item or game-operation implementation exists.
 - Added 15 unit tests and a Windows CI workflow.
 - Updated the Phase 2 documentation and verification record.
+- Added fail-closed configuration load recovery: Observer mode with emergency stop latched, error logging, and one safe replacement-save attempt.
+- Added non-throwing save failure handling with persistence health state and session-only fallback.
+- Tightened authorization boundaries and expanded the test suite from 15 to 26 tests.
+- Added the mandatory execution-time safety revalidation contract.
+- Added reverse-order constructor rollback and idempotent disposal for plugin resources.
+- Re-ran Release build, all tests, format verification, static reference checks and NuGet vulnerability audit.
 
 ## Unfinished
 
-- No required Phase 2 source work remains.
-- User verification remains: enable/load the plugin, confirm Japanese rendering, confirm configuration persistence across a live reload, and confirm unload/reload behavior.
-- Review and merge the Phase 2 PR only after user approval.
+- No required review-fix source work remains.
+- User verification remains: enable/load the plugin, confirm Japanese rendering, inject corrupt/read-only configuration failures, confirm persistence across a live reload, and confirm constructor/unload rollback behavior.
+- Review and merge PR #1 only after user approval.
 
 ## Files changed
 
@@ -71,8 +77,9 @@ Updated: 2026-11-07 JST
 ## Build / test
 
 - `dotnet build DDCore.slnx -c Release --no-restore`: success, 0 warnings, 0 errors.
-- `dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj -c Release --no-build --no-restore`: 15 passed, 0 failed, 0 skipped.
+- `dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj -c Release --no-build --no-restore`: 26 passed, 0 failed, 0 skipped.
 - `dotnet format DDCore.slnx --verify-no-changes --no-restore`: success.
+- `dotnet list DDCore.slnx package --vulnerable --include-transitive`: no known vulnerable packages in all three projects.
 - Package manifest: `InternalName=DDCore`, version `0.1.0.0`, Dalamud API level 15.
 - Assembly/package audit: no BossMod reference; execution gateway is disabled.
 
@@ -82,7 +89,7 @@ Updated: 2026-11-07 JST
 
 ## Artifact hashes (SHA-256)
 
-- `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `D71BF70AC5399F7A5E460BF975118BB526FEBAF74C9C70060896059AC6F1A21D`
+- `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9518899C84EE86BB873F38AB19FA8EC26BC5F331AF5DA645AEE2669AAF3A55F0`
 
 ## Known evidence
 
@@ -93,4 +100,4 @@ Updated: 2026-11-07 JST
 
 ## Safe next step
 
-Wait for user review of the Phase 2 PR. Do not merge it without approval. If live verification is requested, the user performs plugin enablement/reload; record observed results here before claiming those checks complete.
+Wait for review of PR #1. The ACTIVE heartbeat automation `DDCoreレビュー修正の再開確認` (`id=ddcore`) is a fallback only and must make no changes when it observes this completed state. Do not merge without approval and do not claim the remaining live Dalamud checks succeeded.

@@ -28,18 +28,24 @@ Commands:
 dotnet restore DDCore.slnx
 dotnet build DDCore.slnx -c Release --no-restore
 dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj -c Release --no-build --no-restore
+dotnet format DDCore.slnx --verify-no-changes --no-restore
+dotnet list DDCore.slnx package --vulnerable --include-transitive
 ```
 
 Results:
 
 - Release build: succeeded, 0 warnings, 0 errors.
-- Unit tests: 15 passed, 0 failed, 0 skipped.
+- Unit tests: 26 passed, 0 failed, 0 skipped.
 - Generated manifest: `InternalName=DDCore`, version `0.1.0.0`, Dalamud API level 15.
 - Generated package includes `DDCore.dll`, `DDCore.Core.dll`, dependency metadata and the plugin manifest.
-- Package SHA-256: `D71BF70AC5399F7A5E460BF975118BB526FEBAF74C9C70060896059AC6F1A21D`.
+- Package SHA-256: `9518899C84EE86BB873F38AB19FA8EC26BC5F331AF5DA645AEE2669AAF3A55F0`.
 - `DDCore.dll` references Dalamud, ImGui and `DDCore.Core`; it has no BossMod reference.
 - `DDCore.Core` has no Dalamud or BossMod assembly reference.
 - `DisabledExecutionGateway.IsAvailable` is always false and returns `ExecutionStatus.Disabled` for every request.
+- Configuration load exceptions recover to Observer with the emergency-stop latch enabled and attempt one safe replacement save.
+- Configuration save exceptions are logged; safe in-memory state remains active for the current session.
+- Plugin initialization records every registered command, UI callback and window cleanup action and rolls them back in reverse order if construction fails.
+- Format verification succeeded, and the NuGet audit found no known vulnerable direct or transitive package in all three projects.
 
 ## Tests covered
 
@@ -52,6 +58,12 @@ Results:
 - Configuration version migration and persistence calls.
 - Phase 2 execution gateway never executes.
 - Core assembly dependency boundary excludes BossMod and Dalamud.
+- Undefined modes are rejected without changing state.
+- Execution-capable modes require explicit session authorization from Observer.
+- Entering a non-operating mode, emergency stop, and restored emergency stop revoke authorization.
+- Resetting emergency stop does not restore authorization; a fresh authorization is required.
+- Load and save exceptions preserve an Observer/emergency-stopped in-memory state and emit error logs.
+- The execution interface requires a fresh `IExecutionSafetyGate` at the gateway call boundary; the disabled gateway never requests authorization.
 
 ## Not yet verified
 
@@ -59,6 +71,7 @@ Results:
 - Visual rendering and Japanese font display in the live game UI.
 - Actual Dalamud configuration persistence across a live plugin reload.
 - Plugin unload/reload behavior in game.
-- GitHub Actions result; this becomes available after the branch is pushed and the PR workflow runs.
+- Corrupt-setting recovery, storage-write failure, and constructor rollback inside a live Dalamud session.
+- GitHub Actions result for the review-fix commit; this becomes available after the branch is pushed and the PR workflow runs.
 
 The user performs plugin enablement, reload and in-game verification. These items must not be reported as complete until observed.
