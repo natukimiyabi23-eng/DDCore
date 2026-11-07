@@ -59,11 +59,14 @@ The common DD code cannot be moved as a small isolated library without either po
 
 Dalamud API 15 is current in the inspected official documentation and uses .NET 10. The official guidance recommends `Dalamud.NET.Sdk/15.0.0`; plugins implement `IDalamudPlugin` or `IAsyncDalamudPlugin`. The official technical guidance recommends the Windowing API for regular windows and Lumina for local game data.
 
+The official API 16 page was also checked on 2026-11-07. It labels API 16 as not finalized, under development for Patch 8.0, with release date TBA. It is therefore a migration risk, not the DDCore implementation baseline.
+
 FFXIVClientStructs is used by BossMod for native DD state and action hooks. These are not equivalent to stable, high-level Dalamud service contracts.
 
 ### Sources
 
 - <https://dalamud.dev/versions/v15/>
+- <https://dalamud.dev/versions/v16/>
 - <https://dalamud.dev/api/Dalamud.Plugin/Interfaces/IDalamudPlugin/>
 - <https://dalamud.dev/plugin-development/technical-considerations/>
 

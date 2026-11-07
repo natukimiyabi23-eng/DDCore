@@ -9,6 +9,7 @@ Analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
 | .NET 10 SDK | BossMod `global.json`; local build used 10.0.302 | Required for API 15 baseline |
 | `Dalamud.NET.Sdk/15.0.0` | `BossMod/BossMod.csproj` | Use for the future plugin shell |
 | Dalamud API | BossMod SDK and official API 15 docs | Keep behind plugin/adapters where possible |
+| Dalamud API 16 preview | Official v16 page marks it not finalized and under development for Patch 8.0 | Track as migration risk; do not target preview APIs |
 | FFXIVClientStructs | `DeepDungeonState`, `WorldStateGameSync`, `FloorPathfind` | Isolate unsafe/native reads in `DDCore.World` adapter |
 | Lumina | `DeepDungeonState`, `Rooms`, config/UI | Use for game sheets and local game files |
 | BossMod core | `ZoneModule`, `WorldState`, `AIHints`, `ActionQueue`, pathfinding, AoE types | Port only necessary concepts with attribution |
@@ -53,6 +54,7 @@ Official Dalamud restrictions say plugins must not automate server interaction o
 - BossMod pinned tree: <https://github.com/awgil/ffxiv_bossmod/tree/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0>
 - BossMod license: <https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/LICENSE>
 - Dalamud v15: <https://dalamud.dev/versions/v15/>
+- Dalamud v16 preview: <https://dalamud.dev/versions/v16/>
 - Dalamud API index: <https://dalamud.dev/api/>
 - Plugin restrictions: <https://dalamud.dev/plugin-publishing/restrictions/>
 - Plugin technical considerations: <https://dalamud.dev/plugin-development/technical-considerations/>

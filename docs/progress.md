@@ -12,3 +12,6 @@
 - Completed the Phase 1-6 master plan, architecture, dependency inventory, migration plan and research report.
 - Kept plugin implementation out of scope as instructed.
 - Next action requires user approval: select the Phase 2 foundation scope and resolve the open scope questions before implementation.
+- Re-fetched BossMod and confirmed the pinned commit remains the public `origin/master` head.
+- Integrated the verified source map, replay/action-hook findings, implementation methods, cross-phase risk register, validation matrix and approval gates directly into `DDCore_Codex_MasterPlan.md`.
+- Reconfirmed API 15 as the stable baseline and recorded API 16 as an explicitly unfinished future migration risk.
