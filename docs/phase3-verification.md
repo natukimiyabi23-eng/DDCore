@@ -43,6 +43,17 @@ dotnet list DDCore.slnx package --vulnerable --include-transitive
 
 Final command results and package hash are recorded in `CONTINUATION.md` after the full verification run.
 
+## Accuracy-review verification
+
+- Release build: succeeded with 0 warnings and 0 errors.
+- Unit tests: 125 passed, 0 failed, 0 skipped.
+- Format verification: succeeded.
+- NuGet vulnerability audit: no known vulnerable package in Core, Plugin or tests.
+- Static dependency audit: Core has no project reference and its assembly test reports no BossMod or Dalamud reference; Plugin references only Core and `Dalamud.NET.Sdk/15.0.0`.
+- Package: `DDCore` version `0.2.1.0`, Dalamud API level 15.
+- Package contents: Core/plugin assemblies, manifest, BSD notice and Phase 3 provenance; no BossMod assembly.
+- Package SHA-256: `BB37604E72600FF97743B38F75E7268ACAB96AE62ECFE360771C27FB3331837E`.
+
 ## Fail-closed behavior
 
 - No matching analyzer: unknown, not safe.

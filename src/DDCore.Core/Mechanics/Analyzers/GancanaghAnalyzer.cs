@@ -48,7 +48,7 @@ public sealed class GancanaghAnalyzer : IMechanicAnalyzer
 
     public string AnalyzerId => Id;
 
-    public Version AnalyzerVersion { get; } = new(1, 0, 0);
+    public Version AnalyzerVersion { get; } = new(2, 0, 0);
 
     public bool CanAnalyze(WorldSnapshot snapshot) =>
         snapshot.Dungeon.Kind == DeepDungeonKind.EurekaOrthos && snapshot.Dungeon.Floor == 10;

@@ -15,6 +15,7 @@ public sealed class GancanaghAnalyzerTests
     [Fact]
     public void UpstreamActionAndArenaConstantsArePinned()
     {
+        Assert.Equal(new Version(2, 0, 0), new GancanaghAnalyzer().AnalyzerVersion);
         Assert.Equal(0x3D54u, GancanaghAnalyzer.BossObjectId);
         Assert.Equal(0x3D55u, GancanaghAnalyzer.PachypodiumMineObjectId);
         Assert.Equal(6499u, GancanaghAnalyzer.AttackActionId);

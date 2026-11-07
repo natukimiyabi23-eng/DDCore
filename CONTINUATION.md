@@ -57,10 +57,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-1. NuGet脆弱性監査とBossMod/Dalamud静的依存監査を実行する。
-2. 最終ZIPの版番号・内容・SHA-256を確認し、`phase3-verification.md`と本ファイルへ記録する。
-3. 差分を最終レビューし、修正をコミット・pushする。
-4. Draft PR #2の本文を精度レビュー結果へ更新し、GitHub Actions成功を確認する。
+1. 検証記録の最終差分をコミットし、`phase3/mechanics-foundation`をpushする。
+2. Draft PR #2の本文を精度レビュー結果へ更新し、GitHub Actions成功を確認する。
 
 Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
 
@@ -113,6 +111,9 @@ Live Dalamud/FFXIV verification remains the user's responsibility and is not rep
 - Accuracy checkpoint Release build: success, 0 warnings, 0 errors.
 - Accuracy checkpoint tests: 125 passed, 0 failed, 0 skipped.
 - Accuracy checkpoint format verification: success.
+- Accuracy final NuGet vulnerability audit: no known vulnerable packages in all three projects.
+- Accuracy final static dependency audit: Core has no project references or BossMod/Dalamud assembly reference; Plugin references Core and Dalamud SDK only.
+- Accuracy final package: `InternalName=DDCore`, version `0.2.1.0`, Dalamud API level 15, no BossMod assembly.
 
 ## Deployment
 
@@ -122,6 +123,7 @@ Live Dalamud/FFXIV verification remains the user's responsibility and is not rep
 
 - Latest local rebuild of `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9CFDA877FF0351D164117C82FD94204AC03DE8DF1777491914A22BF89770138B`
 - Current Phase 3 local package: `4DF9B67F6C4BB4F9077773F72085234147C56F42631C2C886B603C6C3703EB83`
+- Accuracy review package `0.2.1.0`: `BB37604E72600FF97743B38F75E7268ACAB96AE62ECFE360771C27FB3331837E`
 - No artifact was deployed.
 
 ## Known evidence

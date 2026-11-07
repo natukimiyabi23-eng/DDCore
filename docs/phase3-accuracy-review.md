@@ -84,3 +84,7 @@ The current geometry comparison is analytic and synthetic. Bit-for-bit equality 
 6. BossMod uses single-precision geometry and DDCore uses double precision; exact SDF values are not compared.
 7. No movement, route selection, combat, targeting, item use or game input exists in this phase.
 
+## Verification result
+
+The accuracy-review revision builds in Release with zero warnings and errors. All 125 unit tests pass, format verification passes, and the NuGet audit reports no known vulnerable package. Static reference inspection and the Core assembly test find no BossMod or Dalamud dependency in Core. The generated `0.2.1.0` package contains the BSD notice and three-entry provenance manifest and contains no BossMod assembly. These results do not replace live encounter validation.
+
