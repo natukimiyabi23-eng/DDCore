@@ -48,3 +48,12 @@
 - Recorded BSD-3-Clause provenance requirements and current official Dalamud publication constraints.
 - Recommended Eureka Orthos floor 10 (Gancanagh) as the first bounded vertical slice, pending user approval.
 - Phase 3 implementation, game operation and `main` merge were not performed.
+
+## 2026-11-07 — Phase 3 mechanic foundation
+
+- Created `phase3/mechanics-foundation` from the unmerged Phase 2 branch; `main` remains untouched.
+- Implemented P3.0 through P3.5 without game operations or a BossMod runtime dependency.
+- Added six pure C# AoE shapes, immutable snapshots, bounded local JSON replay, deterministic analyzer contracts and fail-closed unknown handling.
+- Implemented Gancanagh cast analysis for actions 31478, 32700 and 31479, plus interruption, disappearance, elapsed-cast and unknown-action handling.
+- Added pinned BossMod provenance and the BSD-3-Clause binary/source notice.
+- Synthetic replay tests pass; live Dalamud and live Gancanagh behavior remain unverified.

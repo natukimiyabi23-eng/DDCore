@@ -1,17 +1,22 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.1.0.0</Version>
+    <Version>0.2.0.0</Version>
     <AssemblyName>DDCore</AssemblyName>
     <RootNamespace>DDCore.Plugin</RootNamespace>
     <Author>natukimiyabi23-eng</Author>
     <Name>DDCore</Name>
-    <Punchline>ディープダンジョン攻略基盤（Phase 2）</Punchline>
-    <Description>ディープダンジョン攻略機能を段階的に構築するための独立基盤です。Phase 2では観測モード、安全制御、設定と日本語UIのみを提供し、自動操作は行いません。</Description>
+    <Punchline>ディープダンジョン解析基盤（Phase 3）</Punchline>
+    <Description>独立したディープダンジョン解析基盤です。Phase 3では純粋C#のAoE計算、リプレイ、ガンカナグ解析を提供しますが、ゲーム操作は行いません。</Description>
     <RepoUrl>https://github.com/natukimiyabi23-eng/DDCore</RepoUrl>
     <Tags>deep-dungeon;utility;japanese</Tags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DDCore.Core\DDCore.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\provenance\bossmod-phase3.json" Link="provenance\bossmod-phase3.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

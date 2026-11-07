@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "entries": [
     {
+      "schemaVersion": 1,
       "id": "bossmod-eo-d10-gancanagh",
       "repository": "https://github.com/awgil/ffxiv_bossmod",
       "commit": "6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0",

@@ -79,6 +79,11 @@ public sealed record ConeAoe : AoeShape
     internal static double SectorSignedDistance(Coordinate2D point, double radius, double halfAngle)
     {
         var distance = point.Length;
+        if (halfAngle == Math.PI)
+        {
+            return distance - radius;
+        }
+
         if (distance == 0)
         {
             return 0;

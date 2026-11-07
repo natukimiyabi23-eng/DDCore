@@ -254,7 +254,7 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 
 ### Detailed Phase 3 design status
 
-The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). It defines the immutable `WorldSnapshot`, serializable geometry, time-bounded hazard output, deterministic analyzer contract, replay/mock tests, provenance gate, implementation order, official-distribution constraints, risk register and unresolved decisions. The recommended first vertical slice is Eureka Orthos floor 10 (Gancanagh), subject to user approval. No Phase 3 implementation has started.
+The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). P3.0 through P3.5 are implemented on `phase3/mechanics-foundation`: immutable `WorldSnapshot`, six serializable geometry concepts, bounded JSON replay/mock support, deterministic analyzer contracts, fail-closed hazard output and the Eureka Orthos floor 10 Gancanagh vertical slice. Live Dalamud and live encounter behavior remain unverified. See [phase3-verification.md](phase3-verification.md).
 
 ## Phase 4 — Strategy decision engine
 

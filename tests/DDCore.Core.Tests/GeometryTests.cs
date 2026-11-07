@@ -45,6 +45,14 @@ public sealed class GeometryTests
         Assert.False(shape.Contains(new Coordinate2D(5, 0), Origin, Math.PI / 2));
     }
 
+    [Fact]
+    public void PiHalfAngleBehavesAsFullCircle()
+    {
+        var shape = new ConeAoe(5, Math.PI);
+        Assert.True(shape.Contains(new Coordinate2D(-4, 0), Origin));
+        Assert.False(shape.Contains(new Coordinate2D(-6, 0), Origin));
+    }
+
     [Theory]
     [InlineData(0, 0, true)]
     [InlineData(10, 2, true)]

@@ -55,13 +55,11 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-1. P3.0: スキーマ・未知状態・BossMod来歴管理を実装してテストする。
-2. P3.1: 純粋C#のAoE幾何計算6種と境界・異常値・回転・平行移動テストを実装する。
-3. P3.2: イミュータブルなWorldSnapshotを実装する。
-4. P3.3: 制限付きJSONリプレイ、モック、入力検証を実装する。
-5. P3.4: 解析契約、Registry、Hazard/MechanicFrame、ライフサイクルを実装する。
-6. P3.5: ガンカナグ解析と合成リプレイの正解比較を実装する。
-7. 全体検証、文書更新、コミット、push、`phase2/plugin-foundation` 向けPR作成、CI確認を行う。
+1. `git status` と未コミット差分を確認する。P3.0〜P3.5本体は段階コミット済みで、仕上げの版番号・CI・README・検証文書・来歴Codec等が未コミット。
+2. `dotnet format DDCore.slnx --verify-no-changes --no-restore` とNuGet監査を、最終変更後の状態でもう一度確認する。
+3. `CONTINUATION.md` を最終結果へ更新し、仕上げ変更をコミットする。
+4. `phase3/mechanics-foundation` をpushし、`phase2/plugin-foundation` 向けDraft PRを作成する。
+5. GitHub Actions成功を確認し、PRへ検証結果・実機未検証・main未マージを記載する。
 
 ## Files changed
 
@@ -91,6 +89,10 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - `dotnet list DDCore.slnx package --vulnerable --include-transitive`: no known vulnerable packages in all three projects.
 - Package manifest: `InternalName=DDCore`, version `0.1.0.0`, Dalamud API level 15.
 - Assembly/package audit: no BossMod reference; execution gateway is disabled.
+- Phase 3 staged tests: 103 passed, 0 failed, 0 skipped after the final provenance fix.
+- Phase 3 Release build: success, 0 warnings, 0 errors.
+- Phase 3 package manifest: version `0.2.0.0`, Dalamud API level 15.
+- Phase 3 ZIP contains `THIRD-PARTY-NOTICES.md` and `provenance/bossmod-phase3.json`.
 
 ## Deployment
 
@@ -99,6 +101,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 ## Artifact hashes (SHA-256)
 
 - Latest local rebuild of `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`: `9CFDA877FF0351D164117C82FD94204AC03DE8DF1777491914A22BF89770138B`
+- Current Phase 3 local package: `FEED796FECF21A2643534D37A698FB7EFD8FDDBC656C5D731313E6C11EA3AFA2`
 - No artifact was deployed.
 
 ## Known evidence
@@ -110,4 +113,4 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Safe next step
 
-Resume the first unfinished numbered step above. Re-read this file and `git status`, then run the relevant stage tests before continuing. Do not add game operations, control the FF14 UI, merge main, or report live behavior as verified.
+Token budget was reached after successful Phase 3 build/package verification. Resume the first unfinished numbered step above; do not reimplement completed P3.0-P3.5 work. Do not add game operations, control the FF14 UI, merge main, or report live behavior as verified.
