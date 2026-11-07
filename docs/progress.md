@@ -15,3 +15,16 @@
 - Re-fetched BossMod and confirmed the pinned commit remains the public `origin/master` head.
 - Integrated the verified source map, replay/action-hook findings, implementation methods, cross-phase risk register, validation matrix and approval gates directly into `DDCore_Codex_MasterPlan.md`.
 - Reconfirmed API 15 as the stable baseline and recorded API 16 as an explicitly unfinished future migration risk.
+
+## 2026-11-07 — Phase 2 plugin foundation
+
+- Created branch `phase2/plugin-foundation`; `main` remains unchanged.
+- Added the .NET 10 / Dalamud API 15 solution with `DDCore.Core`, `DDCore.Plugin`, and `DDCore.Core.Tests`.
+- Implemented the five mode definitions with Observer as the mandatory startup mode.
+- Implemented fail-closed mode transitions, persistent emergency stop, and a permanently disabled Phase 2 execution gateway.
+- Added Japanese main/configuration windows, `/ddcore` commands, versioned configuration persistence and Dalamud logging.
+- Added World, Mechanics, Navigation, Combat, Resources, Decision and Execution contracts without concrete game-operation implementations.
+- Release build succeeded with 0 warnings and 0 errors.
+- All 15 unit tests passed; package and manifest contents were inspected.
+- `dotnet format --verify-no-changes` passed and NuGet vulnerability audit reported no known vulnerable packages.
+- Live Dalamud loading, Japanese UI rendering and live reload persistence are explicitly unverified; the user performs those checks.

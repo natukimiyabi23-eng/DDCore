@@ -7,7 +7,7 @@ Analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`.
 | Dependency | Evidence | DDCore treatment |
 |---|---|---|
 | .NET 10 SDK | BossMod `global.json`; local build used 10.0.302 | Required for API 15 baseline |
-| `Dalamud.NET.Sdk/15.0.0` | `BossMod/BossMod.csproj` | Use for the future plugin shell |
+| `Dalamud.NET.Sdk/15.0.0` | `BossMod/BossMod.csproj`; `src/DDCore.Plugin/DDCore.Plugin.csproj` | Used by the Phase 2 plugin shell |
 | Dalamud API | BossMod SDK and official API 15 docs | Keep behind plugin/adapters where possible |
 | Dalamud API 16 preview | Official v16 page marks it not finalized and under development for Patch 8.0 | Track as migration risk; do not target preview APIs |
 | FFXIVClientStructs | `DeepDungeonState`, `WorldStateGameSync`, `FloorPathfind` | Isolate unsafe/native reads in `DDCore.World` adapter |
@@ -39,7 +39,7 @@ The build emitted NU1902/NU1903 advisories for ImageSharp 3.1.12. This is a fact
 
 BossMod uses BSD-3-Clause. Derived source and binary distribution must preserve its copyright notice, license conditions, and disclaimer. DDCore-specific code should be kept in separate namespaces/files, and later implementation should add a `THIRD-PARTY-NOTICES.md` plus source headers or a provenance manifest for copied/modified files.
 
-No BossMod code has been copied into DDCore during this research phase.
+No BossMod code or resources have been copied into DDCore through Phase 2. The foundation implementation is original DDCore code and only uses BossMod as a documented research reference.
 
 ## Distribution constraint
 

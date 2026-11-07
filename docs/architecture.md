@@ -24,6 +24,15 @@
 | `DDCore.Execution` | Movement, target, action, item and interaction adapters | Yes, only when enabled |
 | `DDCore.UI` | Japanese UI, status, reasons, emergency stop | Only commands the core |
 
+## Phase 2 physical layout
+
+Phase 2 uses two production assemblies rather than creating ten mostly empty assemblies:
+
+- `DDCore.Core`: game-independent modes, safety, configuration and the World/Mechanics/Navigation/Combat/Resources/Decision/Execution contracts.
+- `DDCore` (`DDCore.Plugin` project): Dalamud lifecycle, Japanese UI, command registration, configuration persistence and logging adapters.
+
+The logical boundaries are separate namespaces and interfaces. A responsibility should move to its own assembly when it gains concrete behavior or dependencies that require an enforceable compile-time boundary. This keeps the Phase 2 package small without discarding the target architecture.
+
 ## Dependency direction
 
 ```text
@@ -57,7 +66,7 @@ public interface IDDExecutor { ExecutionResult Execute(ApprovedIntent intent); }
 public interface IDDReplayStore { IEnumerable<DDObservation> Read(string replayId); }
 ```
 
-These are design proposals, not implemented APIs.
+Phase 2 implements the first versions of these boundaries under `DDCore.Core`, with more specific names such as `IWorldSnapshotProvider`, `IMechanicsAnalyzer`, `INavigationAdvisor`, `ICombatAdvisor`, `IResourceAdvisor`, `IDecisionEngine`, and `IExecutionGateway`. The execution implementation is deliberately limited to `DisabledExecutionGateway`.
 
 ## State machine proposal
 

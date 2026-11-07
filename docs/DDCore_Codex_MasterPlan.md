@@ -4,7 +4,7 @@
 
 Create a standalone, extensible Dalamud plugin for Final Fantasy XIV Deep Dungeons, based on proven BossMod concepts while separating BossMod-derived code from DDCore-original code.
 
-This plan covers research and future implementation design. The current task stops before plugin implementation.
+This plan covers research and phased implementation design. Phase 1 research is complete; Phase 2 foundation work is implemented on `phase2/plugin-foundation` for review and is not merged into `main` yet.
 
 ## Fixed technical policy
 
@@ -187,6 +187,15 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 - Japanese UI shows mode, current DD state and safety status.
 - No game operation occurs in default configuration.
 - License/provenance audit passes.
+
+### Phase 2 implementation status
+
+- Source/build verified: independent API 15 plugin and core assemblies compile with 0 warnings and 0 errors.
+- Unit verified: 15 tests pass for startup mode, configuration migration/persistence calls, safety transitions, emergency stop and disabled execution.
+- Package verified: the generated manifest reports API level 15 and the archive contains DDCore plus its game-independent core assembly.
+- Dependency verified: no BossMod assembly/package reference; the core assembly also has no Dalamud reference.
+- Static safety verified: no FFXIVClientStructs, interop hook, action, target or input implementation is present.
+- Live Dalamud load, Japanese UI rendering and live reload persistence remain unverified and require user-side in-game verification.
 
 ## Phase 3 — DD mechanic migration
 
