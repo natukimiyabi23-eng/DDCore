@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "bossmod-eo-d10-gancanagh",
+      "repository": "https://github.com/awgil/ffxiv_bossmod",
+      "commit": "6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0",
+      "sourcePath": "BossMod.Modules/Endwalker/DeepDungeon/EurekaOrthos/D10Gancanagh.cs",
+      "license": "BSD-3-Clause",
+      "copyright": "Copyright (c) 2022-2024, Andrew Gilewsky",
+      "derivation": "ReimplementedFromBehavior",
+      "destination": "src/DDCore.Core/Mechanics/Analyzers/GancanaghAnalyzer.cs",
+      "notes": "Action/object IDs, radii, cast semantics, arena bounds, and the six-instance Titan display limit are attributed to the pinned source. DDCore implementation uses original immutable models and geometry."
+    }
+  ]
+}

@@ -1,16 +1,16 @@
 # DDCore continuation
 
-Status: complete
+Status: in progress
 Updated: 2026-11-07 JST
 
 ## Objective
 
-Phase 2 PR #1をDraftへ変更して検証結果と実機未検証を明記し、BossMod DD依存関係を再確認したうえで、ゲーム操作を伴わないPhase 3ギミック解析の詳細設計、実装順序、テスト計画、依存関係・リスク・未決事項、Dalamud配布制約を文書化する。Phase 3本実装とmainマージは行わない。
+Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲーム操作を伴わないP3.0〜P3.5（来歴管理、幾何計算、WorldSnapshot、JSONリプレイ/モック、解析基盤、ガンカナグ解析）を段階実装・検証してPhase 2ブランチ向けPRを作成する。mainマージと実機操作は行わない。
 
 ## Current state
 
 - Repository: `https://github.com/natukimiyabi23-eng/DDCore` (public, default branch `main`)
-- Working branch: `phase2/plugin-foundation`
+- Working branch: `phase3/mechanics-foundation`
 - Local path: `work/DDCore`
 - BossMod source: `https://github.com/awgil/ffxiv_bossmod`
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
@@ -55,7 +55,13 @@ Phase 2 PR #1をDraftへ変更して検証結果と実機未検証を明記し�
 
 ## Unfinished
 
-None for the requested Phase 2 completion and Phase 3 design task. Phase 3 implementation requires a separate user approval after review of the unresolved decisions.
+1. P3.0: スキーマ・未知状態・BossMod来歴管理を実装してテストする。
+2. P3.1: 純粋C#のAoE幾何計算6種と境界・異常値・回転・平行移動テストを実装する。
+3. P3.2: イミュータブルなWorldSnapshotを実装する。
+4. P3.3: 制限付きJSONリプレイ、モック、入力検証を実装する。
+5. P3.4: 解析契約、Registry、Hazard/MechanicFrame、ライフサイクルを実装する。
+6. P3.5: ガンカナグ解析と合成リプレイの正解比較を実装する。
+7. 全体検証、文書更新、コミット、push、`phase2/plugin-foundation` 向けPR作成、CI確認を行う。
 
 ## Files changed
 
@@ -104,4 +110,4 @@ None for the requested Phase 2 completion and Phase 3 design task. Phase 3 imple
 
 ## Safe next step
 
-Review Draft PR #1 and decide the unresolved Phase 3 scope items, starting with approval or rejection of Gancanagh as the first vertical slice. Do not merge or begin Phase 3 implementation without the user's next instruction.
+Resume the first unfinished numbered step above. Re-read this file and `git status`, then run the relevant stage tests before continuing. Do not add game operations, control the FF14 UI, merge main, or report live behavior as verified.
