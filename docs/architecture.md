@@ -24,6 +24,15 @@
 | `DDCore.Execution` | Movement, target, action, item and interaction adapters | Yes, only when enabled |
 | `DDCore.UI` | Japanese UI, status, reasons, emergency stop | Only commands the core |
 
+## Phase 2 physical layout
+
+Phase 2 uses two production assemblies rather than creating ten mostly empty assemblies:
+
+- `DDCore.Core`: game-independent modes, safety, configuration and the World/Mechanics/Navigation/Combat/Resources/Decision/Execution contracts.
+- `DDCore` (`DDCore.Plugin` project): Dalamud lifecycle, Japanese UI, command registration, configuration persistence and logging adapters.
+
+The logical boundaries are separate namespaces and interfaces. A responsibility should move to its own assembly when it gains concrete behavior or dependencies that require an enforceable compile-time boundary. This keeps the Phase 2 package small without discarding the target architecture.
+
 ## Dependency direction
 
 ```text
@@ -57,7 +66,7 @@ public interface IDDExecutor { ExecutionResult Execute(ApprovedIntent intent); }
 public interface IDDReplayStore { IEnumerable<DDObservation> Read(string replayId); }
 ```
 
-These are design proposals, not implemented APIs.
+Phase 2 implements the first versions of these boundaries under `DDCore.Core`, with more specific names such as `IWorldSnapshotProvider`, `IMechanicsAnalyzer`, `INavigationAdvisor`, `ICombatAdvisor`, `IResourceAdvisor`, `IDecisionEngine`, and `IExecutionGateway`. The execution implementation is deliberately limited to `DisabledExecutionGateway`.
 
 ## State machine proposal
 
@@ -89,6 +98,32 @@ Any active state can transition to `Paused`, `EmergencyStopped`, or `Faulted`. E
 - Rate-limit repeated interaction/action attempts.
 - Record every operation and its observed result.
 - Do not silently fall back from advice to operation.
+
+### Mandatory execution-time revalidation
+
+Every future operation-capable `IExecutionGateway` implementation must call the supplied
+`IExecutionSafetyGate.RevalidateImmediatelyBeforeExecution` inside `TryExecute`, immediately
+before its first external side effect. A safety decision made by the caller, decision engine,
+or an earlier frame is stale and is not authorization.
+
+The final validation must reject at least: an expired intent, an emergency-stop latch, an
+unarmed session, a mode that does not permit execution, a missing execution adapter, and a
+world snapshot sequence that differs from the intent. Validation and the first side effect
+must remain in the same gateway call so no queue or asynchronous handoff can bypass the gate.
+The raw operation adapter must not be exposed to UI or decision code. Phase 2's
+`DisabledExecutionGateway` may return `Disabled` without invoking the gate because it cannot
+produce a side effect.
+
+### Configuration failure policy
+
+- A load exception or incompatible stored object creates a new Observer configuration with
+  the emergency-stop latch enabled. DDCore logs the exception and attempts one replacement save.
+- If any save fails, the exception is logged and the current in-memory state is retained. A
+  failed emergency-stop save therefore remains latched for the running session; every restart
+  still starts in Observer even if persistence remains unavailable.
+- Persistence failure never enables an operating mode and never falls back to an older saved
+  mode. The UI status reports that changes may be session-only.
+- Live recovery from malformed JSON and storage failures remains an in-game verification item.
 
 ## Test architecture
 

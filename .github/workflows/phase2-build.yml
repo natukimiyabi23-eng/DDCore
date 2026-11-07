@@ -1,0 +1,43 @@
+name: Phase 2 build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [phase2/plugin-foundation]
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download current Dalamud development assemblies
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Restore
+        run: dotnet restore DDCore.slnx
+
+      - name: Build
+        run: dotnet build DDCore.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj --configuration Release --no-build --no-restore
+
+      - name: Store plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DDCore-Phase2
+          path: src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
+          if-no-files-found: error
+          retention-days: 7

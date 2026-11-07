@@ -4,7 +4,7 @@
 
 Create a standalone, extensible Dalamud plugin for Final Fantasy XIV Deep Dungeons, based on proven BossMod concepts while separating BossMod-derived code from DDCore-original code.
 
-This plan covers research and future implementation design. The current task stops before plugin implementation.
+This plan covers research and phased implementation design. Phase 1 research is complete; Phase 2 foundation work is implemented on `phase2/plugin-foundation` for review and is not merged into `main` yet.
 
 ## Fixed technical policy
 
@@ -188,6 +188,16 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 - No game operation occurs in default configuration.
 - License/provenance audit passes.
 
+### Phase 2 implementation status
+
+- Source/build verified: independent API 15 plugin and core assemblies compile with 0 warnings and 0 errors.
+- Unit verified: 26 tests pass for startup mode, configuration migration/persistence failures, safety transitions, emergency stop, reauthorization boundaries, initialization rollback and disabled execution.
+- Package verified: the generated manifest reports API level 15 and the archive contains DDCore plus its game-independent core assembly.
+- Dependency verified: no BossMod assembly/package reference; the core assembly also has no Dalamud reference.
+- Static safety verified: no FFXIVClientStructs, interop hook, action, target or input implementation is present.
+- Review state: PR #1 is a Draft from `phase2/plugin-foundation` to `main`; no merge has been performed.
+- Live Dalamud load, Japanese UI rendering and live reload persistence remain unverified and require user-side in-game verification.
+
 ## Phase 3 — DD mechanic migration
 
 ### Implementation target
@@ -241,6 +251,10 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 - Every supported boss has passing replay fixtures.
 - Unknown/unsupported mechanics display a non-safe warning.
 - Observer/Advisor operation remains input-free.
+
+### Detailed Phase 3 design status
+
+The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). It defines the immutable `WorldSnapshot`, serializable geometry, time-bounded hazard output, deterministic analyzer contract, replay/mock tests, provenance gate, implementation order, official-distribution constraints, risk register and unresolved decisions. The recommended first vertical slice is Eureka Orthos floor 10 (Gancanagh), subject to user approval. No Phase 3 implementation has started.
 
 ## Phase 4 — Strategy decision engine
 

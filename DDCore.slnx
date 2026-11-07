@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/DDCore.Core/DDCore.Core.csproj" />
+  <Project Path="src/DDCore.Plugin/DDCore.Plugin.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj" />
+</Solution>
