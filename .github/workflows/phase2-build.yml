@@ -2,9 +2,9 @@ name: Foundation build
 
 on:
   pull_request:
-    branches: [main, phase2/plugin-foundation]
+    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation]
   push:
-    branches: [phase2/plugin-foundation, phase3/mechanics-foundation]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter]
 
 jobs:
   build-and-test:
@@ -32,12 +32,12 @@ jobs:
         run: dotnet build DDCore.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj --configuration Release --no-build --no-restore
+        run: dotnet test DDCore.slnx --configuration Release --no-build --no-restore
 
       - name: Store plugin package
         uses: actions/upload-artifact@v4
         with:
-          name: DDCore-Foundation
+          name: DDCore
           path: src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
           if-no-files-found: error
           retention-days: 7

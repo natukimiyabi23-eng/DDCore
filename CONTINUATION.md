@@ -75,7 +75,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Added `DDCore.Observation`, public-API Plugin adapters, 10 Hz framework polling, generation/cast/session tracking, partial-observation fail-closed analysis, and Japanese diagnostics UI. No write service, target manager, input, hook, or client-struct access is used.
 - Final local verification: locked restore succeeded; Release build succeeded with 0 warnings/errors; 125 Core tests and 15 Observation tests passed (140 total); format passed; NuGet audit found no known vulnerabilities; static read-only/dependency scan passed.
 - Package `0.3.0.0`, API 15, SHA-256 `139CE2C81C8DD4857ED6AA65B48797A452D14CDC9FBE09C0121948B5C8561C14`; contains Core/Observation/Plugin, BSD notice and provenance, with no BossMod assembly.
-- Remaining: commit/push, Draft PR targeting `phase3/mechanics-foundation`, and CI confirmation.
+- Commit `4a8db4d` pushed and Draft PR #3 opened against `phase3/mechanics-foundation`: `https://github.com/natukimiyabi23-eng/DDCore/pull/3`.
+- Existing CI did not trigger for the Phase 3.6 base/head and tested only Core; the workflow is being updated to cover the Phase 3 branch, live-adapter branch and the full solution tests.
+- Remaining: commit/push the CI trigger correction and confirm both push/PR checks.
 - Usage remaining after implementation checkpoint: 57% in the five-hour window and 93% in the weekly window.
 
 
