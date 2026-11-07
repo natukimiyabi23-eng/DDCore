@@ -16,6 +16,15 @@ public sealed class GeometryTests
     }
 
     [Theory]
+    [InlineData(0, Math.PI / 2)]
+    [InlineData(Math.PI / 2, 0)]
+    [InlineData(-Math.PI / 2, -Math.PI)]
+    public void ClockwisePositiveYRotationConvertsToCoreConvention(double gameRotation, double expected)
+    {
+        Assert.Equal(expected, Coordinate2D.FromClockwisePositiveYRotation(gameRotation), 10);
+    }
+
+    [Theory]
     [InlineData(0, 0, true)]
     [InlineData(5, 0, true)]
     [InlineData(5.001, 0, false)]
@@ -104,6 +113,24 @@ public sealed class GeometryTests
         Assert.True(shape.SignedDistance(new(6, 0), Origin) > 0);
     }
 
+    [Fact]
+    public void BoundaryToleranceIsExplicitAndStable()
+    {
+        var shape = new CircleAoe(5);
+        var slightlyOutside = new Coordinate2D(5 + 5e-10, 0);
+
+        Assert.True(shape.Contains(slightlyOutside, Origin));
+        Assert.False(shape.Contains(slightlyOutside, Origin, tolerance: 0));
+    }
+
+    [Fact]
+    public void LargeFiniteCoordinatesDoNotOverflowLengthCalculation()
+    {
+        var distance = new CircleAoe(1).SignedDistance(new Coordinate2D(1e308, 1e308), Origin);
+        Assert.True(double.IsFinite(distance));
+        Assert.True(distance > 1e308);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -119,5 +146,18 @@ public sealed class GeometryTests
         Assert.Throws<ArgumentOutOfRangeException>(() => shape.Contains(new(double.NaN, 0), Origin));
         Assert.Throws<ArgumentOutOfRangeException>(() => shape.Contains(Origin, Origin, double.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => shape.Contains(Origin, Origin, tolerance: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Coordinate2D.FromClockwisePositiveYRotation(double.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Coordinate2D(double.NaN, 0).Length);
+    }
+
+    [Fact]
+    public void InvalidShapeDimensionsAndAnglesAreRejected()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new RectangleAoe(double.PositiveInfinity, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConeAoe(1, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConeAoe(1, Math.PI + 0.001));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DonutAoe(3, 3));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DonutSectorAoe(3, 7, double.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new CrossAoe(1, 1));
     }
 }

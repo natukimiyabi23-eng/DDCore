@@ -15,6 +15,10 @@ public sealed class GancanaghAnalyzerTests
     [Fact]
     public void UpstreamActionAndArenaConstantsArePinned()
     {
+        Assert.Equal(0x3D54u, GancanaghAnalyzer.BossObjectId);
+        Assert.Equal(0x3D55u, GancanaghAnalyzer.PachypodiumMineObjectId);
+        Assert.Equal(6499u, GancanaghAnalyzer.AttackActionId);
+        Assert.Equal(31477u, GancanaghAnalyzer.AuthoritativeShriekActionId);
         Assert.Equal(31478u, GancanaghAnalyzer.MandrashockSingleActionId);
         Assert.Equal(32700u, GancanaghAnalyzer.MandrashockTitanActionId);
         Assert.Equal(31479u, GancanaghAnalyzer.MandrastormActionId);
@@ -32,6 +36,8 @@ public sealed class GancanaghAnalyzerTests
         Assert.Equal(10, circle.Radius);
         Assert.Equal(new Coordinate2D(-295, -300), hazard.Origin);
         Assert.Equal(Start.AddSeconds(5), hazard.ActivatesAt);
+        Assert.Equal(hazard.ActivatesAt, hazard.ExpiresAt);
+        Assert.Equal(HazardLifetimeKind.Instantaneous, hazard.Lifetime);
         Assert.Equal(MechanicSafetyAssessment.HazardsKnown, result.Frame.Safety);
     }
 
@@ -83,7 +89,7 @@ public sealed class GancanaghAnalyzerTests
     }
 
     [Fact]
-    public void ActorDisappearanceRemovesHazard()
+    public void ActorDisappearanceBeforeActivationRetainsHazardAndIsUnknown()
     {
         var analyzer = new GancanaghAnalyzer();
         var actor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
@@ -91,7 +97,34 @@ public sealed class GancanaghAnalyzerTests
         var second = analyzer.Analyze(Snapshot(2, Start.AddSeconds(1)), first.State);
 
         Assert.Single(first.Frame.Hazards);
+        Assert.Single(second.Frame.Hazards);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, second.Frame.Safety);
+        Assert.Contains(second.Frame.Diagnostics, value => value.StartsWith("cast-hazard.source-missing", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void MissingActorHazardExpiresAtKnownInstant()
+    {
+        var analyzer = new GancanaghAnalyzer();
+        var actor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        var first = analyzer.Analyze(Snapshot(1, Start, actor), MechanicState.Empty);
+        var second = analyzer.Analyze(Snapshot(2, Start.AddSeconds(5)), first.State);
+
         Assert.Empty(second.Frame.Hazards);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, second.Frame.Safety);
+    }
+
+    [Fact]
+    public void ExplicitDestroyedActorRemovesHazard()
+    {
+        var analyzer = new GancanaghAnalyzer();
+        var actor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        var first = analyzer.Analyze(Snapshot(1, Start, actor), MechanicState.Empty);
+        var destroyed = actor with { IsDestroyed = true, Cast = null };
+        var second = analyzer.Analyze(Snapshot(2, Start.AddSeconds(1), destroyed), first.State);
+
+        Assert.Empty(second.Frame.Hazards);
+        Assert.Equal(MechanicSafetyAssessment.HazardsKnown, second.Frame.Safety);
     }
 
     [Fact]
@@ -111,6 +144,106 @@ public sealed class GancanaghAnalyzerTests
         Assert.Empty(frame.Hazards);
         Assert.Equal(999999u, Assert.Single(frame.Unsupported).ActionId);
         Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, frame.Safety);
+    }
+
+    [Fact]
+    public void AuthoritativeShriekIsKnownNonHazardOnlyForBoss()
+    {
+        var boss = Actor(1, GancanaghAnalyzer.BossObjectId, new(-300, -300), GancanaghAnalyzer.AuthoritativeShriekActionId, Start, Start.AddSeconds(3));
+        var mine = Actor(2, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.AuthoritativeShriekActionId, Start, Start.AddSeconds(3));
+
+        var bossFrame = Analyze(Snapshot(1, Start, boss)).Frame;
+        var mineFrame = Analyze(Snapshot(1, Start, mine)).Frame;
+
+        Assert.Empty(bossFrame.Unsupported);
+        Assert.Equal(MechanicSafetyAssessment.HazardsKnown, bossFrame.Safety);
+        Assert.Equal(GancanaghAnalyzer.AuthoritativeShriekActionId, Assert.Single(mineFrame.Unsupported).ActionId);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, mineFrame.Safety);
+    }
+
+    [Fact]
+    public void AutoAttackReportedAsCastIsUnsupported()
+    {
+        var boss = Actor(1, GancanaghAnalyzer.BossObjectId, new(-300, -300), GancanaghAnalyzer.AttackActionId, Start, Start.AddSeconds(1));
+        var frame = Analyze(Snapshot(1, Start, boss)).Frame;
+
+        Assert.Equal(GancanaghAnalyzer.AttackActionId, Assert.Single(frame.Unsupported).ActionId);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, frame.Safety);
+    }
+
+    [Fact]
+    public void CastLocationAndRotationComeFromCastObservation()
+    {
+        var actor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        actor = actor with { Cast = actor.Cast! with { TargetLocation = new Coordinate2D(-290, -299), Rotation = 1.25 } };
+
+        var hazard = Assert.Single(Analyze(Snapshot(1, Start, actor)).Frame.Hazards);
+        Assert.Equal(new Coordinate2D(-290, -299), hazard.Origin);
+        Assert.Equal(1.25, hazard.Rotation);
+    }
+
+    [Fact]
+    public void TitanLimitPrefersEarlierCastStartsBeforeEntityId()
+    {
+        var actors = Enumerable.Range(1, 7)
+            .Select(index => Actor(
+                (ulong)index,
+                GancanaghAnalyzer.PachypodiumMineObjectId,
+                new(-300 + index, -300),
+                GancanaghAnalyzer.MandrashockTitanActionId,
+                index == 7 ? Start : Start.AddSeconds(1),
+                Start.AddSeconds(8)))
+            .ToArray();
+
+        var frame = Analyze(Snapshot(1, Start, actors)).Frame;
+        Assert.Contains(frame.Hazards, hazard => hazard.Evidence.Source.EntityId == 7);
+        Assert.DoesNotContain(frame.Hazards, hazard => hazard.Evidence.Source.EntityId == 6);
+    }
+
+    [Fact]
+    public void ConsecutiveCastOnSameActorReplacesOldPrediction()
+    {
+        var analyzer = new GancanaghAnalyzer();
+        var firstActor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        var first = analyzer.Analyze(Snapshot(1, Start, firstActor), MechanicState.Empty);
+        var secondActor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start.AddSeconds(2), Start.AddSeconds(7));
+        var second = analyzer.Analyze(Snapshot(2, Start.AddSeconds(2), secondActor), first.State);
+
+        var hazard = Assert.Single(second.Frame.Hazards);
+        Assert.NotEqual(Assert.Single(first.Frame.Hazards).HazardId, hazard.HazardId);
+    }
+
+    [Fact]
+    public void ReusedEntityIdWithNewGenerationDoesNotAliasOldCast()
+    {
+        var analyzer = new GancanaghAnalyzer();
+        var original = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        var first = analyzer.Analyze(Snapshot(1, Start, original), MechanicState.Empty);
+        var replacement = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-294, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start.AddSeconds(1), Start.AddSeconds(6), generation: 1);
+        var second = analyzer.Analyze(Snapshot(2, Start.AddSeconds(1), replacement), first.State);
+
+        Assert.Equal(2, second.Frame.Hazards.Length);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, second.Frame.Safety);
+    }
+
+    [Fact]
+    public void MissingEncounterActorsAreUnknownNotSafe()
+    {
+        var frame = Analyze(Snapshot(1, Start)).Frame;
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, frame.Safety);
+        Assert.Contains("gancanagh.encounter-actors.missing", frame.Diagnostics);
+    }
+
+    [Fact]
+    public void DirectAnalyzerRejectsTimeRegression()
+    {
+        var analyzer = new GancanaghAnalyzer();
+        var actor = Actor(1, GancanaghAnalyzer.BossObjectId, new(-300, -300), GancanaghAnalyzer.MandrastormActionId, Start, Start.AddSeconds(5));
+        var first = analyzer.Analyze(Snapshot(1, Start.AddSeconds(1), actor), MechanicState.Empty);
+        var second = analyzer.Analyze(Snapshot(2, Start, actor), first.State);
+
+        Assert.Equal(MechanicSafetyAssessment.InvalidObservation, second.Frame.Safety);
+        Assert.Contains("gancanagh.time.regressed", second.Frame.Diagnostics);
     }
 
     [Fact]
@@ -147,6 +280,33 @@ public sealed class GancanaghAnalyzerTests
             second.Select(FrameSignature).ToArray());
     }
 
+    [Fact]
+    public void ReplayGapRetainsPredictionAndNeverReportsGapAsSafe()
+    {
+        var mine = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-290, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.2.0",
+            [
+                Snapshot(1, Start, mine),
+                Snapshot(2, Start.AddSeconds(1)),
+                Snapshot(3, Start.AddSeconds(2), mine),
+            ],
+            ReplayUserIntent.ExplicitCapture);
+        var codec = new ReplayCodec();
+        var runner = new ReplayAnalyzerRunner(codec, new AnalyzerRegistry([new GancanaghAnalyzer()]));
+
+        var first = runner.Run(document);
+        var second = runner.Run(document);
+
+        Assert.Equal(new[] { 1, 1, 1 }, first.Select(frame => frame.Hazards.Length).ToArray());
+        Assert.Equal(
+            new[] { MechanicSafetyAssessment.HazardsKnown, MechanicSafetyAssessment.UnknownOrUnsupported, MechanicSafetyAssessment.HazardsKnown },
+            first.Select(frame => frame.Safety).ToArray());
+        Assert.Equal(first.Select(FrameSignature), second.Select(FrameSignature));
+    }
+
     private static AnalysisResult Analyze(WorldSnapshot snapshot) => new GancanaghAnalyzer().Analyze(snapshot, MechanicState.Empty);
 
     private static string FrameSignature(MechanicFrame frame) =>
@@ -167,9 +327,10 @@ public sealed class GancanaghAnalyzerTests
         Coordinate2D position,
         uint actionId,
         DateTimeOffset startsAt,
-        DateTimeOffset finishesAt) =>
+        DateTimeOffset finishesAt,
+        int generation = 0) =>
         new(
-            new ActorIdentity(entityId, 0),
+            new ActorIdentity(entityId, generation),
             objectId,
             ActorKind.Enemy,
             position,
@@ -181,7 +342,7 @@ public sealed class GancanaghAnalyzerTests
             false,
             true,
             null,
-            new CastSnapshot(actionId, CastLifecycle.Casting, startsAt, finishesAt, null, null),
+            new CastSnapshot(actionId, CastLifecycle.Casting, startsAt, finishesAt, 0, null, null),
             ImmutableArray<StatusSnapshot>.Empty);
 }
 

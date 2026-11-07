@@ -58,7 +58,7 @@ public sealed class WorldSnapshotTests
     {
         var actor = CreateActor() with
         {
-            Cast = new CastSnapshot(1, CastLifecycle.Casting, CapturedAt, CapturedAt.AddSeconds(-1), null, null),
+            Cast = new CastSnapshot(1, CastLifecycle.Casting, CapturedAt, CapturedAt.AddSeconds(-1), 0, null, null),
         };
 
         Assert.Throws<InvalidDataException>(() => CreateSnapshot(actors: [actor]));
@@ -68,6 +68,17 @@ public sealed class WorldSnapshotTests
     public void NonFiniteActorDataIsRejected()
     {
         var actor = CreateActor() with { Position = new Coordinate2D(double.NaN, 0) };
+        Assert.Throws<ArgumentOutOfRangeException>(() => CreateSnapshot(actors: [actor]));
+    }
+
+    [Fact]
+    public void NonFiniteCastRotationIsRejected()
+    {
+        var actor = CreateActor() with
+        {
+            Cast = new CastSnapshot(1, CastLifecycle.Casting, CapturedAt, CapturedAt.AddSeconds(1), double.NaN, null, null),
+        };
+
         Assert.Throws<ArgumentOutOfRangeException>(() => CreateSnapshot(actors: [actor]));
     }
 
@@ -109,6 +120,6 @@ public sealed class WorldSnapshotTests
             false,
             true,
             null,
-            new CastSnapshot(31479, CastLifecycle.Casting, CapturedAt, CapturedAt.AddSeconds(5), null, null),
+            new CastSnapshot(31479, CastLifecycle.Casting, CapturedAt, CapturedAt.AddSeconds(5), 0, null, null),
             ImmutableArray<StatusSnapshot>.Empty);
 }

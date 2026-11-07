@@ -19,13 +19,13 @@ Pinned upstream: BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, `Bos
 
 | Upstream action | ID | DDCore behavior |
 |---|---:|---|
-| MandrashockSingle | 31478 | radius-10 circle at the mine; activation/expiry at cast finish |
-| MandrashockTitan | 32700 | radius-10 circles; deterministic six-instance limit matching the pinned component argument |
+| MandrashockSingle | 31478 | radius-10 circle at the cast location; instantaneous activation/expiry at cast finish |
+| MandrashockTitan | 32700 | radius-10 circles; deterministic six-instance limit ordered by observed cast start |
 | Mandrastorm | 31479 | radius-18.5 circle at the boss |
 | AuthoritativeShriek | 31477 | known non-hazard activation cast; no hazard fabricated |
 | Unknown encounter cast | any other | explicit unsupported mechanic; frame is not treated as known/safe |
 
-Tests cover simultaneous AoEs, cast interruption/completion, actor disappearance, elapsed casts, unknown actions and deterministic replay output. Arena constants are retained for provenance and future bounded projection, but Phase 3 does not calculate a route or perform movement.
+Tests cover simultaneous AoEs, cast interruption/completion, missing/dead/destroyed actors, elapsed and consecutive casts, actor-ID generation reuse, target location/rotation, unknown actions, snapshot gaps and deterministic replay output. Arena constants are retained for provenance and future bounded projection, but Phase 3 does not calculate a route or perform movement. Detailed source comparison and unresolved differences are recorded in `docs/phase3-accuracy-review.md`.
 
 ## Provenance and reimplementation
 
@@ -47,14 +47,16 @@ Final command results and package hash are recorded in `CONTINUATION.md` after t
 
 - No matching analyzer: unknown, not safe.
 - Partial/stale/unsupported observation: unknown, not safe.
-- Invalid observation, sequence regression or analyzer exception: invalid, not safe.
+- Invalid observation, sequence/time regression or analyzer exception: invalid, not safe.
+- Missing encounter actor or a missing pre-activation caster: the prediction is retained where possible and the frame is unknown, not safe.
+- Instantaneous hazards use equal activation/expiry timestamps intentionally; persistent hazards require a positive evidence-based duration.
 - Unknown Gancanagh action: unsupported, not safe.
 - Malformed, oversized, out-of-order or cross-session replay: rejected.
 - Replay capture/export without explicit user intent: rejected.
 
 ## Not verified
 
-- Live Dalamud loading and Japanese UI rendering for version 0.2.0.0.
+- Live Dalamud loading and Japanese UI rendering for version 0.2.1.0.
 - Live FFXIV state acquisition or adapter accuracy.
 - Actual encounter timing/positions against a recorded live Gancanagh session.
 - Official Dalamud repository acceptance.

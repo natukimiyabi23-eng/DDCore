@@ -21,6 +21,12 @@ public enum MechanicSafetyAssessment
     InvalidObservation,
 }
 
+public enum HazardLifetimeKind
+{
+    Instantaneous,
+    Persistent,
+}
+
 public sealed record HazardEvidence(uint ActionId, ActorIdentity Source, string ReasonCode);
 
 public sealed record HazardInstance(
@@ -32,6 +38,7 @@ public sealed record HazardInstance(
     DateTimeOffset ObservedAt,
     DateTimeOffset? ActivatesAt,
     DateTimeOffset? ExpiresAt,
+    HazardLifetimeKind Lifetime,
     HazardSeverity Severity,
     SupportState Support,
     HazardEvidence Evidence)
@@ -47,10 +54,18 @@ public sealed record HazardInstance(
             || ObservedAt == default
             || !Enum.IsDefined(Severity)
             || !Enum.IsDefined(Support)
+            || !Enum.IsDefined(Lifetime)
             || (ActivatesAt is not null && ActivatesAt < ObservedAt)
             || (ExpiresAt is not null && ActivatesAt is not null && ExpiresAt < ActivatesAt))
         {
             throw new InvalidDataException("Hazard metadata or time range is invalid.");
+        }
+
+        if (ActivatesAt is null
+            || (Lifetime == HazardLifetimeKind.Instantaneous && ExpiresAt != ActivatesAt)
+            || (Lifetime == HazardLifetimeKind.Persistent && (ExpiresAt is null || ExpiresAt <= ActivatesAt)))
+        {
+            throw new InvalidDataException("Hazard lifetime does not match its activation and expiry timestamps.");
         }
     }
 }
@@ -105,9 +120,10 @@ public interface IMechanicAnalyzer
 
 public sealed record MechanicAnalysisSession(
     long LastSnapshotSequence,
+    DateTimeOffset LastCapturedAt,
     ImmutableDictionary<string, MechanicState> AnalyzerStates)
 {
-    public static MechanicAnalysisSession Empty { get; } = new(-1, ImmutableDictionary<string, MechanicState>.Empty);
+    public static MechanicAnalysisSession Empty { get; } = new(-1, DateTimeOffset.MinValue, ImmutableDictionary<string, MechanicState>.Empty);
 }
 
 public sealed record RegistryAnalysisResult(MechanicAnalysisSession Session, MechanicFrame Frame);
@@ -134,10 +150,15 @@ public sealed class AnalyzerRegistry
             return new(previousSession, MechanicFrame.Unknown(snapshot, "analysis.sequence.not-increasing", invalid: true));
         }
 
+        if (previousSession.LastCapturedAt != DateTimeOffset.MinValue && snapshot.CapturedAt < previousSession.LastCapturedAt)
+        {
+            return new(previousSession, MechanicFrame.Unknown(snapshot, "analysis.time.regressed", invalid: true));
+        }
+
         if (snapshot.Quality != ObservationQuality.Complete)
         {
             return new(
-                previousSession with { LastSnapshotSequence = snapshot.Sequence },
+                previousSession with { LastSnapshotSequence = snapshot.Sequence, LastCapturedAt = snapshot.CapturedAt },
                 MechanicFrame.Unknown(snapshot, $"analysis.observation.{snapshot.Quality.ToString().ToLowerInvariant()}", invalid: snapshot.Quality == ObservationQuality.Invalid));
         }
 
@@ -145,7 +166,7 @@ public sealed class AnalyzerRegistry
         if (applicable.Length == 0)
         {
             return new(
-                previousSession with { LastSnapshotSequence = snapshot.Sequence },
+                previousSession with { LastSnapshotSequence = snapshot.Sequence, LastCapturedAt = snapshot.CapturedAt },
                 MechanicFrame.Unknown(snapshot, "analysis.no-analyzer"));
         }
 
@@ -154,6 +175,7 @@ public sealed class AnalyzerRegistry
         var unsupported = ImmutableArray.CreateBuilder<UnsupportedMechanic>();
         var diagnostics = ImmutableArray.CreateBuilder<string>();
         var invalid = false;
+        var unknown = false;
 
         foreach (var analyzer in applicable)
         {
@@ -166,6 +188,7 @@ public sealed class AnalyzerRegistry
                 unsupported.AddRange(result.Frame.Unsupported);
                 diagnostics.AddRange(result.Frame.Diagnostics);
                 invalid |= result.Frame.Safety == MechanicSafetyAssessment.InvalidObservation;
+                unknown |= result.Frame.Safety == MechanicSafetyAssessment.UnknownOrUnsupported;
             }
             catch (Exception exception)
             {
@@ -176,7 +199,7 @@ public sealed class AnalyzerRegistry
 
         var safety = invalid
             ? MechanicSafetyAssessment.InvalidObservation
-            : unsupported.Count > 0
+            : unknown || unsupported.Count > 0
                 ? MechanicSafetyAssessment.UnknownOrUnsupported
                 : MechanicSafetyAssessment.HazardsKnown;
         var frame = new MechanicFrame(
@@ -187,6 +210,6 @@ public sealed class AnalyzerRegistry
             unsupported.OrderBy(item => item.ActionId).ThenBy(item => item.Source.EntityId).ToImmutableArray(),
             diagnostics.ToImmutable(),
             safety);
-        return new(new MechanicAnalysisSession(snapshot.Sequence, states.ToImmutable()), frame);
+        return new(new MechanicAnalysisSession(snapshot.Sequence, snapshot.CapturedAt, states.ToImmutable()), frame);
     }
 }

@@ -109,10 +109,12 @@ public sealed class ProvenanceTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "TestData", "bossmod-phase3.json");
         var manifest = new ProvenanceManifestCodec().Deserialize(File.ReadAllBytes(path));
-        var entry = Assert.Single(manifest.Entries);
+        Assert.Equal(3, manifest.Entries.Length);
+        var entry = Assert.Single(manifest.Entries, item => item.Id == "bossmod-eo-d10-gancanagh");
 
         Assert.Equal("bossmod-eo-d10-gancanagh", entry.Id);
         Assert.Equal("6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0", entry.Commit);
         Assert.Equal("BSD-3-Clause", entry.License);
+        Assert.All(manifest.Entries, item => Assert.Equal("6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0", item.Commit));
     }
 }

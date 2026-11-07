@@ -59,6 +59,19 @@ public sealed class AnalyzerRegistryTests
     }
 
     [Fact]
+    public void IncreasingSequenceWithRegressedTimeIsInvalid()
+    {
+        var registry = new AnalyzerRegistry([new StubAnalyzer("a")]);
+        var firstSnapshot = new MockWorldSnapshotBuilder().WithSequence(1).At(new DateTimeOffset(2026, 11, 7, 2, 0, 1, TimeSpan.Zero)).Build();
+        var secondSnapshot = new MockWorldSnapshotBuilder().WithSequence(2).At(new DateTimeOffset(2026, 11, 7, 2, 0, 0, TimeSpan.Zero)).Build();
+        var first = registry.Analyze(firstSnapshot, MechanicAnalysisSession.Empty);
+        var second = registry.Analyze(secondSnapshot, first.Session);
+
+        Assert.Equal(MechanicSafetyAssessment.InvalidObservation, second.Frame.Safety);
+        Assert.Contains("analysis.time.regressed", second.Frame.Diagnostics);
+    }
+
+    [Fact]
     public void AnalyzerExceptionBecomesInvalidFrame()
     {
         var result = new AnalyzerRegistry([new ThrowingAnalyzer()]).Analyze(Snapshot(1), MechanicAnalysisSession.Empty);
@@ -74,9 +87,16 @@ public sealed class AnalyzerRegistryTests
         Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, result.Frame.Safety);
     }
 
+    [Fact]
+    public void AnalyzerUnknownAssessmentIsPreservedWithoutUnsupportedItem()
+    {
+        var result = new AnalyzerRegistry([new StubAnalyzer("a", unknown: true)]).Analyze(Snapshot(1), MechanicAnalysisSession.Empty);
+        Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, result.Frame.Safety);
+    }
+
     private static WorldSnapshot Snapshot(long sequence) => new MockWorldSnapshotBuilder().WithSequence(sequence).Build();
 
-    private sealed class StubAnalyzer(string id, bool unsupported = false) : IMechanicAnalyzer
+    private sealed class StubAnalyzer(string id, bool unsupported = false, bool unknown = false) : IMechanicAnalyzer
     {
         public string AnalyzerId => id;
 
@@ -96,7 +116,7 @@ public sealed class AnalyzerRegistryTests
                 ImmutableArray<HazardInstance>.Empty,
                 unsupportedItems,
                 [id],
-                unsupported ? MechanicSafetyAssessment.UnknownOrUnsupported : MechanicSafetyAssessment.HazardsKnown);
+                unsupported || unknown ? MechanicSafetyAssessment.UnknownOrUnsupported : MechanicSafetyAssessment.HazardsKnown);
             return new(new MechanicState(snapshot.Sequence, snapshot.CapturedAt, ImmutableDictionary<string, HazardInstance>.Empty), frame);
         }
     }

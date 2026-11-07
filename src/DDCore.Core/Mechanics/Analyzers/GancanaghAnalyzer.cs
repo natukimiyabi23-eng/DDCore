@@ -46,9 +46,6 @@ public sealed class GancanaghAnalyzer : IMechanicAnalyzer
                 "gancanagh.mandrastorm"),
         }.ToImmutableDictionary();
 
-    private static readonly ImmutableHashSet<uint> KnownNonHazardActions =
-        ImmutableHashSet.Create(AttackActionId, AuthoritativeShriekActionId);
-
     public string AnalyzerId => Id;
 
     public Version AnalyzerVersion { get; } = new(1, 0, 0);
@@ -69,12 +66,23 @@ public sealed class GancanaghAnalyzer : IMechanicAnalyzer
             return new(previousState, MechanicFrame.Unknown(snapshot, "gancanagh.sequence.not-increasing", invalid: true));
         }
 
-        var active = CastHazardTracker.Reconcile(snapshot, AnalyzerId, Definitions, IsEncounterActor);
-        var unsupported = snapshot.Actors
-            .Where(IsEncounterActor)
+        if (previousState.CapturedAt != DateTimeOffset.MinValue && snapshot.CapturedAt < previousState.CapturedAt)
+        {
+            return new(previousState, MechanicFrame.Unknown(snapshot, "gancanagh.time.regressed", invalid: true));
+        }
+
+        var encounterActors = snapshot.Actors.Where(IsEncounterActor).ToArray();
+        var encounterMissing = encounterActors.Length == 0;
+        var reconciliation = CastHazardTracker.Reconcile(
+            snapshot,
+            AnalyzerId,
+            Definitions,
+            IsEncounterActor,
+            previousState.ActiveHazards);
+        var unsupported = encounterActors
             .Where(actor => !actor.IsDead && !actor.IsDestroyed && actor.Cast is not null)
             .Where(actor => actor.Cast!.Lifecycle == CastLifecycle.Casting)
-            .Where(actor => !Definitions.ContainsKey(actor.Cast!.ActionId) && !KnownNonHazardActions.Contains(actor.Cast.ActionId))
+            .Where(actor => !Definitions.ContainsKey(actor.Cast!.ActionId) && !IsKnownNonHazardCast(actor, actor.Cast.ActionId))
             .Select(actor => new UnsupportedMechanic(
                 AnalyzerId,
                 actor.Cast!.ActionId,
@@ -84,21 +92,30 @@ public sealed class GancanaghAnalyzer : IMechanicAnalyzer
             .OrderBy(item => item.ActionId)
             .ThenBy(item => item.Source.EntityId)
             .ToImmutableArray();
-        var hazards = active.Values.OrderBy(hazard => hazard.HazardId, StringComparer.Ordinal).ToImmutableArray();
-        var safety = unsupported.Length == 0
-            ? MechanicSafetyAssessment.HazardsKnown
-            : MechanicSafetyAssessment.UnknownOrUnsupported;
+        var hazards = reconciliation.Hazards.Values.OrderBy(hazard => hazard.HazardId, StringComparer.Ordinal).ToImmutableArray();
+        var diagnostics = reconciliation.Diagnostics.ToBuilder();
+        if (encounterMissing)
+        {
+            diagnostics.Add("gancanagh.encounter-actors.missing");
+        }
+
+        var safety = unsupported.Length > 0 || reconciliation.ObservationUncertain || encounterMissing
+            ? MechanicSafetyAssessment.UnknownOrUnsupported
+            : MechanicSafetyAssessment.HazardsKnown;
         var frame = new MechanicFrame(
             SchemaVersions.MechanicFrame,
             snapshot.Sequence,
             snapshot.CapturedAt,
             hazards,
             unsupported,
-            ImmutableArray<string>.Empty,
+            diagnostics.ToImmutable(),
             safety);
-        return new(new MechanicState(snapshot.Sequence, snapshot.CapturedAt, active), frame);
+        return new(new MechanicState(snapshot.Sequence, snapshot.CapturedAt, reconciliation.Hazards), frame);
     }
 
     private static bool IsEncounterActor(ActorSnapshot actor) =>
-        actor.ObjectId is BossObjectId or PachypodiumMineObjectId;
+        actor.Kind == ActorKind.Enemy && actor.ObjectId is BossObjectId or PachypodiumMineObjectId;
+
+    private static bool IsKnownNonHazardCast(ActorSnapshot actor, uint actionId) =>
+        actor.ObjectId == BossObjectId && actionId == AuthoritativeShriekActionId;
 }

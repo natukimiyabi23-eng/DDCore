@@ -65,7 +65,7 @@ src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
 - Dalamud: API 15 / .NET 10
 - BossModライセンス: BSD-3-Clause
 
-[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3検証記録](docs/phase3-verification.md)を参照してください。
+[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3検証記録](docs/phase3-verification.md)を参照してください。
 
 ## 配布上の注意
 

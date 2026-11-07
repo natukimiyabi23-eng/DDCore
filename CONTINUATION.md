@@ -1,11 +1,13 @@
 # DDCore continuation
 
-Status: complete
+Status: in progress
 Updated: 2026-11-07 JST
 
 ## Objective
 
 Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲーム操作を伴わないP3.0〜P3.5（来歴管理、幾何計算、WorldSnapshot、JSONリプレイ/モック、解析基盤、ガンカナグ解析）を段階実装・検証してPhase 2ブランチ向けPRを作成する。mainマージと実機操作は行わない。
+
+現在の追加目的: 固定BossModコミットとPhase 3解析基盤を精度照合し、AoEライフサイクル、幾何、時系列、安全側処理、決定論的リプレイの不具合を修正してDraft PR #2を更新する。
 
 ## Current state
 
@@ -55,8 +57,21 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Requested Phase 3 implementation work is complete.
-- Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
+1. NuGet脆弱性監査とBossMod/Dalamud静的依存監査を実行する。
+2. 最終ZIPの版番号・内容・SHA-256を確認し、`phase3-verification.md`と本ファイルへ記録する。
+3. 差分を最終レビューし、修正をコミット・pushする。
+4. Draft PR #2の本文を精度レビュー結果へ更新し、GitHub Actions成功を確認する。
+
+Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
+
+## Accuracy review checkpoint
+
+- BossMod固定コミットから `D10Gancanagh.cs`、`GenericAOEs.cs`、`AOEShapes.cs`、`Angle.cs` を取得・照合済み。
+- 詠唱地点/回転、開始時刻優先の6件制限、瞬間/持続ライフサイクル、欠落キャスター保持を実装済み。
+- Registryの時刻逆行とunknown集約、遭遇アクター欠落、連続詠唱、generation付きID再利用を安全側へ修正済み。
+- 回転変換規約、安定した距離計算、無効寸法/角度/NaN/Infinity/境界誤差テストを追加済み。
+- `docs/phase3-accuracy-review.md` とBossMod共通AoE/shape来歴を追加済み。
+- Snapshot/MechanicFrame/Replay schemaは2、プラグイン版は`0.2.1.0`へ更新済み。
 
 ## Files changed
 
@@ -95,6 +110,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - GitHub Actions: both push and Draft PR `build-and-test` runs succeeded.
 - Draft PR: `https://github.com/natukimiyabi23-eng/DDCore/pull/2` targeting `phase2/plugin-foundation`.
 - CI maintenance note: `actions/upload-artifact@v4` emitted a Node.js 20 deprecation annotation while GitHub forced Node.js 24; the job still succeeded.
+- Accuracy checkpoint Release build: success, 0 warnings, 0 errors.
+- Accuracy checkpoint tests: 125 passed, 0 failed, 0 skipped.
+- Accuracy checkpoint format verification: success.
 
 ## Deployment
 
@@ -115,4 +133,4 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Safe next step
 
-Review Draft PR #2. Do not merge it to `main` until Phase 2 is approved/merged and the user explicitly approves the Phase 3 merge. Any later live verification must be recorded separately; do not infer it from unit or replay tests.
+Five-hour usage remaining reached 5% after the verified checkpoint. Resume the first unfinished step above after recovery. Do not redo completed accuracy fixes, add game operations, merge main, or infer live behavior from unit/replay tests.

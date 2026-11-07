@@ -55,6 +55,7 @@ public sealed record CastSnapshot(
     CastLifecycle Lifecycle,
     DateTimeOffset StartedAt,
     DateTimeOffset FinishesAt,
+    double Rotation,
     ActorIdentity? Target,
     Coordinate2D? TargetLocation)
 {
@@ -64,6 +65,8 @@ public sealed record CastSnapshot(
         {
             throw new InvalidDataException("Cast has an invalid action, lifecycle, or time range.");
         }
+
+        Coordinate2D.EnsureFinite(Rotation, nameof(Rotation));
 
         if (StartedAt > capturedAt + TimeSpan.FromMinutes(10))
         {
@@ -111,6 +114,11 @@ public sealed record ActorSnapshot(
     CastSnapshot? Cast,
     ImmutableArray<StatusSnapshot> Statuses)
 {
+    /// <summary>
+    /// Actor and cast rotations use mathematical radians: zero points along positive X and positive values rotate
+    /// counter-clockwise toward positive Y. A game adapter must convert FFXIV/BossMod clockwise-from-positive-Z
+    /// rotations before constructing a snapshot.
+    /// </summary>
     public void Validate(DateTimeOffset capturedAt)
     {
         Identity.Validate();

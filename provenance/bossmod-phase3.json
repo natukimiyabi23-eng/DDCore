@@ -11,7 +11,31 @@
       "copyright": "Copyright (c) 2022-2024, Andrew Gilewsky",
       "derivation": "ReimplementedFromBehavior",
       "destination": "src/DDCore.Core/Mechanics/Analyzers/GancanaghAnalyzer.cs",
-      "notes": "Action/object IDs, radii, cast semantics, arena bounds, and the six-instance Titan display limit are attributed to the pinned source. DDCore implementation uses original immutable models and geometry."
+      "notes": "Action/object IDs, radii, cast semantics, arena bounds, and the six-instance Titan display limit are attributed to the pinned source. Mandrastorm radius 18.5 is the pinned module's behavioral approximation, while its source comment records action range 60. DDCore implementation uses original immutable models and geometry."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "bossmod-standard-aoes",
+      "repository": "https://github.com/awgil/ffxiv_bossmod",
+      "commit": "6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0",
+      "sourcePath": "BossMod/Components/GenericAOEs.cs",
+      "license": "BSD-3-Clause",
+      "copyright": "Copyright (c) 2022-2024, Andrew Gilewsky",
+      "derivation": "reimplementedFromBehavior",
+      "destination": "src/DDCore.Core/Mechanics/CastHazardTracker.cs",
+      "notes": "StandardAOEs cast-location, cast-rotation, cast-finish activation, cast-start/cast-finish lifecycle, and maximum visible caster behavior were used as behavioral references. DDCore uses snapshot reconciliation rather than BossMod's event list."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "bossmod-aoe-shapes",
+      "repository": "https://github.com/awgil/ffxiv_bossmod",
+      "commit": "6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0",
+      "sourcePath": "BossMod/BossModule/AOEShapes.cs",
+      "license": "BSD-3-Clause",
+      "copyright": "Copyright (c) 2022-2024, Andrew Gilewsky",
+      "derivation": "reimplementedFromBehavior",
+      "destination": "src/DDCore.Core/Geometry/AoeShapes.cs",
+      "notes": "Circle, cone, forward rectangle, donut, donut sector, and cross behavior were compared. DDCore's signed-distance implementations are original pure C# code with an explicit mathematical rotation convention."
     }
   ]
 }
