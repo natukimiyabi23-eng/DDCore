@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 05:30 JST (Phase 5 DD state and strategy engine started)
+Status: complete
+Updated: 2026-11-08 05:48 JST (Phase 5 DD state and strategy engine complete; Draft PR review pending)
 
 ## Objective
 
@@ -28,7 +28,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
 - BossMod license: BSD-3-Clause
 - DD source files found: 63, including Global shared code, Palace of the Dead, Heaven-on-High, Eureka Orthos, and Pilgrim's Traverse.
-- Source version: `0.3.1.0` (Phase 3.7 local verification complete).
+- Source version: `0.5.0.0` (Phase 5 local and CI verification complete).
 - Deployed version: none.
 - Documentation commit: `1217bac70961debec3201ea74e7a8e1966e5fd57`
 
@@ -67,9 +67,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Phase 5 first unfinished step: finalize the state/decision contracts against existing Core types, then implement the pure strategy engine and synthetic tests.
-- Run the complete Release build/test/format/dependency/vulnerability/prohibited-operation verification, update design/verification/progress documents, commit/push, and open a Draft PR targeting `phase4.5/bossmod-integration-proof`.
-- Live Dalamud/FFXIV behavior remains outside this phase and must not be reported as verified.
+- No required Phase 5 implementation or verification step remains.
+- User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
+- Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this phase and must not be reported as verified.
 
 ## Phase 5 checkpoint
 
@@ -87,12 +87,14 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Added Phase 5 design documentation, numbering reconciliation and package version `0.5.0.0`.
 - Locked restore and final Release build passed with 0 warnings/errors; all 209 tests passed; format, NuGet vulnerability, project/reference and prohibited-operation audits passed.
 - Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
-- Exact unfinished step: final diff review, commit/push, open a Draft PR targeting `phase4.5/bossmod-integration-proof`, wait for CI, then record PR/check results and mark complete.
+- Final diff review, commit/push and Draft PR creation completed.
 - Implementation commit `b46f020` and documentation commit `8148741` were pushed. Draft PR #7 targets `phase4.5/bossmod-integration-proof`: `https://github.com/natukimiyabi23-eng/DDCore/pull/7`.
-- CI did not initially trigger because the workflow branch filters ended at the Phase 4.5 push branch and Phase 4 PR base. The next unfinished step is to add only the Phase 4.5 PR base and Phase 5 push branch filters, push that correction, and wait for both checks.
+- CI did not initially trigger because the workflow branch filters ended at the Phase 4.5 push branch and Phase 4 PR base. Commit `1b0e938` added only the Phase 4.5 PR base and Phase 5 push branch filters.
+- Push run `42412644674` and Draft PR run `42412649333` both passed at head `1b0e938`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- Final authoritative usage checkpoint: five-hour window 54% remaining; weekly window 61% remaining.
 
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
-- User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
+- User review and merge decisions remain pending. Do not merge Draft PR #7 or start Phase 6 without explicit approval.
 
 ## Phase 4 checkpoint
 

@@ -9,6 +9,7 @@
 - Added 30 synthetic Core tests for normal, abnormal, missing, regressing, no-route and deterministic scenarios.
 - Locked restore, Release build, all 209 tests, format, dependency/reference, NuGet vulnerability and prohibited-operation audits passed.
 - Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
+- Pushed three commits, opened stacked Draft PR #7 against `phase4.5/bossmod-integration-proof`, and confirmed push run `42412644674` plus PR run `42412649333` passed.
 - Live FFXIV/Dalamud and real-floor strategy behavior remain unverified; the public adapter still cannot populate the required DD room/resource state.
 
 ## 2026-11-08 — Phase 4.5 BossMod integration proof

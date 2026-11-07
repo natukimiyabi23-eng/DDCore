@@ -23,6 +23,8 @@ Verification applies to the user-defined Phase 5 DD state and read-only strategy
 
 The package contains `DDCore.dll`, Core and Observation assemblies, deps/manifest files, symbols, `THIRD-PARTY-NOTICES.md`, and Phase 3/4 provenance manifests. It contains no BossMod assembly.
 
+Push run `42412644674` and Draft PR run `42412649333` both passed the Windows build/test/package workflow at head `1b0e938`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation was emitted while GitHub forced Node.js 24; it did not fail either run.
+
 ## Required checks
 
 - locked restore;
@@ -54,3 +56,4 @@ Static scans separately searched Core/Observation references and all production 
 - Public API observations cannot currently populate authoritative room, exit, trap, pomander or floor state.
 - Synthetic decision correctness does not prove real-map routing or policy quality.
 - The strategy engine is not connected to an execution gateway.
+- CI success does not replace live FFXIV/Dalamud validation.
