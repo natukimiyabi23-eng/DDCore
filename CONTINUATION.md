@@ -88,6 +88,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Locked restore and final Release build passed with 0 warnings/errors; all 209 tests passed; format, NuGet vulnerability, project/reference and prohibited-operation audits passed.
 - Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
 - Exact unfinished step: final diff review, commit/push, open a Draft PR targeting `phase4.5/bossmod-integration-proof`, wait for CI, then record PR/check results and mark complete.
+- Implementation commit `b46f020` and documentation commit `8148741` were pushed. Draft PR #7 targets `phase4.5/bossmod-integration-proof`: `https://github.com/natukimiyabi23-eng/DDCore/pull/7`.
+- CI did not initially trigger because the workflow branch filters ended at the Phase 4.5 push branch and Phase 4 PR base. The next unfinished step is to add only the Phase 4.5 PR base and Phase 5 push branch filters, push that correction, and wait for both checks.
 
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
 - User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
