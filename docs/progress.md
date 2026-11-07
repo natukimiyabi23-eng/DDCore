@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-08 — Phase 4.5 BossMod integration proof
+
+- Verified 37 fixed-commit BossMod IPC functions and separated technical reachability from DD strategy-data availability.
+- Added an optional, read-only, fail-closed reachability probe using public Dalamud IPC only.
+- Added Japanese diagnostics that explicitly report the missing protocol contract and missing DD data contract.
+- Added automated absent/reachable/faulted/OID tests and documented the required BossMod-side versioned DTO contract.
+- Release build passed with 0 warnings/errors; all 179 tests passed; format and NuGet vulnerability checks passed.
+- Recommendation: retain independent migration unless BossMod adds and maintains a versioned read-only DD snapshot API.
+
 ## 2026-11-07
 
 - Created the private GitHub repository and cloned it locally.
