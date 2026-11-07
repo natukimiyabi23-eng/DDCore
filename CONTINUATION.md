@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-07 JST
+Status: in_progress
+Updated: 2026-11-07 JST (Phase 3.6 started)
 
 ## Objective
+
+Current objective: implement Phase 3.6 on `phase3/live-observation-adapter`: a read-only, public-Dalamud-API-15 observation adapter that converts observable game state into `WorldSnapshot`, feeds the existing analyzer registry, exposes Japanese diagnostics, and remains fail-closed. No game operation, input injection, private API access, deployment, live verification, or main merge is authorized.
 
 Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲーム操作を伴わないP3.0〜P3.5（来歴管理、幾何計算、WorldSnapshot、JSONリプレイ/モック、解析基盤、ガンカナグ解析）を段階実装・検証してPhase 2ブランチ向けPRを作成する。mainマージと実機操作は行わない。
 
@@ -57,8 +59,24 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Requested Phase 3 accuracy-review work is complete.
-- Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
+- Verify the exact public Dalamud API 15 contracts for client state, object table, actors, casts, statuses, territory/content identifiers, and framework updates.
+- Implement the normalized observation boundary, generation/cast/session tracking, `WorldSnapshot` conversion, analyzer connection, diagnostic state, and UI.
+- Add conversion/lifecycle/reset/integration/disposal tests without claiming live behavior.
+- Run Release build, all tests, format and dependency audits; update docs; commit/push; open a Draft PR targeting `phase3/mechanics-foundation`.
+- Live Dalamud/FFXIV verification remains the user's responsibility and must not be reported as successful.
+
+## Phase 3.6 checkpoint
+
+- Branch created from clean `phase3/mechanics-foundation`: `phase3/live-observation-adapter`.
+- PR #1 and PR #2 confirmed open and Draft; PR #2 targets `phase2/plugin-foundation`.
+- Usage remaining at start: 82%; estimated work: 30-40%.
+- Exact next step: inspect the local Dalamud API 15 assembly/XML documentation and official sources, then record which requested fields are public, unavailable, or derived before writing the adapter.
+- Public API audit completed against local `Dalamud.dll` 15.0.3.9/XML and official API 15 docs. Directly available: login/territory, duty CFC, object identities/base IDs/position/rotation/HP/validity/target/combat flags, cast action/target/progress/total, and status ID/source/remaining time. Not public: cast ground location, cast-specific rotation, explicit status stack count, and Deep Dungeon floor.
+- Added `DDCore.Observation`, public-API Plugin adapters, 10 Hz framework polling, generation/cast/session tracking, partial-observation fail-closed analysis, and Japanese diagnostics UI. No write service, target manager, input, hook, or client-struct access is used.
+- Final local verification: locked restore succeeded; Release build succeeded with 0 warnings/errors; 125 Core tests and 15 Observation tests passed (140 total); format passed; NuGet audit found no known vulnerabilities; static read-only/dependency scan passed.
+- Package `0.3.0.0`, API 15, SHA-256 `139CE2C81C8DD4857ED6AA65B48797A452D14CDC9FBE09C0121948B5C8561C14`; contains Core/Observation/Plugin, BSD notice and provenance, with no BossMod assembly.
+- Remaining: commit/push, Draft PR targeting `phase3/mechanics-foundation`, and CI confirmation.
+- Usage remaining after implementation checkpoint: 57% in the five-hour window and 93% in the weekly window.
 
 
 ## Accuracy review checkpoint

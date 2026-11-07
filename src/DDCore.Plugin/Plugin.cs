@@ -6,9 +6,13 @@ using Dalamud.Plugin.Services;
 using DDCore.Core.Configuration;
 using DDCore.Core.Execution;
 using DDCore.Core.Logging;
+using DDCore.Core.Mechanics;
+using DDCore.Core.Mechanics.Analyzers;
 using DDCore.Core.Modes;
 using DDCore.Core.Safety;
+using DDCore.Observation;
 using DDCore.Plugin.Infrastructure;
+using DDCore.Plugin.Observation;
 using DDCore.Plugin.Windows;
 
 namespace DDCore.Plugin;
@@ -20,6 +24,10 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static IDalamudPluginInterface PluginInterface { get; set; } = null!;
     [PluginService] private static ICommandManager CommandManager { get; set; } = null!;
     [PluginService] private static IPluginLog PluginLog { get; set; } = null!;
+    [PluginService] private static IClientState ClientState { get; set; } = null!;
+    [PluginService] private static IObjectTable ObjectTable { get; set; } = null!;
+    [PluginService] private static IDutyState DutyState { get; set; } = null!;
+    [PluginService] private static IFramework Framework { get; set; } = null!;
 
     private readonly Stack<Action> cleanupActions = new();
     private IDDLogger logger = NullDDLogger.Instance;
@@ -27,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
     private WindowSystem? windowSystem;
     private MainWindow? mainWindow;
     private ConfigurationWindow? configurationWindow;
+    private ObservationRuntime? observationRuntime;
     private bool resourcesReleased;
 
     public Plugin()
@@ -40,6 +49,14 @@ public sealed class Plugin : IDalamudPlugin
             Safety = new SafetyController(executionAvailable: false);
             Safety.RestoreEmergencyStop(configurationService.Current.EmergencyStopLatched);
             Execution = new DisabledExecutionGateway();
+
+            var observationSource = new DalamudObservationSource(ClientState, ObjectTable, DutyState);
+            var snapshotProvider = new LiveWorldSnapshotProvider(observationSource);
+            observationRuntime = new ObservationRuntime(
+                new DalamudFrameworkTickSource(Framework),
+                snapshotProvider,
+                new AnalyzerRegistry([new GancanaghAnalyzer()]));
+            cleanupActions.Push(observationRuntime.Dispose);
 
             windowSystem = new WindowSystem("DDCore");
             mainWindow = new MainWindow(this);
@@ -78,7 +95,7 @@ public sealed class Plugin : IDalamudPlugin
                     ?? "設定の永続化に失敗しました。安全状態は現在のセッションで維持されます。";
             }
 
-            logger.Information("DDCore Phase 2をObserverモードで起動しました。ゲーム操作機能は含まれていません。");
+            logger.Information("DDCore Phase 3.6をObserverモードで起動しました。観測は読み取り専用で、ゲーム操作機能は含まれていません。");
         }
         catch (Exception exception)
         {
@@ -94,6 +111,8 @@ public sealed class Plugin : IDalamudPlugin
     public IExecutionGateway Execution { get; private set; } = null!;
     public DDCoreConfiguration Configuration => configurationService.Current;
     public string LastStatusMessage { get; private set; } = "Observerモードで安全に起動しました。";
+    public LiveObservationDiagnostics ObservationDiagnostics => observationRuntime?.Current
+        ?? LiveObservationDiagnostics.Waiting;
 
     public void Dispose() => ReleaseResources();
 

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This record covers P3.0 through P3.5 on `phase3/mechanics-foundation`. It covers game-independent mechanic analysis only. It does not claim live Dalamud state acquisition, in-game UI rendering, movement, targeting, combat, item use, input injection or full Deep Dungeon automation.
+This record covers P3.0 through P3.5 on `phase3/mechanics-foundation` and the Phase 3.6 observation work on its child branch. It does not claim live Dalamud loading, in-game rendering, movement, targeting, combat, item use, input injection or full Deep Dungeon automation.
 
 ## Implemented
 
@@ -12,6 +12,9 @@ This record covers P3.0 through P3.5 on `phase3/mechanics-foundation`. It covers
 - P3.3: deterministic JSON replay, explicit capture/export intent, a 4 MiB document limit, collection limits, strict fields/enums, ordering checks and a mock snapshot builder.
 - P3.4: `IMechanicAnalyzer`, `AnalyzerRegistry`, immutable analyzer state, `HazardInstance`, `MechanicFrame`, cast-hazard lifecycle and fail-closed unknown/invalid results.
 - P3.5: Eureka Orthos floor 10 Gancanagh analyzer and synthetic golden replay tests.
+- P3.6: public-Dalamud-API read-only observation, normalized conversion, generation/cast/session tracking, analyzer connection and Japanese diagnostics.
+
+Phase 3.6 changes nullable unknown territory/content/status-stack representation and therefore advances `WorldSnapshot` and replay schemas to version 3. `MechanicFrame` remains version 2.
 
 ## Gancanagh support
 
@@ -36,7 +39,7 @@ No BossMod assembly or package is referenced. DDCore geometry, snapshots, replay
 ```powershell
 dotnet restore DDCore.slnx --locked-mode
 dotnet build DDCore.slnx -c Release --no-restore
-dotnet test tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj -c Release --no-build --no-restore
+dotnet test DDCore.slnx -c Release --no-build --no-restore
 dotnet format DDCore.slnx --verify-no-changes --no-restore
 dotnet list DDCore.slnx package --vulnerable --include-transitive
 ```
@@ -74,3 +77,18 @@ Final command results and package hash are recorded in `CONTINUATION.md` after t
 - Any gameplay operation; none is implemented in Phase 3.
 
 The user performs plugin enablement, reload and in-game verification. Replay and unit tests are not reported as live-game verification.
+
+Phase 3.6 field availability, derivations and remaining public-API gaps are recorded in `docs/phase3-live-observation.md`. Final Phase 3.6 command results, package hash, commit and PR are recorded in `CONTINUATION.md` only after the final verification run.
+
+## Phase 3.6 verification
+
+- Locked restore: succeeded for all five projects.
+- Release build: succeeded with 0 warnings and 0 errors.
+- Unit tests: 140 passed (125 Core + 15 Observation), 0 failed, 0 skipped.
+- Format verification: succeeded.
+- NuGet vulnerability audit: no known vulnerable package in any project.
+- Static dependency audit: Core and Observation have no BossMod or Dalamud reference; Plugin references Core, Observation and `Dalamud.NET.Sdk/15.0.0`.
+- Source scan: no FFXIVClientStructs, interop provider, signature scanner, target manager, key state, address, send-action or execute-command use under `src`.
+- Package: `DDCore` version `0.3.0.0`, Dalamud API level 15; includes Core, Observation, Plugin, BSD notice and provenance, with no BossMod assembly.
+- Package SHA-256: `139CE2C81C8DD4857ED6AA65B48797A452D14CDC9FBE09C0121948B5C8561C14`.
+- Live Dalamud loading, UI rendering and Gancanagh observation remain unverified.

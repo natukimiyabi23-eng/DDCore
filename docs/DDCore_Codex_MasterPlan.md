@@ -254,7 +254,7 @@ Completed for initial planning. The pinned `BossMod.Modules` Release build succe
 
 ### Detailed Phase 3 design status
 
-The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). P3.0 through P3.5 are implemented on `phase3/mechanics-foundation`: immutable `WorldSnapshot`, six serializable geometry concepts, bounded JSON replay/mock support, deterministic analyzer contracts, fail-closed hazard output and the Eureka Orthos floor 10 Gancanagh vertical slice. Live Dalamud and live encounter behavior remain unverified. See [phase3-verification.md](phase3-verification.md).
+The implementation-ready, non-operating design is recorded in [phase3-mechanics-design.md](phase3-mechanics-design.md). P3.0 through P3.5 are implemented on `phase3/mechanics-foundation`: immutable `WorldSnapshot`, six serializable geometry concepts, bounded JSON replay/mock support, deterministic analyzer contracts, fail-closed hazard output and the Eureka Orthos floor 10 Gancanagh vertical slice. Phase 3.6 adds a public-API-only, read-only observation adapter on `phase3/live-observation-adapter`; its direct, derived and unavailable fields are documented in [phase3-live-observation.md](phase3-live-observation.md). Live Dalamud and live encounter behavior remain unverified. See [phase3-verification.md](phase3-verification.md).
 
 ## Phase 4 — Strategy decision engine
 

@@ -84,7 +84,7 @@ public sealed record CastSnapshot(
 public sealed record StatusSnapshot(
     uint StatusId,
     ActorIdentity? Source,
-    byte Stacks,
+    byte? Stacks,
     DateTimeOffset? ExpiresAt)
 {
     public void Validate()
@@ -142,8 +142,8 @@ public sealed record ActorSnapshot(
 public sealed record DeepDungeonContext(
     DeepDungeonKind Kind,
     int? Floor,
-    uint TerritoryId,
-    uint ContentId,
+    uint? TerritoryId,
+    uint? ContentId,
     string ContentKey,
     int? Tileset)
 {
@@ -200,7 +200,7 @@ public sealed record WorldSnapshot
             Guid.NewGuid(),
             ObservationSource.LiveAdapter,
             ObservationQuality.Complete,
-            new DeepDungeonContext(isDeepDungeon ? DeepDungeonKind.Unsupported : DeepDungeonKind.None, null, 0, 0, contentKey, null),
+            new DeepDungeonContext(isDeepDungeon ? DeepDungeonKind.Unsupported : DeepDungeonKind.None, null, null, null, contentKey, null),
             ImmutableArray<ActorSnapshot>.Empty,
             ImmutableArray<string>.Empty)
     {

@@ -26,10 +26,13 @@
 
 ## Phase 2 physical layout
 
-Phase 2 uses two production assemblies rather than creating ten mostly empty assemblies:
+Phase 3.6 uses three production assemblies rather than creating ten mostly empty assemblies:
 
 - `DDCore.Core`: game-independent modes, safety, configuration and the World/Mechanics/Navigation/Combat/Resources/Decision/Execution contracts.
+- `DDCore.Observation`: normalized public-observation DTOs, session/entity/cast lifecycle tracking and `WorldSnapshot` conversion without a Dalamud reference.
 - `DDCore` (`DDCore.Plugin` project): Dalamud lifecycle, Japanese UI, command registration, configuration persistence and logging adapters.
+
+The live dependency direction is `DDCore.Plugin -> DDCore.Observation -> DDCore.Core`. Dalamud types stop at `DalamudObservationSource`; neither downstream assembly references Dalamud. Partial observations may produce hazard candidates, but their aggregate safety remains unknown.
 
 The logical boundaries are separate namespaces and interfaces. A responsibility should move to its own assembly when it gains concrete behavior or dependencies that require an enforceable compile-time boundary. This keeps the Phase 2 package small without discarding the target architecture.
 
