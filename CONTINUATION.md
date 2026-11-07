@@ -1,6 +1,6 @@
 # DDCore continuation
 
-Status: in_progress
+Status: complete
 Updated: 2026-11-08 JST (Phase 3.7 finalization)
 
 ## Objective
@@ -61,9 +61,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Commit, push and create a Draft PR targeting `phase3/live-observation-adapter`.
-- Confirm the push and Draft PR GitHub Actions runs succeed.
-- Live Dalamud loading, Japanese UI rendering and recording remain the user's responsibility and must not be reported as successful.
+- Requested Phase 3.7 source, tests, documentation, branch and Draft PR work is complete.
+- Live Dalamud loading, Japanese UI rendering, local-path permissions/performance and Gancanagh recording remain the user's responsibility and are not reported as successful.
 
 ## Phase 3.7 checkpoint
 
@@ -75,7 +74,10 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Added `docs/phase3-diagnostics-recording.md`, `docs/phase3-live-test-procedure.md` and the pending final verification report.
 - Final local verification: locked restore succeeded; Release build succeeded with 0 warnings/errors; 159 tests passed; format passed; NuGet audit found no known vulnerabilities; static dependency/prohibited-operation scan passed.
 - Package `0.3.1.0`, API 15, SHA-256 `C9129D7C5B6A6D0BF88A0FB416BB14EDD2102D94118D7364D8C5E465A376F954`; contains Core/Observation/Plugin, BSD notice and provenance, with no BossMod assembly.
-- Exact next step: commit and push the verified tree, create the Draft PR against `phase3/live-observation-adapter`, then wait for both CI runs.
+- Implementation commit `478ab76` was pushed and Draft PR #4 was opened against `phase3/live-observation-adapter`: `https://github.com/natukimiyabi23-eng/DDCore/pull/4`.
+- Push run `42385808420` and Draft PR run `42385836623` both passed the full build/test/package job. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- Phase 3.7 changed `.github/workflows/phase2-build.yml`, `CONTINUATION.md`, `README.md`, Phase 3 architecture/progress/verification documents, added the recording specification and live-test procedure, added `ObservationDiagnostics.cs`/`ObservationRecording.cs`, integrated runtime/plugin/UI controls, and added/expanded Observation tests.
+- Safe next step: review Draft PR #4 and perform `docs/phase3-live-test-procedure.md` manually if desired. Do not merge to `main` without explicit user approval and do not infer live behavior from unit tests.
 
 ## Phase 3.6 checkpoint
 

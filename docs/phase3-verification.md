@@ -111,4 +111,6 @@ Phase 3.6 field availability, derivations and remaining public-API gaps are reco
 - Static prohibited-operation/communication scan found no client structs, interop/signature scanner, target/key/action/command, `System.Net`, HTTP, socket, Discord, webhook or upload use under `src`.
 - Package: `DDCore` version `0.3.1.0`, Dalamud API 15, no BossMod assembly.
 - Package SHA-256: `C9129D7C5B6A6D0BF88A0FB416BB14EDD2102D94118D7364D8C5E465A376F954`.
+- Implementation commit `478ab76`; Draft PR #4 targets `phase3/live-observation-adapter` and remains unmerged.
+- GitHub Actions push run `42385808420` and Draft PR run `42385836623` both passed the full build/test/package job. The non-failing `actions/upload-artifact@v4` Node.js 20 deprecation annotation remains.
 - Live Dalamud loading, UI rendering, local path permissions, performance and Gancanagh recording remain unverified. Follow `docs/phase3-live-test-procedure.md` manually.

@@ -89,3 +89,4 @@
 - Removed player and party-member actors and references before recording; chat, names and account data are not observed.
 - Added Japanese start/stop, preview, export and confirmed-delete controls. Recording remains OFF by default and has no uploader.
 - Added recording format/privacy documentation and a user-run live test procedure. Live Dalamud and FFXIV testing remains unperformed.
+- Pushed implementation commit `478ab76`, opened Draft PR #4 against the Phase 3.6 branch, and confirmed both push and PR GitHub Actions runs passed.
