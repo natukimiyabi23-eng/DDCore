@@ -34,6 +34,8 @@ Phase 3.6 uses three production assemblies rather than creating ten mostly empty
 
 The live dependency direction is `DDCore.Plugin -> DDCore.Observation -> DDCore.Core`. Dalamud types stop at `DalamudObservationSource`; neither downstream assembly references Dalamud. Partial observations may produce hazard candidates, but their aggregate safety remains unknown.
 
+Phase 3.7 keeps normal diagnostics and detailed recording separate. `ObservationDiagnosticLog` is a bounded in-memory state/error history, while `ObservationRecordingService` receives privacy-filtered immutable snapshots only after an explicit user start. It produces the existing replay schema locally, with bounded sampling and atomic interval flushes. Neither path depends on an execution adapter or a network client.
+
 The logical boundaries are separate namespaces and interfaces. A responsibility should move to its own assembly when it gains concrete behavior or dependencies that require an enforceable compile-time boundary. This keeps the Phase 2 package small without discarding the target architecture.
 
 ## Dependency direction

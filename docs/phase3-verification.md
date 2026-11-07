@@ -94,3 +94,23 @@ Phase 3.6 field availability, derivations and remaining public-API gaps are reco
 - GitHub Actions: push run `42363700322` and Draft PR run `42363704906` both passed the full solution build/test/package job.
 - CI annotation: `actions/upload-artifact@v4` still targets deprecated Node.js 20 and was forced to Node.js 24 by GitHub; this did not fail the runs.
 - Live Dalamud loading, UI rendering and Gancanagh observation remain unverified.
+
+## Phase 3.7 verification
+
+- Added a 256-entry, change-only in-memory diagnostic log and a separate explicit-start local recorder.
+- Recording is OFF at startup and bounded to 2 MiB, 1,800 snapshots, 15 minutes, 2 Hz sampling and five-second atomic flushes.
+- The persisted format is the existing strict `ReplayDocument`; derived AoE frames are regenerated deterministically rather than duplicated.
+- Player/party actors and references are removed before persistence. Names, chat and account data are not observed, and no network/export service exists.
+- Storage failure, session/territory/logout transitions, limit exhaustion and plugin disposal stop or flush the recorder without enabling operation.
+- Japanese UI adds working start, stop, status, preview-confirmed local export and confirmation-gated delete controls.
+- Release build: succeeded with 0 warnings and 0 errors.
+- Unit tests: 159 passed (125 Core + 34 Observation), 0 failed, 0 skipped.
+- Format verification: succeeded.
+- NuGet vulnerability audit: no known vulnerable package in any project.
+- Static dependency audit: Core and Observation have no BossMod/Dalamud dependency; Plugin references Core, Observation and Dalamud API 15 only.
+- Static prohibited-operation/communication scan found no client structs, interop/signature scanner, target/key/action/command, `System.Net`, HTTP, socket, Discord, webhook or upload use under `src`.
+- Package: `DDCore` version `0.3.1.0`, Dalamud API 15, no BossMod assembly.
+- Package SHA-256: `C9129D7C5B6A6D0BF88A0FB416BB14EDD2102D94118D7364D8C5E465A376F954`.
+- Implementation commit `478ab76`; Draft PR #4 targets `phase3/live-observation-adapter` and remains unmerged.
+- GitHub Actions push run `42385808420` and Draft PR run `42385836623` both passed the full build/test/package job. The non-failing `actions/upload-artifact@v4` Node.js 20 deprecation annotation remains.
+- Live Dalamud loading, UI rendering, local path permissions, performance and Gancanagh recording remain unverified. Follow `docs/phase3-live-test-procedure.md` manually.

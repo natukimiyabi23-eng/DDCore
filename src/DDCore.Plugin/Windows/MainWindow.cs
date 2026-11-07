@@ -10,6 +10,8 @@ namespace DDCore.Plugin.Windows;
 internal sealed class MainWindow : Window, IDisposable
 {
     private readonly Plugin plugin;
+    private bool exportPreviewConfirmed;
+    private bool deletionConfirmed;
 
     public MainWindow(Plugin plugin)
         : base("DDCore##Main")
@@ -17,8 +19,8 @@ internal sealed class MainWindow : Window, IDisposable
         this.plugin = plugin;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(560, 600),
-            MaximumSize = new Vector2(900, 720),
+            MinimumSize = new Vector2(600, 720),
+            MaximumSize = new Vector2(980, 980),
         };
     }
 
@@ -36,6 +38,10 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+        DrawRecording();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
         DrawModes();
         ImGui.Spacing();
         ImGui.Separator();
@@ -46,7 +52,7 @@ internal sealed class MainWindow : Window, IDisposable
     private void DrawStatus()
     {
         ImGui.TextUnformatted("ディープダンジョン攻略基盤");
-        ImGui.TextDisabled("Phase 3.6: 読み取り専用観測・ギミック解析・安全制御");
+        ImGui.TextDisabled("Phase 3.7: 読み取り専用観測・診断・明示操作によるローカル記録");
         ImGui.Spacing();
 
         ImGui.TextUnformatted("現在のモード");
@@ -134,6 +140,106 @@ internal sealed class MainWindow : Window, IDisposable
         };
         return diagnostics.Floor is { } floor ? $"{kind} {floor}階（推定を含む）" : kind;
     }
+
+    private void DrawRecording()
+    {
+        var status = plugin.RecordingStatus;
+        ImGui.TextUnformatted("実機検証用の観測記録");
+        ImGui.TextDisabled("初期状態はOFFです。敵とギミック再現に必要な情報だけをローカル保存し、外部送信しません。");
+        ImGui.Spacing();
+        DrawValue("記録状態", RecordingStateText(status.State));
+        DrawValue("記録件数", $"{status.Preview.SnapshotCount}件");
+        DrawValue("記録容量", FormatBytes(status.Preview.StoredBytes));
+        DrawValue("保存先", status.RecordingPath ?? "未作成");
+        DrawValue("最新解析エラー", plugin.LatestObservationError?.Message ?? status.LatestError ?? "なし");
+
+        ImGui.Spacing();
+        using (ImRaii.Disabled(status.State == ObservationRecordingState.Recording))
+        {
+            if (ImGui.Button("記録開始", new Vector2(120, 32)))
+            {
+                exportPreviewConfirmed = false;
+                deletionConfirmed = false;
+                plugin.StartObservationRecording();
+            }
+        }
+
+        ImGui.SameLine();
+        using (ImRaii.Disabled(status.State != ObservationRecordingState.Recording))
+        {
+            if (ImGui.Button("記録停止", new Vector2(120, 32)))
+            {
+                plugin.StopObservationRecording();
+            }
+        }
+
+        if (status.Preview.SnapshotCount > 0 && ImGui.TreeNode("保存内容を確認"))
+        {
+            DrawValue("セッション", status.Preview.SessionId?.ToString("N") ?? "未確定");
+            DrawValue("記録開始", status.Preview.StartedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "未確定");
+            DrawValue("最終観測", status.Preview.LastCapturedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "未確定");
+            DrawValue("敵・詠唱・AoE", $"{status.Preview.EnemyCount}体 / {status.Preview.ActiveCastCount}件 / {status.Preview.HazardCount}件");
+            DrawValue("未対応理由", status.Preview.LatestUnsupportedReason ?? "なし");
+            ImGui.BulletText("他プレイヤー名、チャット本文、アカウント情報は収集しません。");
+            ImGui.BulletText("プレイヤーとパーティメンバーの識別子は保存前に除外します。");
+            ImGui.Checkbox("この保存内容を確認しました", ref exportPreviewConfirmed);
+            ImGui.TreePop();
+        }
+
+        using (ImRaii.Disabled(
+            status.State == ObservationRecordingState.Recording
+            || status.Preview.SnapshotCount == 0
+            || !exportPreviewConfirmed))
+        {
+            if (ImGui.Button("エクスポート", new Vector2(140, 32)))
+            {
+                plugin.ExportObservationRecording(exportPreviewConfirmed);
+            }
+        }
+
+        ImGui.SameLine();
+        ImGui.Checkbox("削除を確認", ref deletionConfirmed);
+        ImGui.SameLine();
+        using (ImRaii.Disabled(
+            status.State == ObservationRecordingState.Recording
+            || status.Preview.SnapshotCount == 0
+            || !deletionConfirmed))
+        {
+            if (ImGui.Button("記録データ削除", new Vector2(150, 32)))
+            {
+                plugin.DeleteObservationRecording(deletionConfirmed);
+                deletionConfirmed = false;
+                exportPreviewConfirmed = false;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(status.ExportPath))
+        {
+            DrawValue("出力先", status.ExportPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status.StopReason))
+        {
+            DrawValue("停止理由", status.StopReason);
+        }
+    }
+
+    private static string RecordingStateText(ObservationRecordingState state) => state switch
+    {
+        ObservationRecordingState.Off => "OFF",
+        ObservationRecordingState.Recording => "記録中",
+        ObservationRecordingState.Stopped => "停止・保存済み",
+        ObservationRecordingState.LimitReached => "上限到達・停止",
+        ObservationRecordingState.Faulted => "保存エラー・停止",
+        _ => "不明",
+    };
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        >= 1024 * 1024 => $"{bytes / (1024d * 1024d):F2} MiB",
+        >= 1024 => $"{bytes / 1024d:F1} KiB",
+        _ => $"{bytes} bytes",
+    };
 
     private void DrawModes()
     {

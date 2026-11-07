@@ -1,9 +1,11 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-07 JST (Phase 3.6 started)
+Updated: 2026-11-08 JST (Phase 3.7 finalization)
 
 ## Objective
+
+Current objective: implement Phase 3.7 on `phase3/diagnostics-and-recording`: bounded local diagnostics and explicit opt-in observation recording, Japanese diagnostic controls, replay-compatible export, privacy safeguards, tests, documentation, verification, and a Draft PR targeting `phase3/live-observation-adapter`. Preserve read-only operation, `DisabledExecutionGateway`, no external communication, no live FF14 operation, and no main merge.
 
 Current objective: implement Phase 3.6 on `phase3/live-observation-adapter`: a read-only, public-Dalamud-API-15 observation adapter that converts observable game state into `WorldSnapshot`, feeds the existing analyzer registry, exposes Japanese diagnostics, and remains fail-closed. No game operation, input injection, private API access, deployment, live verification, or main merge is authorized.
 
@@ -14,13 +16,13 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 ## Current state
 
 - Repository: `https://github.com/natukimiyabi23-eng/DDCore` (public, default branch `main`)
-- Working branch: `phase3/mechanics-foundation`
+- Working branch: `phase3/diagnostics-and-recording`
 - Local path: `work/DDCore`
 - BossMod source: `https://github.com/awgil/ffxiv_bossmod`
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
 - BossMod license: BSD-3-Clause
 - DD source files found: 63, including Global shared code, Palace of the Dead, Heaven-on-High, Eureka Orthos, and Pilgrim's Traverse.
-- Source version: `0.1.0.0` (Phase 2 foundation complete).
+- Source version: `0.3.1.0` (Phase 3.7 local verification complete).
 - Deployed version: none.
 - Documentation commit: `1217bac70961debec3201ea74e7a8e1966e5fd57`
 
@@ -59,8 +61,23 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Requested Phase 3.6 source, tests, documentation, branch and Draft PR work is complete.
-- Live Dalamud loading, Japanese UI rendering and Gancanagh observation remain the user's responsibility and are not reported as successful.
+- Requested Phase 3.7 source, tests, documentation, branch and Draft PR work is complete.
+- Live Dalamud loading, Japanese UI rendering, local-path permissions/performance and Gancanagh recording remain the user's responsibility and are not reported as successful.
+
+## Phase 3.7 checkpoint
+
+- Created `phase3/diagnostics-and-recording` from clean `phase3/live-observation-adapter`; Draft PR #3 and both Phase 3.6 CI checks were confirmed successful before branching.
+- Implemented bounded in-memory diagnostics, explicit local recording, strict ReplayCodec export, 2 MiB/1,800 snapshot/15 minute limits, 2 Hz sampling, five-second atomic flushes, safe fault stop and session-boundary stop.
+- Added a privacy filter that removes player/party actors and references before persistence. No names, chat, account fields, uploader or network client were added.
+- Added Japanese start/stop/status/preview/export/delete UI and package version `0.3.1.0`.
+- Added recording, storage failure, zone/logout, privacy, replay, disposal and diagnostics tests. Observation tests pass: 34/34; Core tests pass: 125/125; total: 159/159.
+- Added `docs/phase3-diagnostics-recording.md`, `docs/phase3-live-test-procedure.md` and the pending final verification report.
+- Final local verification: locked restore succeeded; Release build succeeded with 0 warnings/errors; 159 tests passed; format passed; NuGet audit found no known vulnerabilities; static dependency/prohibited-operation scan passed.
+- Package `0.3.1.0`, API 15, SHA-256 `C9129D7C5B6A6D0BF88A0FB416BB14EDD2102D94118D7364D8C5E465A376F954`; contains Core/Observation/Plugin, BSD notice and provenance, with no BossMod assembly.
+- Implementation commit `478ab76` was pushed and Draft PR #4 was opened against `phase3/live-observation-adapter`: `https://github.com/natukimiyabi23-eng/DDCore/pull/4`.
+- Push run `42385808420` and Draft PR run `42385836623` both passed the full build/test/package job. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- Phase 3.7 changed `.github/workflows/phase2-build.yml`, `CONTINUATION.md`, `README.md`, Phase 3 architecture/progress/verification documents, added the recording specification and live-test procedure, added `ObservationDiagnostics.cs`/`ObservationRecording.cs`, integrated runtime/plugin/UI controls, and added/expanded Observation tests.
+- Safe next step: review Draft PR #4 and perform `docs/phase3-live-test-procedure.md` manually if desired. Do not merge to `main` without explicit user approval and do not infer live behavior from unit tests.
 
 ## Phase 3.6 checkpoint
 
@@ -154,4 +171,4 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Safe next step
 
-Review Draft PR #2. Do not merge to `main` without explicit user approval, and do not infer live behavior from unit/replay tests.
+Read `docs/phase3-live-observation.md`, `docs/phase3-accuracy-review.md`, `docs/phase3-verification.md`, `docs/architecture.md` and the observation/replay/UI source. Then define the bounded recording contracts before implementation. Do not operate FF14 or infer live behavior from unit tests.

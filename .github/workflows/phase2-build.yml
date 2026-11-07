@@ -1,10 +1,10 @@
-name: Foundation build
+name: DDCore build
 
 on:
   pull_request:
-    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation]
+    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter]
   push:
-    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording]
 
 jobs:
   build-and-test:
