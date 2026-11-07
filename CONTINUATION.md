@@ -91,7 +91,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Implementation commit `b46f020` and documentation commit `8148741` were pushed. Draft PR #7 targets `phase4.5/bossmod-integration-proof`: `https://github.com/natukimiyabi23-eng/DDCore/pull/7`.
 - CI did not initially trigger because the workflow branch filters ended at the Phase 4.5 push branch and Phase 4 PR base. Commit `1b0e938` added only the Phase 4.5 PR base and Phase 5 push branch filters.
 - Final push run `42412810484` and Draft PR run `42412814600` both passed at verified head `bc2e5dc`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run. The final continuation-only commit uses the CI skip marker to avoid recursively spawning another identical verification run.
-- Final authoritative usage checkpoint: five-hour window 54% remaining; weekly window 61% remaining.
+- Final authoritative usage checkpoint after CI and documentation closeout: five-hour window 48% remaining; weekly window 61% remaining.
 
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
 - User review and merge decisions remain pending. Do not merge Draft PR #7 or start Phase 6 without explicit approval.
