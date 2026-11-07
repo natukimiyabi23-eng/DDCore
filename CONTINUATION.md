@@ -1,6 +1,6 @@
 # DDCore continuation
 
-Status: in progress
+Status: complete
 Updated: 2026-11-07 JST
 
 ## Objective
@@ -55,9 +55,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-1. `CONTINUATION.md` の最終検証結果をコミットする。
-2. `phase3/mechanics-foundation` をpushし、`phase2/plugin-foundation` 向けDraft PRを作成する。
-3. GitHub Actions成功を確認し、PRへ検証結果・実機未検証・main未マージを記載する。
+- Requested Phase 3 implementation work is complete.
+- Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
 
 ## Files changed
 
@@ -93,6 +92,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - NuGet vulnerability audit: no known vulnerable packages in all three projects.
 - Phase 3 package manifest: version `0.2.0.0`, Dalamud API level 15.
 - Phase 3 ZIP contains `THIRD-PARTY-NOTICES.md` and `provenance/bossmod-phase3.json`.
+- GitHub Actions: both push and Draft PR `build-and-test` runs succeeded.
+- Draft PR: `https://github.com/natukimiyabi23-eng/DDCore/pull/2` targeting `phase2/plugin-foundation`.
+- CI maintenance note: `actions/upload-artifact@v4` emitted a Node.js 20 deprecation annotation while GitHub forced Node.js 24; the job still succeeded.
 
 ## Deployment
 
@@ -113,4 +115,4 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Safe next step
 
-Resume the first unfinished numbered step above; do not reimplement completed P3.0-P3.5 work. Do not add game operations, control the FF14 UI, merge main, or report live behavior as verified.
+Review Draft PR #2. Do not merge it to `main` until Phase 2 is approved/merged and the user explicitly approves the Phase 3 merge. Any later live verification must be recorded separately; do not infer it from unit or replay tests.
