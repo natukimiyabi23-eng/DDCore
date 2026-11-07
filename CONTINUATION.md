@@ -1,6 +1,6 @@
 # DDCore continuation
 
-Status: in progress
+Status: complete
 Updated: 2026-11-07 JST
 
 ## Objective
@@ -57,10 +57,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-1. 検証記録の最終差分をコミットし、`phase3/mechanics-foundation`をpushする。
-2. Draft PR #2の本文を精度レビュー結果へ更新し、GitHub Actions成功を確認する。
+- Requested Phase 3 accuracy-review work is complete.
+- Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
 
-Live Dalamud/FFXIV verification remains the user's responsibility and is not reported as successful.
 
 ## Accuracy review checkpoint
 
@@ -114,6 +113,8 @@ Live Dalamud/FFXIV verification remains the user's responsibility and is not rep
 - Accuracy final NuGet vulnerability audit: no known vulnerable packages in all three projects.
 - Accuracy final static dependency audit: Core has no project references or BossMod/Dalamud assembly reference; Plugin references Core and Dalamud SDK only.
 - Accuracy final package: `InternalName=DDCore`, version `0.2.1.0`, Dalamud API level 15, no BossMod assembly.
+- Accuracy-review push and Draft PR GitHub Actions: both succeeded.
+- Draft PR #2 body now records the BossMod comparison, 125-test result, residual differences and live-verification gap.
 
 ## Deployment
 
@@ -135,4 +136,4 @@ Live Dalamud/FFXIV verification remains the user's responsibility and is not rep
 
 ## Safe next step
 
-Five-hour usage remaining reached 5% after the verified checkpoint. Resume the first unfinished step above after recovery. Do not redo completed accuracy fixes, add game operations, merge main, or infer live behavior from unit/replay tests.
+Review Draft PR #2. Do not merge to `main` without explicit user approval, and do not infer live behavior from unit/replay tests.
