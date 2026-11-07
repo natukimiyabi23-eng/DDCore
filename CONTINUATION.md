@@ -100,4 +100,4 @@ Updated: 2026-11-07 JST
 
 ## Safe next step
 
-Wait for review of PR #1. The ACTIVE heartbeat automation `DDCoreレビュー修正の再開確認` (`id=ddcore`) is a fallback only and must make no changes when it observes this completed state. Do not merge without approval and do not claim the remaining live Dalamud checks succeeded.
+Wait for review of PR #1. The fallback heartbeat automation `DDCoreレビュー修正の再開確認` (`id=ddcore`) was created and verified ACTIVE during the work, then deleted after completion to prevent unnecessary runs. Do not merge without approval and do not claim the remaining live Dalamud checks succeeded.
