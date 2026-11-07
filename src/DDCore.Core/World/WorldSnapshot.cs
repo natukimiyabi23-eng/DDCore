@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using DDCore.Core.Geometry;
 using DDCore.Core.Model;
 using DDCore.Core.Schema;
@@ -159,6 +160,7 @@ public sealed record DeepDungeonContext(
 
 public sealed record WorldSnapshot
 {
+    [JsonConstructor]
     public WorldSnapshot(
         int schemaVersion,
         long sequence,
