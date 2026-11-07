@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 JST (Phase 4.5 BossMod integration proof in progress)
+Status: complete
+Updated: 2026-11-08 JST (Phase 4.5 BossMod integration proof complete; Draft PR review pending)
 
 ## Objective
 
@@ -65,7 +65,6 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Phase 4.5: implement and test the optional BossMod IPC reachability probe, document that the fixed IPC surface exposes no DD strategy DTOs, run the full verification matrix, commit/push, and open a stacked Draft PR.
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
 - User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
 
@@ -101,7 +100,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Static audit found no BossMod assembly/package reference and no new movement, targeting, action, item, hook or client-struct operation. Package `0.4.5.0`, API 15, SHA-256 `6D61D5E0CBD30E75126F419B1869B85B800CFE9732E4945A3189904D7C1016A4`.
 - Exact unfinished step: final diff review, commit/push, open the stacked Draft PR against `phase4/reuse-analysis`, wait for CI, then record PR/check results and mark complete.
 - Implementation commit `fcb9602` was pushed. Draft PR #6 targets `phase4/reuse-analysis`: `https://github.com/natukimiyabi23-eng/DDCore/pull/6`.
-- Exact unfinished step: wait for the latest push/PR CI, record the check result, make the completion documentation commit, and mark this continuation complete. Do not merge PR #6 or start Phase 5.
+- Added CI coverage for the Phase 4.5 stacked branch. Push run `42392652552` and Draft PR run `42392656475` both passed at head `cc0acb8`.
+- Phase 4.5 conclusion: public IPC proves optional reachability only. The fixed 37-function surface supplies none of the seven required DD strategy-data categories, so independent migration remains recommended unless BossMod adds a versioned read-only DD snapshot contract.
+- Exact next step: user reviews Draft PR #6. Live IPC invocation remains unverified. Do not merge PR #6, operate FF14, or start Phase 5 without explicit user approval.
 
 ## Phase 3.7 checkpoint
 

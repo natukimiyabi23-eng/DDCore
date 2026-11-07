@@ -27,7 +27,10 @@ Package: version `0.4.5.0`, Dalamud API 15. SHA-256: `6D61D5E0CBD30E75126F419B18
 
 The package contains Core, Observation, Plugin, the BSD third-party notice and existing Phase 3/4 provenance manifests. It contains no BossMod assembly.
 
-GitHub Actions status is recorded after the branch and Draft PR checks complete.
+GitHub Actions for implementation/workflow head `cc0acb803115fc3d5fd39a77cd4ecc4ceb6aa67e` both passed:
+
+- push run `42392652552`;
+- Draft PR run `42392656475`.
 
 Draft PR: <https://github.com/natukimiyabi23-eng/DDCore/pull/6>, targeting `phase4/reuse-analysis`.
 
