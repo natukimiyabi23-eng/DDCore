@@ -78,3 +78,4 @@
 - Direct DD floor, cast ground location, cast-specific rotation and status stack count remain unavailable through the verified public API and are not fabricated.
 - Added 15 observation tests while retaining all 125 Core tests. Live Dalamud and encounter behavior remain unverified.
 - Extended the existing Windows CI to run the full solution tests for the Phase 3.6 branch and its Draft PR base.
+- Confirmed both the push and Draft PR full-solution GitHub Actions runs succeeded; PR #3 remains Draft and unmerged.

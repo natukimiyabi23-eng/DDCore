@@ -1,6 +1,6 @@
 # DDCore continuation
 
-Status: in_progress
+Status: complete
 Updated: 2026-11-07 JST (Phase 3.6 started)
 
 ## Objective
@@ -59,11 +59,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Verify the exact public Dalamud API 15 contracts for client state, object table, actors, casts, statuses, territory/content identifiers, and framework updates.
-- Implement the normalized observation boundary, generation/cast/session tracking, `WorldSnapshot` conversion, analyzer connection, diagnostic state, and UI.
-- Add conversion/lifecycle/reset/integration/disposal tests without claiming live behavior.
-- Run Release build, all tests, format and dependency audits; update docs; commit/push; open a Draft PR targeting `phase3/mechanics-foundation`.
-- Live Dalamud/FFXIV verification remains the user's responsibility and must not be reported as successful.
+- Requested Phase 3.6 source, tests, documentation, branch and Draft PR work is complete.
+- Live Dalamud loading, Japanese UI rendering and Gancanagh observation remain the user's responsibility and are not reported as successful.
 
 ## Phase 3.6 checkpoint
 
@@ -76,8 +73,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Final local verification: locked restore succeeded; Release build succeeded with 0 warnings/errors; 125 Core tests and 15 Observation tests passed (140 total); format passed; NuGet audit found no known vulnerabilities; static read-only/dependency scan passed.
 - Package `0.3.0.0`, API 15, SHA-256 `139CE2C81C8DD4857ED6AA65B48797A452D14CDC9FBE09C0121948B5C8561C14`; contains Core/Observation/Plugin, BSD notice and provenance, with no BossMod assembly.
 - Commit `4a8db4d` pushed and Draft PR #3 opened against `phase3/mechanics-foundation`: `https://github.com/natukimiyabi23-eng/DDCore/pull/3`.
-- Existing CI did not trigger for the Phase 3.6 base/head and tested only Core; the workflow is being updated to cover the Phase 3 branch, live-adapter branch and the full solution tests.
-- Remaining: commit/push the CI trigger correction and confirm both push/PR checks.
+- CI correction commit `ae4d4fb` covers the Phase 3 base/head and full solution tests.
+- Both push run `42363700322` and Draft PR run `42363704906` passed. The only annotation is the existing `actions/upload-artifact@v4` Node.js 20 deprecation notice while GitHub forces Node.js 24; it did not fail either run.
+- Draft PR #3 remains unmerged and targets `phase3/mechanics-foundation`: `https://github.com/natukimiyabi23-eng/DDCore/pull/3`.
 - Usage remaining after implementation checkpoint: 57% in the five-hour window and 93% in the weekly window.
 
 

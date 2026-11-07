@@ -91,4 +91,6 @@ Phase 3.6 field availability, derivations and remaining public-API gaps are reco
 - Source scan: no FFXIVClientStructs, interop provider, signature scanner, target manager, key state, address, send-action or execute-command use under `src`.
 - Package: `DDCore` version `0.3.0.0`, Dalamud API level 15; includes Core, Observation, Plugin, BSD notice and provenance, with no BossMod assembly.
 - Package SHA-256: `139CE2C81C8DD4857ED6AA65B48797A452D14CDC9FBE09C0121948B5C8561C14`.
+- GitHub Actions: push run `42363700322` and Draft PR run `42363704906` both passed the full solution build/test/package job.
+- CI annotation: `actions/upload-artifact@v4` still targets deprecated Node.js 20 and was forced to Node.js 24 by GitHub; this did not fail the runs.
 - Live Dalamud loading, UI rendering and Gancanagh observation remain unverified.
