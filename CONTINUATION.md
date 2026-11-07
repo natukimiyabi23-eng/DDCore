@@ -78,7 +78,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Estimated requirement: 48% total (research 6%, implementation 17%, tests/audits 9%, documentation/PR 6%, contingency 10%); projected five-hour balance `86% - 48% = 38%`.
 - Branch: `phase5/strategy-engine`, created from clean Phase 4.5 head `07b3fd2c00cc39a0c4f2b7c59c8728345fad9764`.
 - Draft PR #6 remains open and clean, targeting `phase4/reuse-analysis`; it is not merged.
-- Five-hour continuation automation: `ddcore-phase-5-followup`, scheduled once for `2026-11-08 10:30:26 JST`, created and verified `ACTIVE`. Purpose: inspect the active goal, this file, Git state, build/test state, and remaining usage, then resume only the first unfinished step or report completion without rerunning work.
+- Five-hour continuation automation: `ddcore-phase-5-followup`, scheduled once for `2026-11-08 10:30:26 JST`, was created and verified `ACTIVE`. Its purpose was to inspect the active goal, this file, Git state, build/test state, and remaining usage, then resume only the first unfinished step or report completion. It was deleted as obsolete after Phase 5 completed well before the scheduled time.
 - No source implementation has been edited at this checkpoint.
 - Implemented immutable Unknown-preserving strategy state for dungeon/floor, 25 rooms, exit, enemies, traps, pomanders, aggregate resources and remaining time.
 - Implemented deterministic, read-only strategy decisions for fail-closed stop, danger retreat, combat continuity, resource conservation, active exit, exploration and exit search. Safe routes exclude known/unknown-danger rooms, traps and non-defeated enemies.
