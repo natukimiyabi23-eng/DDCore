@@ -17,6 +17,7 @@ BossModのディープダンジョン関連機能を独立プラグイン化す�
 - DD source files found: 63, including Global shared code, Palace of the Dead, Heaven-on-High, Eureka Orthos, and Pilgrim's Traverse.
 - Source version: documentation only; plugin version not assigned.
 - Deployed version: none.
+- Documentation commit: `5d08a17`
 
 ## Completed
 
@@ -60,6 +61,15 @@ BossModのディープダンジョン関連機能を独立プラグイン化す�
 ## Deployment
 
 - None. Documentation/research task only.
+
+## Artifact hashes (SHA-256)
+
+- `docs/DDCore_Codex_MasterPlan.md`: `F12CB3616CCE7EF2E760DF69B7BABEBCD6868ACE144EEEC61ED469382C15554A`
+- `docs/architecture.md`: `E189A91FD056C031E96D6939B22C571DF2740B33995850FE4497601EE65E88B7`
+- `docs/dependencies.md`: `AB52639A2D7F3884B0ABF5B0758708BB5F69041AB3897A8ED90122ADFDC6FB85`
+- `docs/migration-plan.md`: `5F8D00245CBF6F4094DF1B8ECECFEF3534EA6601C38189BB3707AC8734958C82`
+- `docs/research-report.md`: `AA8551A6350B20FF6F0F19F5D777611668611BE90600F66BB5A0D7A362497958`
+- `docs/progress.md`: `8776701B65C84CA62A616858645E1FDAE374843823420ACBC96140F9906D6D9C`
 
 ## Known evidence
 
