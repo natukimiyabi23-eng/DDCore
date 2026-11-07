@@ -23,7 +23,7 @@ Verification applies to the user-defined Phase 5 DD state and read-only strategy
 
 The package contains `DDCore.dll`, Core and Observation assemblies, deps/manifest files, symbols, `THIRD-PARTY-NOTICES.md`, and Phase 3/4 provenance manifests. It contains no BossMod assembly.
 
-Push run `42412644674` and Draft PR run `42412649333` both passed the Windows build/test/package workflow at head `1b0e938`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation was emitted while GitHub forced Node.js 24; it did not fail either run.
+Final push run `42412810484` and Draft PR run `42412814600` both passed the Windows build/test/package workflow at verified head `bc2e5dc`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation was emitted while GitHub forced Node.js 24; it did not fail either run.
 
 ## Required checks
 
