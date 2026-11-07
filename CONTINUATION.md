@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 JST (Phase 4 locally verified; GitHub publication pending)
+Status: complete
+Updated: 2026-11-08 JST (Phase 4 complete; Draft PR review pending)
 
 ## Objective
 
@@ -63,8 +63,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Commit/push `phase4/reuse-analysis`, create a Draft PR targeting `phase3/diagnostics-and-recording`, and wait for CI.
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
+- User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
 
 ## Phase 4 checkpoint
 
@@ -78,7 +78,10 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Locked restore and final Release build passed with 0 warnings/errors; all 173 tests passed (Core 139, Observation 34); format and NuGet vulnerability audit passed.
 - Core has no project references. Static matches for BossMod are attribution/comments only; no BossMod/Dalamud/Lumina/FFXIVClientStructs runtime dependency was introduced into Core/Observation.
 - Package `0.4.0.0`, API 15, SHA-256 `2EDB2C5F48E0BC15992379CC0B1DEFAA83B9EB02FE7F7A44E7EF1E39D03CDB5F`; includes both provenance manifests and `THIRD-PARTY-NOTICES.md`.
-- Exact next step: review the diff, commit/push, open the Draft PR, and wait for GitHub Actions.
+- Implementation commit `0d07b68` and this completion record were pushed to `phase4/reuse-analysis`.
+- Draft PR #5 targets `phase3/diagnostics-and-recording`: `https://github.com/natukimiyabi23-eng/DDCore/pull/5`.
+- Both push and Draft PR `build-and-test` runs passed (runs `42388673278` and `42388678876`).
+- Exact next step: user reviews Draft PR #5. Do not merge or start Phase 5 without explicit approval.
 
 ## Phase 3.7 checkpoint
 
@@ -188,4 +191,4 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Safe next step
 
-Read `docs/phase3-live-observation.md`, `docs/phase3-accuracy-review.md`, `docs/phase3-verification.md`, `docs/architecture.md` and the observation/replay/UI source. Then define the bounded recording contracts before implementation. Do not operate FF14 or infer live behavior from unit tests.
+Review Draft PR #5 and `docs/phase4-reuse-analysis.md`. Live room/resource observation remains unresolved. Do not merge to `main`, start Phase 5, operate FF14, or infer live behavior from offline tests without explicit user approval.

@@ -18,6 +18,7 @@ Phase 4 is limited to source analysis, dependency measurement and one pure-C# na
 | Unit tests | Existing tests plus Phase 4 tests | Passed; Core 139 + Observation 34 = 173 |
 | Format | `dotnet format --verify-no-changes` | Passed |
 | NuGet audit | No known vulnerable package reported | Passed for all five projects |
+| GitHub Actions | Push and Draft PR full build/test jobs | Passed; runs `42388673278` and `42388678876` |
 | Live Dalamud/FFXIV | Not part of this phase | **Not performed** |
 
 ## Comparison limitation
@@ -40,3 +41,5 @@ The original `FloorPathfind` class is internal and depends on the native FFXIVCl
 - Package contents include `DDCore.Core`, `DDCore.Observation`, the plugin, `THIRD-PARTY-NOTICES.md`, `provenance/bossmod-phase3.json` and `provenance/bossmod-phase4.json`.
 
 No package was deployed and no live Dalamud/FFXIV test was performed.
+
+Draft PR: <https://github.com/natukimiyabi23-eng/DDCore/pull/5> targeting `phase3/diagnostics-and-recording`. It remains unmerged.
