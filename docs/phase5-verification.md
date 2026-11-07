@@ -27,7 +27,7 @@ Two local schema-version 3 exports (412 snapshots total) were decoded without mo
 
 The package contains `DDCore.dll`, Core and Observation assemblies, deps/manifest files, symbols, `THIRD-PARTY-NOTICES.md`, and Phase 3/4 provenance manifests. It contains no BossMod assembly.
 
-The original Phase 5 push run `42412810484` and Draft PR run `42412814600` passed at verified head `bc2e5dc`. CI for the real-data validation update is recorded after its push; local locked restore, Release build, 213 tests, format and package audits passed before that push.
+The original Phase 5 push run `42412810484` and Draft PR run `42412814600` passed at verified head `bc2e5dc`. The real-data validation push run `42422135760` and Draft PR run `42422139691` also passed at verified head `0c0f04c`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either updated run.
 
 ## Required checks
 

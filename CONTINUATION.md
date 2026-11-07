@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 08:00 JST (Phase 5 real-data conversion and local replay run complete)
+Status: complete
+Updated: 2026-11-08 08:10 JST (Phase 5 real-data validation complete)
 
 ## Objective
 
@@ -69,9 +69,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Run the locked full verification matrix, record the rebuilt package hash, review the diff, commit/push the read-only adapter/tests/docs, update Draft PR #7, and wait for CI.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
-- Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this phase and must not be reported as verified.
+- Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered.
+- Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this validation and must not be reported as verified.
 
 ## Phase 5 checkpoint
 
@@ -87,6 +87,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Full local verification passed: locked restore, Release build with 0 warnings/errors, Core 173/173 plus Observation 40/40 (213 total), format, NuGet vulnerability, Core reference and prohibited-operation scans.
 - Rebuilt package `0.5.0.0` SHA-256: `6EC28A9568A34B33221174CC4DE6E77E8E6A0EB4D8E3C6C60DBE8D06B46F2D74`.
 - Authoritative usage after local verification: five-hour window 25% remaining; weekly window 57% remaining.
+- Commit `0c0f04c` was pushed to `phase5/strategy-engine`; Draft PR #7 was updated with an aggregate-only validation summary.
+- Push run `42422135760` and Draft PR run `42422139691` both passed at head `0c0f04c`. The non-failing Node.js deprecation annotation is unchanged.
+- Continuation automation `ddcore-phase5-live-data-followup` was deleted as obsolete after the requested work and CI completed before its scheduled time.
 
 - Started: `2026-11-08T05:30:26+09:00`.
 - Authoritative preflight: five-hour window 86% remaining; weekly window 67% remaining.
