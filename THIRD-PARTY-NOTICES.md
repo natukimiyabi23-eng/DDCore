@@ -14,6 +14,10 @@ Test-only NuGet dependencies are listed in `tests/DDCore.Core.Tests/DDCore.Core.
 
 The Phase 3 Gancanagh analyzer reimplements observed behavior and uses identifiers and numeric encounter data from BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`. File-level provenance is recorded in `provenance/bossmod-phase3.json`.
 
+## Phase 4 BossMod-adapted algorithm
+
+`src/DDCore.Core/Navigation/RoomPathfinder.cs` adapts the deterministic room-graph breadth-first search from `BossMod.Modules/Global/DeepDungeon/FloorPathfind.cs` at the same pinned commit. DDCore replaces the native room-flags type, localizes search state per call, validates the 5x5 graph and reconstructs paths through predecessor links. File-level provenance is recorded in `provenance/bossmod-phase4.json`.
+
 BossMod is distributed under the BSD 3-Clause License:
 
 Copyright (c) 2022-2024, Andrew Gilewsky

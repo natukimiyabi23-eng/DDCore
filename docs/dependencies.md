@@ -43,7 +43,9 @@ Of these 63 paths, 59 are C# files and 4 are JSON resource files. The current Bo
 
 BossMod uses BSD-3-Clause. Derived source and binary distribution must preserve its copyright notice, license conditions, and disclaimer. DDCore-specific code should be kept in separate namespaces/files, and later implementation should add a `THIRD-PARTY-NOTICES.md` plus source headers or a provenance manifest for copied/modified files.
 
-No BossMod code or resources have been copied into DDCore through Phase 2. The foundation implementation is original DDCore code and only uses BossMod as a documented research reference.
+No BossMod code or resources were copied into DDCore through Phase 2. Phase 3 records behavior/data reimplementation in `provenance/bossmod-phase3.json`. Phase 4 adapts the small `FloorPathfind` room BFS with explicit source headers, a BSD notice and `provenance/bossmod-phase4.json`; it does not add a BossMod assembly/package reference.
+
+The reproducible Phase 4 lexical dependency inventory is implemented in `tools/Measure-Phase4BossMod.ps1`. It reports 67 scoped files and 28,609 physical lines at the pinned commit. Its dependency families are lexical evidence rather than a semantic compiler graph; see `docs/phase4-reuse-analysis.md` for the exact definition and results.
 
 ## Distribution constraint
 

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "schemaVersion": 1,
+      "id": "bossmod-deep-dungeon-floor-pathfind",
+      "repository": "https://github.com/awgil/ffxiv_bossmod",
+      "commit": "6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0",
+      "sourcePath": "BossMod.Modules/Global/DeepDungeon/FloorPathfind.cs",
+      "license": "BSD-3-Clause",
+      "copyright": "Copyright (c) 2022-2024, Andrew Gilewsky",
+      "derivation": "adapted",
+      "destination": "src/DDCore.Core/Navigation/RoomPathfinder.cs",
+      "notes": "Adapted from lines 5-60. The native RoomFlags dependency is replaced by a DDCore-owned enum, search state is local per call, inputs are validated, and predecessor reconstruction replaces per-queue path copies. N/S/W/E traversal order and valid-map route semantics are preserved."
+    }
+  ]
+}

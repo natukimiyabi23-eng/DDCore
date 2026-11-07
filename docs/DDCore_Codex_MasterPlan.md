@@ -275,6 +275,7 @@ The implementation-ready, non-operating design is recorded in [phase3-mechanics-
 - `FloorPathfind` is a deterministic BFS over a small 5x5 room graph.
 - `DeepDungeonAI` contains DD-specific potion, transformation, kiting and line-of-sight policy, but it operates inside BossMod's autorotation framework.
 - BossMod supplies useful policy evidence but not DDCore's proposed explainable, mode-gated state machine.
+- Phase 4 measurement found 67 scoped files / 28,609 physical lines and strong coupling to BossMod world, decision and geometry types. Of the eight named components, only the 5x5 room BFS was portable after dependency removal; see `phase4-reuse-analysis.md`.
 
 ### Implementation approach
 
@@ -306,6 +307,10 @@ The implementation-ready, non-operating design is recorded in [phase3-mechanics-
 - State machine has no unhandled transition in the scenario corpus.
 - Simulation can complete representative floor sets without invoking execution.
 - Unsafe/ambiguous states produce pause, not a guessed action.
+
+### Phase 4 extraction checkpoint
+
+`RoomPathfinder` is the first pure strategy building block. It preserves the pinned BossMod traversal order and route contract, is compared against a source-faithful test oracle, and remains disconnected from live observation because authoritative room flags are not available. This checkpoint is not completion of the decision engine and does not authorize Phase 5.
 
 ## Phase 5 — Operation foundation
 

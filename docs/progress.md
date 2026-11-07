@@ -90,3 +90,16 @@
 - Added Japanese start/stop, preview, export and confirmed-delete controls. Recording remains OFF by default and has no uploader.
 - Added recording format/privacy documentation and a user-run live test procedure. Live Dalamud and FFXIV testing remains unperformed.
 - Pushed implementation commit `478ab76`, opened Draft PR #4 against the Phase 3.6 branch, and confirmed both push and PR GitHub Actions runs passed.
+
+## 2026-11-08 — Phase 4 BossMod reuse analysis
+
+- Created `phase4/reuse-analysis` from the unmerged Phase 3.7 branch; `main` remains untouched.
+- Measured the fixed BossMod corpus as 67 files and 28,609 physical lines under an explicit, reproducible scope.
+- Analyzed `FloorPathfind`, `AutoClear`, `DeepDungeonAI`, `DeepDungeonState`, `AIHints`, `ActionQueue`, `Rooms` and `Traps` by pinned source line.
+- Mapped strategy inputs to the current immutable `WorldSnapshot` and recorded missing authoritative room, passage, resource, trap and execution inputs.
+- Adapted only the independent 5x5 room-graph BFS into pure C# with strict graph validation and per-call state.
+- Added a source-faithful comparison oracle, deterministic fixtures and all-pairs route comparison without adding any game operation.
+- Recorded component-level and reviewed-line reuse measurements, provenance, BSD notice and Phase 5-8 planning estimates.
+- Locked restore and Release build passed with 0 warnings/errors; 173 tests passed (Core 139, Observation 34).
+- Format verification and NuGet vulnerability audit passed; Core has no project references and the package contains both provenance manifests plus the BSD notice.
+- Pushed implementation commit `0d07b68`, opened Draft PR #5 against `phase3/diagnostics-and-recording`, and confirmed both push and PR GitHub Actions runs passed.

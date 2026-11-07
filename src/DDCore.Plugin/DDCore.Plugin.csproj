@@ -1,11 +1,11 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.3.1.0</Version>
+    <Version>0.4.0.0</Version>
     <AssemblyName>DDCore</AssemblyName>
     <RootNamespace>DDCore.Plugin</RootNamespace>
     <Author>natukimiyabi23-eng</Author>
     <Name>DDCore</Name>
-    <Punchline>ディープダンジョン読み取り専用解析・診断基盤（Phase 3.7）</Punchline>
+    <Punchline>ディープダンジョン読み取り専用解析・診断・経路計算基盤</Punchline>
     <Description>公開Dalamud APIの観測、ガンカナグのAoE候補解析、明示操作による有界なローカル記録を提供します。ゲーム操作や外部送信は行いません。</Description>
     <RepoUrl>https://github.com/natukimiyabi23-eng/DDCore</RepoUrl>
     <Tags>deep-dungeon;utility;japanese</Tags>
@@ -19,5 +19,6 @@
   <ItemGroup>
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\provenance\bossmod-phase3.json" Link="provenance\bossmod-phase3.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\provenance\bossmod-phase4.json" Link="provenance\bossmod-phase4.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
