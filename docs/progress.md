@@ -79,3 +79,13 @@
 - Added 15 observation tests while retaining all 125 Core tests. Live Dalamud and encounter behavior remain unverified.
 - Extended the existing Windows CI to run the full solution tests for the Phase 3.6 branch and its Draft PR base.
 - Confirmed both the push and Draft PR full-solution GitHub Actions runs succeeded; PR #3 remains Draft and unmerged.
+
+## 2026-11-07 — Phase 3.7 diagnostics and recording
+
+- Created `phase3/diagnostics-and-recording` from the clean unmerged Phase 3.6 branch.
+- Added bounded change-only normal diagnostics and explicit-start local observation recording.
+- Reused the strict JSON replay format with 2 Hz sampling, five-second atomic flushes, and lower 2 MiB/1,800-snapshot/15-minute limits.
+- Added safe stop behavior for storage failure, session/territory/logout transition, limit exhaustion and plugin disposal.
+- Removed player and party-member actors and references before recording; chat, names and account data are not observed.
+- Added Japanese start/stop, preview, export and confirmed-delete controls. Recording remains OFF by default and has no uploader.
+- Added recording format/privacy documentation and a user-run live test procedure. Live Dalamud and FFXIV testing remains unperformed.

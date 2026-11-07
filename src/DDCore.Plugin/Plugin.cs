@@ -36,6 +36,8 @@ public sealed class Plugin : IDalamudPlugin
     private MainWindow? mainWindow;
     private ConfigurationWindow? configurationWindow;
     private ObservationRuntime? observationRuntime;
+    private ObservationRecordingService? observationRecorder;
+    private readonly ObservationDiagnosticLog observationDiagnosticLog = new();
     private bool resourcesReleased;
 
     public Plugin()
@@ -52,10 +54,18 @@ public sealed class Plugin : IDalamudPlugin
 
             var observationSource = new DalamudObservationSource(ClientState, ObjectTable, DutyState);
             var snapshotProvider = new LiveWorldSnapshotProvider(observationSource);
+            var recordingDirectory = Path.Combine(PluginInterface.GetPluginConfigDirectory(), "recordings");
+            observationRecorder = new ObservationRecordingService(
+                recordingDirectory,
+                typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "unknown");
+            cleanupActions.Push(observationRecorder.Dispose);
             observationRuntime = new ObservationRuntime(
                 new DalamudFrameworkTickSource(Framework),
                 snapshotProvider,
-                new AnalyzerRegistry([new GancanaghAnalyzer()]));
+                new AnalyzerRegistry([new GancanaghAnalyzer()]),
+                observationRecorder,
+                observationDiagnosticLog,
+                logger);
             cleanupActions.Push(observationRuntime.Dispose);
 
             windowSystem = new WindowSystem("DDCore");
@@ -95,7 +105,7 @@ public sealed class Plugin : IDalamudPlugin
                     ?? "設定の永続化に失敗しました。安全状態は現在のセッションで維持されます。";
             }
 
-            logger.Information("DDCore Phase 3.6をObserverモードで起動しました。観測は読み取り専用で、ゲーム操作機能は含まれていません。");
+            logger.Information("DDCore Phase 3.7をObserverモードで起動しました。観測と明示操作によるローカル記録は読み取り専用で、ゲーム操作機能は含まれていません。");
         }
         catch (Exception exception)
         {
@@ -113,6 +123,9 @@ public sealed class Plugin : IDalamudPlugin
     public string LastStatusMessage { get; private set; } = "Observerモードで安全に起動しました。";
     public LiveObservationDiagnostics ObservationDiagnostics => observationRuntime?.Current
         ?? LiveObservationDiagnostics.Waiting;
+    public ObservationRecordingStatus RecordingStatus => observationRecorder?.Status
+        ?? ObservationRecordingStatus.Off;
+    public ObservationDiagnosticEntry? LatestObservationError => observationDiagnosticLog.LatestError;
 
     public void Dispose() => ReleaseResources();
 
@@ -183,6 +196,62 @@ public sealed class Plugin : IDalamudPlugin
         LastStatusMessage = configurationService.LastPersistenceError
             ?? "設定保存に失敗しました。変更は現在のセッションだけに保持されます。";
         return false;
+    }
+
+    public void StartObservationRecording()
+    {
+        if (observationRecorder?.Start() == true)
+        {
+            LastStatusMessage = "観測記録を開始しました。ローカル保存のみで、外部送信は行いません。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = observationRecorder?.Status.LatestError
+            ?? "観測記録を開始できませんでした。すでに記録中の可能性があります。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void StopObservationRecording()
+    {
+        if (observationRecorder?.Stop() == true)
+        {
+            LastStatusMessage = "観測記録を停止し、ローカルへ保存しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = observationRecorder?.Status.LatestError
+            ?? "停止できる観測記録がありません。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void ExportObservationRecording(bool previewConfirmed)
+    {
+        if (observationRecorder?.Export(previewConfirmed) == true)
+        {
+            LastStatusMessage = "確認済みの観測記録をローカルのexportsフォルダーへ出力しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = observationRecorder?.Status.LatestError
+            ?? "内容確認後、停止済みの記録をエクスポートしてください。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void DeleteObservationRecording(bool deletionConfirmed)
+    {
+        if (observationRecorder?.Delete(deletionConfirmed) == true)
+        {
+            LastStatusMessage = "観測記録と、このセッションから作成したエクスポートを削除しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = observationRecorder?.Status.LatestError
+            ?? "削除確認がないか、記録中のため削除できません。";
+        logger.Warning(LastStatusMessage);
     }
 
     private void OnCommand(string command, string arguments)

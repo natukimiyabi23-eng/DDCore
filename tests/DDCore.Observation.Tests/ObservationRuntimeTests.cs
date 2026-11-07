@@ -48,16 +48,109 @@ public sealed class ObservationRuntimeTests
     public void ConvertsCaptureExceptionToInvalidDiagnostics()
     {
         var tick = new FakeTickSource();
+        var diagnosticLog = new ObservationDiagnosticLog();
         using var runtime = new ObservationRuntime(
             tick,
             new ThrowingProvider(),
-            new AnalyzerRegistry([]));
+            new AnalyzerRegistry([]),
+            diagnosticLog: diagnosticLog);
 
         tick.Raise();
 
         Assert.Equal(LiveObservationState.Invalid, runtime.Current.State);
         Assert.Equal(MechanicSafetyAssessment.InvalidObservation, runtime.Current.Safety);
         Assert.Contains("observation.capture-failed:InvalidOperationException", runtime.Current.Reasons);
+        Assert.Equal("observation.capture-failed", diagnosticLog.LatestError?.Code);
+    }
+
+    [Fact]
+    public void DiagnosticLogRecordsChangesWithoutRepeatingIdenticalState()
+    {
+        var source = new LiveWorldSnapshotProviderTests.QueueSource(
+            LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player()], dutyStarted: false),
+            LiveWorldSnapshotProviderTests.Frame(At.AddSeconds(1), [LiveWorldSnapshotProviderTests.Player()], dutyStarted: false));
+        var tick = new FakeTickSource();
+        var diagnosticLog = new ObservationDiagnosticLog();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(source),
+            new AnalyzerRegistry([]),
+            diagnosticLog: diagnosticLog);
+
+        tick.Raise();
+        var afterFirst = diagnosticLog.Snapshot().Length;
+        tick.Raise();
+
+        Assert.Equal(2, afterFirst);
+        Assert.Equal(afterFirst, diagnosticLog.Snapshot().Length);
+        Assert.Equal(["observation.session.reset", "observation.state.changed"], diagnosticLog.Snapshot().Select(entry => entry.Code));
+    }
+
+    [Fact]
+    public void TerritoryChangeStopsActiveRecordingBeforeSessionsMix()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"ddcore-runtime-{Guid.NewGuid():N}");
+        try
+        {
+            using var recorder = new ObservationRecordingService(directory, "0.3.1.0", utcNow: () => At);
+            Assert.True(recorder.Start());
+            var source = new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player()], territoryId: 777, dutyStarted: false),
+                LiveWorldSnapshotProviderTests.Frame(At.AddSeconds(1), [LiveWorldSnapshotProviderTests.Player()], territoryId: 778, dutyStarted: false));
+            var tick = new FakeTickSource();
+            using var runtime = new ObservationRuntime(
+                tick,
+                new LiveWorldSnapshotProvider(source),
+                new AnalyzerRegistry([]),
+                recorder);
+
+            tick.Raise();
+            tick.Raise();
+
+            Assert.Equal(ObservationRecordingState.Stopped, recorder.Status.State);
+            Assert.Equal("recording.session-changed", recorder.Status.StopReason);
+            Assert.Equal(1, recorder.Status.Preview.SnapshotCount);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void LogoutStopsActiveRecordingBeforeSessionsMix()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"ddcore-runtime-{Guid.NewGuid():N}");
+        try
+        {
+            using var recorder = new ObservationRecordingService(directory, "0.3.1.0", utcNow: () => At);
+            Assert.True(recorder.Start());
+            var source = new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player()], dutyStarted: false),
+                new RawObservationFrame(At.AddSeconds(1), false, null, null, false, null, [], []));
+            var tick = new FakeTickSource();
+            using var runtime = new ObservationRuntime(
+                tick,
+                new LiveWorldSnapshotProvider(source),
+                new AnalyzerRegistry([]),
+                recorder);
+
+            tick.Raise();
+            tick.Raise();
+
+            Assert.Equal(ObservationRecordingState.Stopped, recorder.Status.State);
+            Assert.Equal("recording.session-changed", recorder.Status.StopReason);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
     }
 
     [Fact]
