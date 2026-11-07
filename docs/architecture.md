@@ -99,6 +99,12 @@ Phase 4 extracted only the deterministic 5x5 room-graph BFS into `DDCore.Core.Na
 
 The current live observation boundary does not expose authoritative room flags, room geometry, passage/resource state or traps. Therefore this algorithm is an offline/testable building block only. No observation adapter feeds it and no decision or execution component consumes it yet.
 
+### Phase 4.5 optional BossMod diagnostic
+
+`DDCore.Observation` owns the BossMod-neutral `IBossModIpcInvoker` contract and fail-closed diagnostic result. `DDCore.Plugin` alone adapts public Dalamud IPC. The probe is optional, one-shot and read-only. It does not feed `WorldSnapshot`, `AnalyzerRegistry`, decisions or execution because the fixed BossMod IPC surface exposes no versioned DD strategy DTO.
+
+Reachability and DD-data capability are independent fields. No future code may infer hazards, safe locations or strategy availability from `ReachableUnversioned`.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.

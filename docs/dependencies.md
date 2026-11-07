@@ -45,6 +45,8 @@ BossMod uses BSD-3-Clause. Derived source and binary distribution must preserve 
 
 No BossMod code or resources were copied into DDCore through Phase 2. Phase 3 records behavior/data reimplementation in `provenance/bossmod-phase3.json`. Phase 4 adapts the small `FloorPathfind` room BFS with explicit source headers, a BSD notice and `provenance/bossmod-phase4.json`; it does not add a BossMod assembly/package reference.
 
+Phase 4.5 uses only the public Dalamud IPC subscriber API and the string endpoint `BossMod.HasModuleByDataId`. BossMod remains optional and no BossMod assembly is referenced. The endpoint has no protocol/version handshake and provides no DD strategy DTO, so it is treated as a diagnostic compatibility surface rather than a functional dependency.
+
 The reproducible Phase 4 lexical dependency inventory is implemented in `tools/Measure-Phase4BossMod.ps1`. It reports 67 scoped files and 28,609 physical lines at the pinned commit. Its dependency families are lexical evidence rather than a semantic compiler graph; see `docs/phase4-reuse-analysis.md` for the exact definition and results.
 
 ## Distribution constraint
@@ -64,6 +66,7 @@ Official Dalamud restrictions say plugins must not automate server interaction o
 - Dalamud v15: <https://dalamud.dev/versions/v15/>
 - Dalamud v16 preview: <https://dalamud.dev/versions/v16/>
 - Dalamud API index: <https://dalamud.dev/api/>
+- Dalamud `IDalamudPluginInterface` IPC subscriber API: <https://dalamud.dev/api/Dalamud.Plugin/Interfaces/IDalamudPluginInterface/>
 - Plugin restrictions: <https://dalamud.dev/plugin-publishing/restrictions/>
 - Plugin technical considerations: <https://dalamud.dev/plugin-development/technical-considerations/>
 - Official repository criteria: <https://github.com/goatcorp/DalamudPluginsD17/blob/main/README.md>

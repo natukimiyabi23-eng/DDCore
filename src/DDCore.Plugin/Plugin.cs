@@ -38,6 +38,7 @@ public sealed class Plugin : IDalamudPlugin
     private ObservationRuntime? observationRuntime;
     private ObservationRecordingService? observationRecorder;
     private readonly ObservationDiagnosticLog observationDiagnosticLog = new();
+    private BossModIntegrationDiagnostics bossModIntegration = BossModIntegrationDiagnostics.NotChecked;
     private bool resourcesReleased;
 
     public Plugin()
@@ -51,6 +52,9 @@ public sealed class Plugin : IDalamudPlugin
             Safety = new SafetyController(executionAvailable: false);
             Safety.RestoreEmergencyStop(configurationService.Current.EmergencyStopLatched);
             Execution = new DisabledExecutionGateway();
+
+            bossModIntegration = BossModIntegrationProbe.Check(
+                () => new DalamudBossModIpcInvoker(PluginInterface));
 
             var observationSource = new DalamudObservationSource(ClientState, ObjectTable, DutyState);
             var snapshotProvider = new LiveWorldSnapshotProvider(observationSource);
@@ -126,6 +130,7 @@ public sealed class Plugin : IDalamudPlugin
     public ObservationRecordingStatus RecordingStatus => observationRecorder?.Status
         ?? ObservationRecordingStatus.Off;
     public ObservationDiagnosticEntry? LatestObservationError => observationDiagnosticLog.LatestError;
+    public BossModIntegrationDiagnostics BossModIntegration => bossModIntegration;
 
     public void Dispose() => ReleaseResources();
 

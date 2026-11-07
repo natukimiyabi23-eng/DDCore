@@ -38,6 +38,10 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+        DrawBossModIntegration();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
         DrawRecording();
         ImGui.Spacing();
         ImGui.Separator();
@@ -116,6 +120,31 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.TextUnformatted(label);
         ImGui.SameLine(170);
         ImGui.TextWrapped(value);
+    }
+
+    private void DrawBossModIntegration()
+    {
+        var diagnostics = plugin.BossModIntegration;
+        ImGui.TextUnformatted("BossMod連携診断（読み取り専用）");
+        ImGui.TextDisabled("接続可否とDD攻略データの提供可否は別々に判定します。");
+        ImGui.Spacing();
+        DrawValue("IPC接続", diagnostics.Connection switch
+        {
+            BossModConnectionState.NotChecked => "未確認",
+            BossModConnectionState.Unavailable => "未導入・未起動・既知IPCなし",
+            BossModConnectionState.ReachableUnversioned => "到達可能（バージョン契約なし）",
+            BossModConnectionState.IncompatibleOrFaulted => "署名不一致または呼び出し失敗",
+            _ => "不明",
+        });
+        DrawValue("ガンカナグ定義", diagnostics.HasGancanaghModule switch
+        {
+            true => "既知IPCで登録を確認",
+            false => "既知IPCには未登録",
+            null => "確認不能",
+        });
+        DrawValue("DD攻略データ", "取得不可（AoE・安全位置・部屋・資源・優先度の公開契約なし）");
+        DrawValue("プロトコル版", diagnostics.ProtocolVersion ?? "提供なし・互換性を保証できません");
+        DrawValue("診断コード", diagnostics.ReasonCode);
     }
 
     private static string ObservationStateText(LiveObservationState state) => state switch

@@ -1,9 +1,11 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-08 JST (Phase 4 complete; Draft PR review pending)
+Updated: 2026-11-08 JST (Phase 4.5 BossMod integration proof complete; Draft PR review pending)
 
 ## Objective
+
+Current objective: implement Phase 4.5 on `phase4.5/bossmod-integration-proof`: prove separately whether DDCore can reach BossMod's fixed-commit IPC surface and whether that surface provides the Deep Dungeon strategy data DDCore needs. Add only a read-only, optional, fail-closed diagnostic probe when supported by the public Dalamud IPC mechanism; do not add BossMod runtime references, private hooks, gameplay operation, Phase 5 work, deployment, live FF14 operation, or a `main` merge. Record source-line evidence, comparison, verification, and create a stacked Draft PR targeting `phase4/reuse-analysis`.
 
 Current objective: implement Phase 4 on `phase4/reuse-analysis`: quantitatively analyze the pinned BossMod Deep Dungeon strategy code, map dependencies and required inputs to DDCore `WorldSnapshot`, classify direct reuse/dependency removal/reimplementation, extract the smallest viable pure C# algorithm module, compare it against the pinned implementation where executable, measure reuse using explicit definitions, and re-estimate Phase 5-8 scope/tokens. Preserve Phase 3.7, do not implement Phase 5 operation, do not merge to `main`, and create a Draft PR targeting `phase3/diagnostics-and-recording`.
 
@@ -82,6 +84,25 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Draft PR #5 targets `phase3/diagnostics-and-recording`: `https://github.com/natukimiyabi23-eng/DDCore/pull/5`.
 - Both push and Draft PR `build-and-test` runs passed (runs `42388673278` and `42388678876`).
 - Exact next step: user reviews Draft PR #5. Do not merge or start Phase 5 without explicit approval.
+
+## Phase 4.5 checkpoint
+
+- Authoritative preflight at start: five-hour window 38% remaining and weekly window 75% remaining. Estimated remaining work 30% plus 4% contingency; projected five-hour balance `38% - 34% = 4%`.
+- Created `phase4.5/bossmod-integration-proof` from clean `phase4/reuse-analysis` at `497278d`; Draft PR #5 remains the Phase 4 base.
+- Fixed BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0` registers 37 `BossMod.*` IPC functions in `BossMod/Services/IpcService.cs` through Dalamud's IPC provider mechanism.
+- The fixed IPC surface exposes configuration, rotation status, preset management and obstacle-map operations/status, but no active mechanic/AoE DTO, `AIHints`, safe position, action recommendation, `DeepDungeonState`, rooms/passages/resources or target-priority data.
+- Current upstream still contains the IPC provider but the file was moved/renamed and 10 of the 37 fixed-commit endpoints were removed, demonstrating an unversioned compatibility risk.
+- Exact unfinished step: add a read-only diagnostic probe for invocation reachability only, explicitly report protocol version and DD strategy-data capability as unavailable, test absent/success/error paths, then document and verify. Do not claim useful DD integration from reachability alone.
+- Implemented the optional probe in Observation/Plugin, added Japanese UI diagnostics and five tests. Observation tests pass 39/39 and the first full Release build passed with 0 warnings/errors.
+- Added `docs/phase4.5-bossmod-integration.md` and the verification scaffold. Five-hour balance after this milestone: 29%; weekly balance: 73%.
+- Exact unfinished step: run the locked full verification matrix, record final counts/hash, review the diff, commit/push, open the stacked Draft PR and wait for CI.
+- Final local verification passed: locked restore, Release build (0 warnings/errors), 179 tests (Core 139 + Observation 40), format and NuGet vulnerability audit.
+- Static audit found no BossMod assembly/package reference and no new movement, targeting, action, item, hook or client-struct operation. Package `0.4.5.0`, API 15, SHA-256 `6D61D5E0CBD30E75126F419B1869B85B800CFE9732E4945A3189904D7C1016A4`.
+- Exact unfinished step: final diff review, commit/push, open the stacked Draft PR against `phase4/reuse-analysis`, wait for CI, then record PR/check results and mark complete.
+- Implementation commit `fcb9602` was pushed. Draft PR #6 targets `phase4/reuse-analysis`: `https://github.com/natukimiyabi23-eng/DDCore/pull/6`.
+- Added CI coverage for the Phase 4.5 stacked branch. Push run `42392652552` and Draft PR run `42392656475` both passed at head `cc0acb8`.
+- Phase 4.5 conclusion: public IPC proves optional reachability only. The fixed 37-function surface supplies none of the seven required DD strategy-data categories, so independent migration remains recommended unless BossMod adds a versioned read-only DD snapshot contract.
+- Exact next step: user reviews Draft PR #6. Live IPC invocation remains unverified. Do not merge PR #6, operate FF14, or start Phase 5 without explicit user approval.
 
 ## Phase 3.7 checkpoint
 
