@@ -10,20 +10,24 @@ Verification applies to the user-defined Phase 5 DD state and read-only strategy
 |---|---|
 | Locked restore | Passed for all five projects |
 | Release solution build | Passed, 0 warnings / 0 errors |
-| Core tests | 169 passed, 0 failed, 0 skipped |
+| Core tests | 173 passed, 0 failed, 0 skipped |
 | Observation tests | 40 passed, 0 failed, 0 skipped |
-| Total tests | 209 passed |
+| Total tests | 213 passed |
 | Format verification | Passed with no changes required |
 | NuGet vulnerability audit | No known vulnerable direct or transitive package in all five projects |
 | Core project references | None |
 | Core assembly references | Framework assemblies only; no Dalamud, BossMod or ClientStructs |
 | Static prohibited-operation scan | No targeting, action/item use, input, hook, scanner, ClientStructs or NavMesh operation symbol found in production source |
 | Package | `0.5.0.0`, Dalamud API 15 |
-| Package SHA-256 | `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A` |
+| Package SHA-256 | `6EC28A9568A34B33221174CC4DE6E77E8E6A0EB4D8E3C6C60DBE8D06B46F2D74` |
+
+## Real-data replay validation
+
+Two local schema-version 3 exports (412 snapshots total) were decoded without modifying or committing the source JSON. All snapshots entered the read-only strategy adapter and engine; all returned fail-closed `Stop` decisions because floor/room/exit/resource observations were unavailable. The labelled candidate contributed 124 of those inputs. See [phase5-real-data-validation.md](phase5-real-data-validation.md) for the evidence, limitations and Phase 6 readiness decision.
 
 The package contains `DDCore.dll`, Core and Observation assemblies, deps/manifest files, symbols, `THIRD-PARTY-NOTICES.md`, and Phase 3/4 provenance manifests. It contains no BossMod assembly.
 
-Final push run `42412810484` and Draft PR run `42412814600` both passed the Windows build/test/package workflow at verified head `bc2e5dc`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation was emitted while GitHub forced Node.js 24; it did not fail either run.
+The original Phase 5 push run `42412810484` and Draft PR run `42412814600` passed at verified head `bc2e5dc`. CI for the real-data validation update is recorded after its push; local locked restore, Release build, 213 tests, format and package audits passed before that push.
 
 ## Required checks
 

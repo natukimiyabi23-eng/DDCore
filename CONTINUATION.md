@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 05:48 JST (Phase 5 DD state and strategy engine complete; Draft PR review pending)
+Status: in_progress
+Updated: 2026-11-08 08:00 JST (Phase 5 real-data conversion and local replay run complete)
 
 ## Objective
+
+Current objective: validate the Phase 5 read-only strategy engine against original observation exports under `C:\Users\wasur\AppData\Roaming\XIVLauncher\pluginConfigs\DDCore\recordings\exports` without modifying, deleting or committing those files. Auto-detect and summarize the exports, identify the user-labelled 2026-11-07 floor 3 to floor 4 session without inventing absent fields, determine conversion coverage into `DeepDungeonStrategyState`, execute only valid decisions, add minimal read-only validation code/tests if needed, update Draft PR #7, and stop before Phase 6 or any game operation.
 
 Current objective: implement the user-defined Phase 5 on `phase5/strategy-engine`, based on `phase4.5/bossmod-integration-proof`: add a read-only, deterministic Deep Dungeon state model and strategy engine that preserves unknown observations, uses the Phase 4 `RoomPathfinder`, returns recommendations with reasons/preconditions/risk/blocking information, and is covered by synthetic tests and full verification. This user-defined numbering intentionally treats Phase 5 as the decision-engine phase even though the original master plan labels decision logic as Phase 4 and operation infrastructure as Phase 5. Do not add gameplay execution, BossMod runtime dependency, Phase 6 work, live FF14 operation, or a `main` merge.
 
@@ -67,11 +69,24 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- No required Phase 5 implementation or verification step remains.
+- Run the locked full verification matrix, record the rebuilt package hash, review the diff, commit/push the read-only adapter/tests/docs, update Draft PR #7, and wait for CI.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
 - Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this phase and must not be reported as verified.
 
 ## Phase 5 checkpoint
+
+- Real-data validation started: `2026-11-08T07:37:07+09:00`.
+- Authoritative preflight: five-hour window 42% remaining; weekly window 60% remaining.
+- Estimated requirement: 30% total (research 6%, conversion/validation implementation 10%, tests 5%, audits/docs 5%, PR 2%, contingency 2%); projected five-hour balance `42% - 30% = 12%`.
+- Export folder access succeeded. Two `ddcore-export-*.json` files were detected, including candidate `ddcore-export-20261107-180939-e7bd7997efe34218aadad2a978beb81e.replay.json`.
+- Continuation automation `ddcore-phase5-live-data-followup` was scheduled once for `2026-11-08 12:37:07 JST`, created and verified `ACTIVE`. It checks the active goal, this file, Git/PR/build/test state and remaining usage, then resumes only unfinished work.
+- Production `ReplayCodec` accepted all 412 snapshots (candidate: 124). The read-only adapter and strategy engine evaluated every snapshot with 0 exceptions; all returned fail-closed `Stop` / `Unknown`, with 0 actionable decisions.
+- The candidate contains 42 HP-decrease transitions, 2 alive-to-dead/destroyed transitions, 13 casts and 19 status snapshots. It contains no floor, room graph/membership, exit, traps, pomanders, remaining time or resource readiness.
+- The floor 3 to floor 4 attribution is retained only as a user-provided truth label; the JSON does not contain a transition event or either floor number.
+- Added `WorldSnapshotStrategyAdapter`, four tests and `docs/phase5-real-data-validation.md`. Core tests pass 173/173 before the full verification matrix.
+- Full local verification passed: locked restore, Release build with 0 warnings/errors, Core 173/173 plus Observation 40/40 (213 total), format, NuGet vulnerability, Core reference and prohibited-operation scans.
+- Rebuilt package `0.5.0.0` SHA-256: `6EC28A9568A34B33221174CC4DE6E77E8E6A0EB4D8E3C6C60DBE8D06B46F2D74`.
+- Authoritative usage after local verification: five-hour window 25% remaining; weekly window 57% remaining.
 
 - Started: `2026-11-08T05:30:26+09:00`.
 - Authoritative preflight: five-hour window 86% remaining; weekly window 67% remaining.

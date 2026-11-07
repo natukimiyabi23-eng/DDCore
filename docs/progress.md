@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-08 — Phase 5 real-data validation
+
+- Auto-detected two unmodified local replay exports and validated 412 schema-version 3 snapshots with the production replay codec.
+- Added a read-only `WorldSnapshotStrategyAdapter` that transfers only direct observations and preserves unavailable room, exit, resource and timing inputs as Unknown.
+- The user-labelled floor 3 to floor 4 candidate contains 124 snapshots, but no floor number or transition event; the label cannot be independently derived from the JSON.
+- All 412 strategy evaluations completed without exceptions and returned deterministic fail-closed `Stop` / `Unknown` results. No actionable decision was produced.
+- Added four adapter/fail-closed tests. Core tests now pass 173/173 and the full local verification is recorded in `phase5-verification.md`.
+- Phase 6 is not ready because authoritative floor, room graph/membership, exit, traps, pomanders, remaining time and resource readiness are not observed.
+
 ## 2026-11-08 — User-defined Phase 5 DD strategy engine
 
 - Reconciled the explicit Phase 5 instruction with the original master plan: this branch completes a bounded decision-engine layer and does not start the original Phase 5 operation foundation.
