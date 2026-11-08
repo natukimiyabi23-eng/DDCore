@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-09 02:53 JST (Phase 5.5D diagnostics started after Phase 5.5C completion check)
+Status: complete
+Updated: 2026-11-09 03:06 JST (Phase 5.5D diagnostics complete; awaiting user live verification)
 
 ## Objective
 
@@ -15,7 +15,10 @@ Current objective: implement only Phase 5.5D on `phase5.5d/chat-floor-diagnostic
 - Implementation milestone: added the opt-in API 15 `LogMessage` / `ChatMessage` adapter, pure candidate analyzer, independent bounded schema-1 anonymous recorder/export, Japanese UI, 18 new tests and Phase 5.5D documentation. Exact-floor candidates remain outside `WorldSnapshot` and strategy state.
 - Original replay recheck passed unchanged: schema 5 / producer 0.5.3.0, 105 snapshots, 1,535 actor observations (641 usable, 894 quarantined, 0 missing), SHA-256 `A21CDE46C934A7A94D747638B6A2F0262459E53E00E4B1DA89B651872D63B90F`.
 - Local verification passed: Release build 0 warnings/errors; Core 197/197 and Observation 122/122 tests (319 total, 18 new); format; NuGet vulnerability; dependency/prohibited-operation checks. Package 0.5.4.0 / API 15 is `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `C77DC90AE46C7A35AC12B88D67913DC6FEED9347FA2C89ACA264A26C35CBCB39`.
-- Exact unfinished step: review/stage, commit/push, open a Draft PR targeting `phase5.5c/chat-floor-design`, wait for CI, mark this continuation complete, delete both obsolete follow-up automations, notify Discord, and stop for user-run live verification.
+- Implementation commit `84aac4c` was pushed. Draft PR #13 targets `phase5.5c/chat-floor-design`, is open/Draft/mergeable, and no branch or PR was merged.
+- GitHub Actions passed at the implementation head: push run `42507903657` and Draft PR run `42507933803`.
+- User verification still required: manually load package 0.5.4.0, opt in to **階層診断開始** before a DD floor transition, stop and export afterward, and compare the anonymous event candidate with the visibly confirmed floor. Candidate IDs, parameter mapping, order, duplicate delivery and all three DDs remain live-unverified.
+- No deployment, activation, FF14/Dalamud/UI operation or exact-floor strategy integration was performed. Safe next step is review of Draft PR #13 and user-run live diagnostics; do not start another phase without explicit approval.
 
 Current objective: research and design Phase 5.5C exact-floor observation from read-only public Dalamud API 15 chat events. Produce only `docs/phase5.5c-chat-floor-investigation.md`, `docs/phase5.5c-chat-floor-design.md`, and `docs/phase5.5c-live-verification-plan.md`, grounded in verified API/source evidence and the user-confirmed Japanese example `地下9階`. Do not implement DDCore functionality, subscribe to chat at runtime, access private structures, operate FF14/Dalamud, change B2 behavior, merge any PR/main, or proceed beyond the approval boundary.
 
