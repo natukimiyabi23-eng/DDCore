@@ -90,6 +90,8 @@ internal sealed class MainWindow : Window, IDisposable
         DrawValue("DD種別・階層", DungeonText(diagnostics));
         DrawValue("観測した敵", $"{diagnostics.EnemyCount}体");
         DrawValue("詠唱中の敵", $"{diagnostics.CastingEnemyCount}体");
+        DrawValue("Actor座標", $"使用可 {diagnostics.UsableSpatialCount} / 隔離 {diagnostics.QuarantinedSpatialCount} / 欠損 {diagnostics.MissingSpatialCount}");
+        DrawValue("最新の座標隔離理由", diagnostics.LatestSpatialReason ?? "なし");
         DrawValue("検出したAoE", $"{diagnostics.HazardCount}件");
         DrawValue("安全判定", diagnostics.Safety switch
         {

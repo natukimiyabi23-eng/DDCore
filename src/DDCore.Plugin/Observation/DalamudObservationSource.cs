@@ -171,15 +171,28 @@ internal sealed class DalamudObservationSource(
                 null,
                 float.IsFinite(status.RemainingTime) && status.RemainingTime > 0 ? status.RemainingTime : null))
             .ToImmutableArray() ?? [];
-        var position = gameObject.Position;
+        RawPosition? position = null;
+        double? rotation = null;
+        string? spatialMissingReason = null;
+        try
+        {
+            var observedPosition = gameObject.Position;
+            position = new RawPosition(observedPosition.X, observedPosition.Y, observedPosition.Z);
+            rotation = gameObject.Rotation;
+        }
+        catch (Exception exception)
+        {
+            spatialMissingReason = $"dalamud.actor.spatial-read-failed:{exception.GetType().Name}";
+        }
+
         return new RawActorObservation(
             gameObject.EntityId,
             gameObject.GameObjectId,
             gameObject.ObjectIndex,
             gameObject.BaseId,
             kind,
-            new RawPosition(position.X, position.Y, position.Z),
-            gameObject.Rotation,
+            position,
+            rotation,
             gameObject.HitboxRadius,
             character.CurrentHp,
             character.MaxHp,
@@ -188,6 +201,7 @@ internal sealed class DalamudObservationSource(
             character.StatusFlags.HasFlag(StatusFlags.InCombat),
             gameObject.TargetObjectId == 0 ? null : gameObject.TargetObjectId,
             cast,
-            statuses);
+            statuses,
+            spatialMissingReason);
     }
 }

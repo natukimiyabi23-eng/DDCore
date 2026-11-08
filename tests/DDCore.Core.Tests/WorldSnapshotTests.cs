@@ -112,7 +112,10 @@ public sealed class WorldSnapshotTests
     [Fact]
     public void NonFiniteActorDataIsRejected()
     {
-        var actor = CreateActor() with { Position = new Coordinate2D(double.NaN, 0) };
+        var actor = CreateActor() with
+        {
+            Spatial = ActorSpatialObservation.Usable(new Coordinate2D(double.NaN, 0), 0),
+        };
         Assert.Throws<ArgumentOutOfRangeException>(() => CreateSnapshot(actors: [actor]));
     }
 
@@ -170,6 +173,47 @@ public sealed class WorldSnapshotTests
             new Coordinate2D(1, 2),
             0,
             new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, "unexpected"))));
+    }
+
+    [Fact]
+    public void ActorSpatialMissingAndOriginRemainDistinct()
+    {
+        var missing = ActorSpatialObservation.Missing(
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Missing, "actor.spatial.not-observed"),
+            "actor.spatial.not-observed");
+        var origin = ActorSpatialObservation.Quarantined(
+            new Coordinate2D(0, 0),
+            0,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null),
+            "actor.spatial.origin-unverified");
+
+        missing.Validate();
+        origin.Validate();
+
+        Assert.Null(missing.Position);
+        Assert.Equal(new Coordinate2D(0, 0), origin.Position);
+        Assert.Equal(SpatialUsability.Missing, missing.Usability);
+        Assert.Equal(SpatialUsability.Quarantined, origin.Usability);
+    }
+
+    [Fact]
+    public void MissingSpatialRequiresMissingMetadataWithMatchingReason()
+    {
+        var direct = new ActorSpatialObservation(
+            null,
+            null,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null),
+            SpatialUsability.Missing,
+            "actor.spatial.not-observed");
+        var mismatch = new ActorSpatialObservation(
+            null,
+            null,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Missing, "one"),
+            SpatialUsability.Missing,
+            "two");
+
+        Assert.Throws<InvalidDataException>(direct.Validate);
+        Assert.Throws<InvalidDataException>(mismatch.Validate);
     }
 
     private static WorldSnapshot CreateSnapshot(

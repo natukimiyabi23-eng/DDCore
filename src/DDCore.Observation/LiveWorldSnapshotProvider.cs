@@ -60,11 +60,17 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         var identities = new Dictionary<uint, ActorIdentity>();
         foreach (var actor in raw.Actors)
         {
-            if (actor.EntityId == 0 || !actor.IsValid)
+            if (actor.EntityId == 0)
             {
                 quality = ObservationQuality.Partial;
-                diagnostics.Add("observation.actor.invalid-or-missing-entity-id");
+                diagnostics.Add("observation.actor.missing-entity-id");
                 continue;
+            }
+
+            if (!actor.IsValid)
+            {
+                quality = ObservationQuality.Partial;
+                diagnostics.Add("observation.actor.invalid-lifecycle");
             }
 
             identities[actor.EntityId] = new ActorIdentity(actor.EntityId, generations.Observe(actor));
@@ -85,14 +91,20 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         foreach (var rawActor in raw.Actors.Where(actor => identities.ContainsKey(actor.EntityId)))
         {
             var identity = identities[rawActor.EntityId];
-            var cast = ConvertCast(raw, rawActor, identity, identities, byGameObjectId, diagnostics, ref quality);
+            var spatial = ActorSpatialQualifier.Qualify(rawActor);
+            if (spatial.Usability != SpatialUsability.Usable)
+            {
+                quality = ObservationQuality.Partial;
+                diagnostics.Add(spatial.ReasonCode!);
+            }
+
+            var cast = ConvertCast(raw, rawActor, spatial, identity, identities, byGameObjectId, diagnostics, ref quality);
             var statuses = rawActor.Statuses.Select(status => ConvertStatus(raw, status, identities)).ToImmutableArray();
             actors.Add(new ActorSnapshot(
                 identity,
                 rawActor.BaseId,
                 ConvertKind(rawActor.Kind, raw.LocalPlayerEntityId, rawActor.EntityId),
-                new Coordinate2D(rawActor.Position.X, rawActor.Position.Z),
-                Coordinate2D.FromClockwisePositiveYRotation(rawActor.Rotation),
+                spatial,
                 rawActor.HitboxRadius,
                 rawActor.CurrentHp,
                 rawActor.MaximumHp,
@@ -165,6 +177,7 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
     private CastSnapshot? ConvertCast(
         RawObservationFrame frame,
         RawActorObservation actor,
+        ActorSpatialObservation actorSpatial,
         ActorIdentity identity,
         IReadOnlyDictionary<uint, ActorIdentity> identities,
         IReadOnlyDictionary<ulong, RawActorObservation> byGameObjectId,
@@ -185,15 +198,39 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
                 return null;
             }
 
+            if (actorSpatial.Rotation is null)
+            {
+                quality = ObservationQuality.Partial;
+                diagnostics.Add($"observation.cast.rotation-unavailable:{actor.EntityId:X8}");
+                activeCasts.Remove(identity);
+                return null;
+            }
+
             var elapsed = Math.Min(rawCast.CurrentSeconds, rawCast.TotalSeconds);
             var startedAt = frame.CapturedAt - TimeSpan.FromSeconds(elapsed);
             var finishesAt = startedAt + TimeSpan.FromSeconds(rawCast.TotalSeconds);
             var target = ResolveTarget(rawCast.TargetObjectId, identities, byGameObjectId);
             Coordinate2D? targetLocation = null;
+            ObservationMetadata? targetLocationMetadata = null;
+            var targetLocationUsability = SpatialUsability.Missing;
+            string? targetLocationReason = null;
             if (rawCast.TargetObjectId is { } targetId && byGameObjectId.TryGetValue(targetId, out var targetActor))
             {
-                targetLocation = new Coordinate2D(targetActor.Position.X, targetActor.Position.Z);
-                diagnostics.Add($"observation.cast.target-location.derived-from-target:{actor.EntityId:X8}");
+                var targetSpatial = ActorSpatialQualifier.Qualify(targetActor);
+                if (targetSpatial.UsablePosition is { } usableTarget)
+                {
+                    targetLocation = usableTarget;
+                    targetLocationMetadata = new ObservationMetadata(
+                        ObservationValueSource.Derived,
+                        ObservationValueQuality.Derived,
+                        null);
+                    targetLocationUsability = SpatialUsability.Usable;
+                    diagnostics.Add($"observation.cast.target-location.derived-from-target:{actor.EntityId:X8}");
+                }
+                else
+                {
+                    diagnostics.Add($"observation.cast.target-location.unusable:{actor.EntityId:X8}");
+                }
             }
 
             diagnostics.Add($"observation.cast.timing.derived:{actor.EntityId:X8}");
@@ -206,9 +243,14 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
             {
                 result = active.Cast with
                 {
-                    Rotation = Coordinate2D.FromClockwisePositiveYRotation(actor.Rotation),
+                    Rotation = actorSpatial.Rotation.Value,
                     Target = target,
                     TargetLocation = targetLocation,
+                    TargetLocationMetadata = targetLocationMetadata,
+                    TargetLocationUsability = targetLocationUsability,
+                    TargetLocationReasonCode = targetLocationReason,
+                    RotationUsability = actorSpatial.Usability,
+                    RotationReasonCode = actorSpatial.Usability == SpatialUsability.Usable ? null : actorSpatial.ReasonCode,
                 };
             }
             else
@@ -218,9 +260,14 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
                     CastLifecycle.Casting,
                     startedAt,
                     finishesAt,
-                    Coordinate2D.FromClockwisePositiveYRotation(actor.Rotation),
+                    actorSpatial.Rotation.Value,
                     target,
-                    targetLocation);
+                    targetLocation,
+                    targetLocationMetadata,
+                    targetLocationUsability,
+                    targetLocationReason,
+                    actorSpatial.Usability,
+                    actorSpatial.Usability == SpatialUsability.Usable ? null : actorSpatial.ReasonCode);
             }
 
             activeCasts[identity] = new CastObservationState(result, rawCast.CurrentSeconds);

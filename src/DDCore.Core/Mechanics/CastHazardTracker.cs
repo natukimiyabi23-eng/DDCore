@@ -65,6 +65,14 @@ public static class CastHazardTracker
                 .Take(definition.MaximumInstances))
             {
                 var cast = actor.Cast!;
+                var origin = cast.UsableTargetLocation ?? actor.Spatial.UsablePosition;
+                if (origin is null || cast.RotationUsability != SpatialUsability.Usable)
+                {
+                    observationUncertain = true;
+                    diagnostics.Add($"cast-hazard.spatial-unusable:{actor.Identity.EntityId:X}:{actor.Identity.Generation}");
+                    continue;
+                }
+
                 var hazardId = $"{analyzerId}:{actor.Identity.EntityId:X}:{actor.Identity.Generation}:{cast.ActionId}:{cast.StartedAt.UtcTicks}";
                 var expiresAt = definition.Lifetime == HazardLifetimeKind.Instantaneous
                     ? cast.FinishesAt
@@ -73,7 +81,7 @@ public static class CastHazardTracker
                     hazardId,
                     analyzerId,
                     definition.Shape,
-                    cast.TargetLocation ?? actor.Position,
+                    origin.Value,
                     cast.Rotation,
                     snapshot.CapturedAt,
                     cast.FinishesAt,

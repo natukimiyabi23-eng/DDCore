@@ -42,8 +42,8 @@ public sealed record RawActorObservation(
     ushort ObjectIndex,
     uint BaseId,
     RawActorKind Kind,
-    RawPosition Position,
-    double Rotation,
+    RawPosition? Position,
+    double? Rotation,
     double HitboxRadius,
     uint CurrentHp,
     uint MaximumHp,
@@ -52,7 +52,8 @@ public sealed record RawActorObservation(
     bool IsInCombat,
     ulong? TargetObjectId,
     RawCastObservation? Cast,
-    ImmutableArray<RawStatusObservation> Statuses);
+    ImmutableArray<RawStatusObservation> Statuses,
+    string? SpatialMissingReason = null);
 
 public sealed record RawContentFinderConditionObservation(
     uint RowId,

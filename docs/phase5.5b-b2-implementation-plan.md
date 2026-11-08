@@ -1,5 +1,7 @@
 # Phase 5.5B B2 actor spatial quality and schema 5 implementation plan
 
+> Status: approved and implemented on `phase5.5b/b2-actor-spatial-schema5`; verification is recorded in `phase5.5b-b2-verification.md`. This document remains the implementation specification.
+
 ## 1. Decision and scope
 
 B2 should make actor coordinates explicitly nullable, qualified and safe to consume, then migrate replay output to schema 5. It must not attempt to explain BaseId 6388 through a special case, infer rooms from coordinates, or add native reads. The key rule is:
@@ -185,6 +187,6 @@ User-run verification should capture a new producer/schema-5 replay in EO 1-10 a
 
 The fixed replay folder rule in repository `AGENTS.md` continues to apply. The user performs plugin enable/reload and live verification.
 
-## 10. Approval boundary
+## 10. Authorization boundary
 
-This plan does not authorize implementation. B2 must wait for explicit approval. Approval of B2 authorizes only the schema/model/public-spatial/consumer-safety work above. It does not authorize exact-floor native reads, room topology, B3/B4, movement, combat, targeting, items, input injection, deployment, plugin activation or any PR merge.
+The user explicitly approved B2.1-B2.4 on 2026-11-08. That approval covers only the schema/model/public-spatial/consumer-safety work above. It does not authorize exact-floor native reads, room topology, B3/B4, movement, combat, targeting, items, input injection, deployment, plugin activation or any PR merge.
