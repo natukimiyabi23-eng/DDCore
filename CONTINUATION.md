@@ -1,9 +1,17 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 11:43 JST (Phase 5.5A implementation and CI complete)
+Status: in_progress
+Updated: 2026-11-08 20:40 JST (Eureka Orthos entry-travel foundation started)
 
 ## Objective
+
+Current objective: research API 15 and optional movement providers, then implement only a non-operating Eureka Orthos entry-travel foundation on `feature/eo-entry-travel-foundation`: authoritative display coordinates, deterministic high-level route planning, explicit-start authorization, emergency-stop-first state tracking, missing-position and stall detection, Japanese preview/status UI, synthetic tests, documentation, verification and a stacked Draft PR. Do not connect vnavmesh/Lifestream, inject input, move the character, interact with NPCs, perform combat/item actions, operate FF14/Dalamud UI, merge `main`, or claim live verification. Stop for user approval before any operation-capable adapter.
+
+- Start: `2026-11-08T20:40:07+09:00`.
+- Authoritative preflight: five-hour remaining 95%; weekly remaining 26%.
+- Estimate: 24% including research, implementation, tests, docs/PR and 2% contingency. Projected five-hour balance 71%; projected weekly balance 2%.
+- One-time continuation automation: `ddcore-eo-entry-travel-followup`, verified `ACTIVE`, scheduled for the next `01:40:07 JST` occurrence (exactly five hours after start). It must resume only unfinished work and never enable gameplay operation.
+- Thread goal registration could not be replaced because the earlier FateFarmJP goal remains unfinished/usage-limited. This file and the verified ACTIVE automation are the authoritative DDCore continuation state.
 
 Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
 
@@ -72,6 +80,12 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Re-ran the Phase 2 Release build, 26 tests, format verification and NuGet vulnerability audit after the documentation work.
 
 ## Unfinished
+
+- Entry-travel foundation implementation and documentation are present on `feature/eo-entry-travel-foundation`.
+- Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 200/200 and Observation 43/43 tests (243 total); format; NuGet vulnerability; project/reference and new-source prohibited-operation audits.
+- Package version `0.5.2.0`, SHA-256 `102F4F229401EFC6F1444E8DA681D07409D638A3FA7FAA99B5ABDE9670E481E0`.
+- Next safe step: commit, push and open a stacked Draft PR against `phase5/strategy-engine`; confirm CI; then mark this continuation complete and remove the one-time follow-up automation.
+- No movement/teleport/NPC IPC or live FF14 operation has been added. User approval remains mandatory before any operation adapter.
 
 - Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.

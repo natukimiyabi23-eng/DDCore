@@ -127,6 +127,12 @@ Phase 5.5A adds a reusable `ObservationMetadata` value and an identifier-free `A
 
 Schema 4 writes this optional field. The codec accepts schema 3 documents/snapshots without it and keeps them Unknown. The privacy filter persists the anonymous pose but continues to remove Player/PartyMember actors and references. Strategy conversion exposes the pose only as evidence and does not derive room membership or bypass any existing Unknown gate.
 
+### Entry-travel preview boundary
+
+The entry-travel foundation keeps route intent separate from operation. `EntryTravelPlanner` owns only a high-level, deterministic preview made from explicit current-area, unlock and teleport-availability states. Official map coordinates are display metadata and are never treated as raw world positions. `EntryTravelProgressTracker` models fresh explicit authorization, emergency stop, missing-position failure, step consistency and stall detection without depending on Dalamud or calling an adapter.
+
+Every produced Eureka Orthos plan remains non-executable until a separately approved world-coordinate resolver and operation adapter exist. vnavmesh and Lifestream are investigated optional IPC candidates, not dependencies. `DisabledExecutionGateway` remains the only gateway, and the Japanese UI offers no movement-start control.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.
