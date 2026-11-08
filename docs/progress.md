@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5C chat exact-floor investigation and design
+
+- Confirmed from the installed Dalamud API 15.0.3.9 contract that public `IChatGui` exposes both structured `LogMessage` and displayed `ChatMessage` callbacks.
+- Located pinned game-data candidates: row 7248 (`転移が実行された！`), row 7270 (`地下UNKNOWN階`) and row 9218 (`第UNKNOWN層`), all with LogKind 57.
+- Kept event reception, parameter mapping, event order and PotD/HoH coverage explicitly unverified; the user-observed EO `地下9階` remains visual evidence only.
+- Designed a structured-row-first parser, B1 range reconciliation, `Verified`/`Unverified`/`Missing`/`Conflict`/`Stale` quality model, floor-epoch invalidation and privacy-minimal diagnostics.
+- Added a separate live verification plan for EO, Palace of the Dead and Heaven-on-High without claiming support for untested dungeons.
+- Documentation only. No chat subscription, schema change, internal access, gameplay operation, execution gateway change, deployment or merge was performed.
+
 ## 2026-11-08 — Phase 5.5B B2 actor spatial quality and schema 5
 
 - Added explicit actor spatial `Usable`, `Quarantined` and `Missing` states with source, quality and stable reason evidence.
