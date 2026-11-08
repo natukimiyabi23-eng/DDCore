@@ -202,3 +202,13 @@
 - Locked restore and Release build passed with 0 warnings/errors; 173 tests passed (Core 139, Observation 34).
 - Format verification and NuGet vulnerability audit passed; Core has no project references and the package contains both provenance manifests plus the BSD notice.
 - Pushed implementation commit `0d07b68`, opened Draft PR #5 against `phase3/diagnostics-and-recording`, and confirmed both push and PR GitHub Actions runs passed.
+
+## 2026-11-09 — Phase 5.5D chat floor diagnostics
+
+- Confirmed Phase 5.5C Draft PR #12 is complete as a design phase; its public-event candidates remain live-unverified.
+- Added an explicit-start, read-only `IChatGui.LogMessage` / `ChatMessage` probe for candidate rows 7248, 7270 and 9218 and system chat kind 57.
+- Stored only bounded row IDs, integer parameters, timestamps and B1 reconciliation results; chat text, sender and player identity are not retained.
+- Kept candidate floors out of `WorldSnapshot` and the Phase 5 strategy engine. Matching B1 evidence remains labelled consistent but unverified; conflicts stay explicit.
+- Added independent schema-1 diagnostic export with 256-entry, 256 KiB and 15-minute limits. Replay schema 5 and schema 3/4 read compatibility are unchanged.
+- Reverified the original schema-5 floor 3-4 replay as 105 snapshots and 1,535 actor observations (641 usable, 894 quarantined, 0 missing) without modifying it.
+- Added Japanese opt-in controls, privacy preview, local export and confirmed deletion. Live FFXIV/Dalamud behavior remains unverified and requires user operation.

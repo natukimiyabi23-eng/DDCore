@@ -29,6 +29,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static IDutyState DutyState { get; set; } = null!;
     [PluginService] private static ICondition Condition { get; set; } = null!;
     [PluginService] private static IFramework Framework { get; set; } = null!;
+    [PluginService] private static IChatGui ChatGui { get; set; } = null!;
 
     private readonly Stack<Action> cleanupActions = new();
     private IDDLogger logger = NullDDLogger.Instance;
@@ -38,6 +39,8 @@ public sealed class Plugin : IDalamudPlugin
     private ConfigurationWindow? configurationWindow;
     private ObservationRuntime? observationRuntime;
     private ObservationRecordingService? observationRecorder;
+    private ChatFloorDiagnosticRecorder? chatFloorRecorder;
+    private DalamudChatFloorDiagnosticSource? chatFloorSource;
     private readonly ObservationDiagnosticLog observationDiagnosticLog = new();
     private BossModIntegrationDiagnostics bossModIntegration = BossModIntegrationDiagnostics.NotChecked;
     private bool resourcesReleased;
@@ -72,6 +75,16 @@ public sealed class Plugin : IDalamudPlugin
                 observationDiagnosticLog,
                 logger);
             cleanupActions.Push(observationRuntime.Dispose);
+            var chatFloorDirectory = Path.Combine(recordingDirectory, "chat-floor-diagnostics");
+            chatFloorRecorder = new ChatFloorDiagnosticRecorder(
+                chatFloorDirectory,
+                typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "unknown");
+            cleanupActions.Push(chatFloorRecorder.Dispose);
+            chatFloorSource = new DalamudChatFloorDiagnosticSource(
+                ChatGui,
+                chatFloorRecorder,
+                () => ObservationDiagnostics);
+            cleanupActions.Push(chatFloorSource.Dispose);
 
             windowSystem = new WindowSystem("DDCore");
             mainWindow = new MainWindow(this);
@@ -110,7 +123,7 @@ public sealed class Plugin : IDalamudPlugin
                     ?? "設定の永続化に失敗しました。安全状態は現在のセッションで維持されます。";
             }
 
-            logger.Information("DDCore Phase 3.7をObserverモードで起動しました。観測と明示操作によるローカル記録は読み取り専用で、ゲーム操作機能は含まれていません。");
+            logger.Information("DDCore Phase 5.5DをObserverモードで起動しました。チャット階層診断は初期OFF・読み取り専用で、ゲーム操作機能は含まれていません。");
         }
         catch (Exception exception)
         {
@@ -130,6 +143,8 @@ public sealed class Plugin : IDalamudPlugin
         ?? LiveObservationDiagnostics.Waiting;
     public ObservationRecordingStatus RecordingStatus => observationRecorder?.Status
         ?? ObservationRecordingStatus.Off;
+    public ChatFloorRecordingStatus ChatFloorStatus => chatFloorRecorder?.Status
+        ?? ChatFloorRecordingStatus.Off;
     public ObservationDiagnosticEntry? LatestObservationError => observationDiagnosticLog.LatestError;
     public BossModIntegrationDiagnostics BossModIntegration => bossModIntegration;
 
@@ -257,6 +272,58 @@ public sealed class Plugin : IDalamudPlugin
 
         LastStatusMessage = observationRecorder?.Status.LatestError
             ?? "削除確認がないか、記録中のため削除できません。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void StartChatFloorDiagnostics()
+    {
+        if (chatFloorRecorder?.Start() == true)
+        {
+            LastStatusMessage = "階層イベント診断を開始しました。チャット本文やプレイヤー情報は保存しません。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = chatFloorRecorder?.Status.LatestError ?? "階層イベント診断を開始できませんでした。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void StopChatFloorDiagnostics()
+    {
+        if (chatFloorRecorder?.Stop() == true)
+        {
+            LastStatusMessage = "階層イベント診断を停止し、匿名化データをローカル保存しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = chatFloorRecorder?.Status.LatestError ?? "停止できる階層イベント診断がありません。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void ExportChatFloorDiagnostics(bool previewConfirmed)
+    {
+        if (chatFloorRecorder?.Export(previewConfirmed) == true)
+        {
+            LastStatusMessage = "確認済みの階層イベント診断をローカルへ出力しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = chatFloorRecorder?.Status.LatestError ?? "内容確認後、停止済み診断をエクスポートしてください。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void DeleteChatFloorDiagnostics(bool deletionConfirmed)
+    {
+        if (chatFloorRecorder?.Delete(deletionConfirmed) == true)
+        {
+            LastStatusMessage = "階層イベント診断データを削除しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = chatFloorRecorder?.Status.LatestError ?? "削除確認がないか、診断中のため削除できません。";
         logger.Warning(LastStatusMessage);
     }
 
