@@ -42,7 +42,7 @@ Compatibility means the files decode, validate and normalize without treating un
 - Dependency audit: no BossMod runtime/package reference and no new package dependency.
 - Prohibited-operation audit: no FFXIVClientStructs, targeting, action, input or navigation operation reference; `DisabledExecutionGateway` remains wired in `Plugin.cs`.
 - Package: version 0.5.3.0, Dalamud API 15, SHA-256 `322C89CB24E5AF94DDFC9CCE06CC39D8E10438363D091A6577FDCDB0E9A0ABD9`.
-- GitHub Actions: pending Draft PR publication.
+- GitHub Actions: push run `42484347112` and Draft PR run `42484370838` passed at implementation head `fb79e06`.
 
 The B2 cases cover exact-origin preservation/quarantine for BaseId 6388 and unrelated IDs, missing versus origin, public acquisition failure, invalid/stale/dead observations, usable non-origin observations, quarantined target derivation, hazard suppression, schema 3/4 migration, schema 5 round-trip/output names, mixed schema pairs, duplicate properties, legacy aliases in schema 5 and malformed spatial pairs.
 
