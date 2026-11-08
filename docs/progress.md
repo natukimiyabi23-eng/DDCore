@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-08 — Eureka Orthos entry-travel foundation
+
+- Verified the official Eureka Orthos unlock, Burnel shortcut and Khatun entry coordinates, while keeping displayed map coordinates distinct from raw world coordinates.
+- Investigated public Dalamud API 15 observation plus vnavmesh and Lifestream IPC candidates at fixed source commits.
+- Added a deterministic high-level route preview for another area, Revenant's Toll and the Eight Sentinels entrance area. Unknown access/current/teleport state fails closed.
+- Added pure explicit-start, emergency-stop, missing-position, inconsistent-step and stall-detection state logic.
+- Added a Japanese preview/status panel with no start control. vnavmesh, Lifestream, teleport, movement and NPC interaction remain disconnected.
+- Stopped before an operation-capable adapter as required; live movement is not implemented or verified.
+
 ## 2026-11-08 — Phase 5.5A observation foundation
 
 - Added reusable source/quality/missing-reason metadata and an identifier-free nullable player pose.

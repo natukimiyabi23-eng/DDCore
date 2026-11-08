@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using DDCore.Core.Modes;
+using DDCore.Core.Navigation;
 using DDCore.Observation;
 
 namespace DDCore.Plugin.Windows;
@@ -39,6 +40,10 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.Separator();
         ImGui.Spacing();
         DrawBossModIntegration();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+        DrawEntryTravelFoundation();
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
@@ -156,6 +161,20 @@ internal sealed class MainWindow : Window, IDisposable
         LiveObservationState.Invalid => "観測エラー",
         _ => "不明",
     };
+
+    private static void DrawEntryTravelFoundation()
+    {
+        ImGui.TextUnformatted("DD入口移動（設計・模擬検証）");
+        ImGui.TextDisabled("実移動アダプターは未接続です。開始操作はまだ提供しません。");
+        ImGui.Spacing();
+        DrawValue("対象", "オルト・エウレカ");
+        DrawValue("現在の状態", "実操作無効・プレビューのみ");
+        DrawValue("近道NPC", $"{EurekaOrthosEntryCatalog.Burnel.JapaneseName}  X:{EurekaOrthosEntryCatalog.Burnel.MapPosition.X:F1} Y:{EurekaOrthosEntryCatalog.Burnel.MapPosition.Y:F1}");
+        DrawValue("入口受付", $"{EurekaOrthosEntryCatalog.Khatun.JapaneseName}  X:{EurekaOrthosEntryCatalog.Khatun.MapPosition.X:F1} Y:{EurekaOrthosEntryCatalog.Khatun.MapPosition.Y:F1}");
+        ImGui.BulletText("現在地・解放状態・テレポ可否が不明なら計画を停止します。");
+        ImGui.BulletText("実装済みなのは明示開始、緊急停止、位置欠損、停滞の純粋ロジックです。");
+        ImGui.BulletText("vnavmesh / Lifestream / NPC操作は接続していません。");
+    }
 
     private static string DungeonText(LiveObservationDiagnostics diagnostics)
     {
