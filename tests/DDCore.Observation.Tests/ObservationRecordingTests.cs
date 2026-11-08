@@ -218,10 +218,16 @@ public sealed class ObservationRecordingTests : IDisposable
         recorder.Stop();
 
         var restored = new ReplayCodec().Deserialize(File.ReadAllBytes(recorder.Status.RecordingPath!));
-        var actors = Assert.Single(restored.Snapshots).Actors;
+        var sanitized = Assert.Single(restored.Snapshots);
+        var actors = sanitized.Actors;
         Assert.All(actors, actor => Assert.True(actor.Kind is ActorKind.Enemy or ActorKind.EventObject));
         Assert.DoesNotContain(actors, actor => actor.Identity.EntityId is 10 or 11);
         Assert.Null(Assert.Single(actors).Target);
+        Assert.Equal(new Coordinate2D(12, 34), sanitized.PlayerPose!.Position);
+        Assert.Equal(ObservationValueSource.PublicDalamud, sanitized.PlayerPose.Metadata.Source);
+        var json = File.ReadAllText(recorder.Status.RecordingPath!);
+        Assert.DoesNotContain("\"entityId\":10", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"entityId\":11", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -307,7 +313,11 @@ public sealed class ObservationRecordingTests : IDisposable
         var builder = new MockWorldSnapshotBuilder()
             .InSession(sessionId ?? Session)
             .At(capturedAt)
-            .WithSequence(sequence);
+            .WithSequence(sequence)
+            .WithAnonymousPlayerPose(
+                new Coordinate2D(12, 34),
+                0.25,
+                new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null));
         if (includePlayerAndParty)
         {
             builder.AddActor(Actor(10, ActorKind.Player, target: new ActorIdentity(1, 0)));

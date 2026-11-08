@@ -105,6 +105,28 @@ The current live observation boundary does not expose authoritative room flags, 
 
 Reachability and DD-data capability are independent fields. No future code may infer hazards, safe locations or strategy availability from `ReachableUnversioned`.
 
+### User-defined Phase 5 strategy layer
+
+The user-defined Phase 5 completes a bounded portion of the original master plan's Phase 4 decision-engine scope. It does not implement the original Phase 5 operation foundation. `DeepDungeonStrategyState` is an immutable, game-independent input model for dungeon kind, floor, the complete 25-room graph, exploration/danger state, exit, enemies, traps, pomanders, aggregate resource readiness and remaining time. Every observation can remain `Unknown`; unknown required data produces a stop decision rather than a default value.
+
+`DeepDungeonStrategyEngine` is pure and deterministic. Its priority is stale/invalid input rejection, current danger avoidance, engaged-combat continuity, resource conservation, current-room hostile advice, active-exit routing and safe unexplored-room routing. Results expose action, reason, preconditions, risk, blocking reasons, target room and route. Time thresholds are supplied through an explicit policy and are not presented as BossMod facts.
+
+The engine reuses `RoomPathfinder`, attributed to BossMod's fixed-commit `FloorPathfind.cs:5-60`, but adds no BossMod runtime dependency. Live public Dalamud observations still lack authoritative room connections, exit, traps, pomanders and floor state, so the engine is not connected to live operation and cannot authorize execution. `DisabledExecutionGateway` remains the only execution implementation.
+
+### Phase 5.5 observation boundary
+
+The Phase 5.5 research confirms that public Dalamud API 15 supplies actors, self pose, casts, statuses, territory/content identifiers and a boolean `InDeepDungeon` condition, but no verified typed floor, room-map, passage, trap, pomander or DD-timer contract. BossMod obtains most of those fields from `InstanceContentDeepDungeon` through FFXIVClientStructs, which is a high-risk internal source rather than a stable public service.
+
+The next observation model must therefore add source, availability, timestamp, sequence and floor-epoch provenance. Missing pose must be distinct from a valid `(0,0)` coordinate. A confirmed floor-epoch change invalidates every room-, exit-, trap- and enemy-membership observation before strategy evaluation. Public and any future optional native sources terminate at a source-neutral fusion boundary; no native type or observation provider may access execution.
+
+The full acquisition matrix, evidence and approval gates are in `phase5.5-observation-acquisition.md`. Phase 5.5A implements only the approved public self-pose/model slice described below; native DD metadata remains research-only.
+
+### Phase 5.5A implemented boundary
+
+Phase 5.5A adds a reusable `ObservationMetadata` value and an identifier-free `AnonymousPlayerPose`. The live plugin obtains the pose only from public `IObjectTable.LocalPlayer`; the Core/Observation layers remain free of Dalamud types. Nullable position and rotation distinguish unavailable data from a valid origin, while source, quality and missing reason remain replayable.
+
+Schema 4 writes this optional field. The codec accepts schema 3 documents/snapshots without it and keeps them Unknown. The privacy filter persists the anonymous pose but continues to remove Player/PartyMember actors and references. Strategy conversion exposes the pose only as evidence and does not derive room membership or bypass any existing Unknown gate.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.

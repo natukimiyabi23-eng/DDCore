@@ -32,7 +32,13 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
             staleDiagnostics.Add("observation.time.regressed");
             var staleQuality = ObservationQuality.Partial;
             var staleDungeon = ResolveDungeon(raw, raw.Actors, staleDiagnostics, ref staleQuality);
-            return Build(raw, ObservationQuality.Stale, staleDungeon, [], staleDiagnostics);
+            return Build(
+                raw,
+                ObservationQuality.Stale,
+                staleDungeon,
+                [],
+                staleDiagnostics,
+                ConvertPlayerPose(raw, ObservationValueQuality.Stale, "observation.time.regressed"));
         }
 
         lastCapturedAt = raw.CapturedAt;
@@ -42,7 +48,13 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         if (!raw.IsLoggedIn)
         {
             diagnostics.Add("observation.client.logged-out");
-            return Build(raw, ObservationQuality.Unsupported, NotInDungeon(raw), [], diagnostics);
+            return Build(raw, ObservationQuality.Unsupported, NotInDungeon(raw), [], diagnostics, ConvertPlayerPose(raw));
+        }
+
+        var playerPose = ConvertPlayerPose(raw);
+        if (playerPose.Metadata.Quality != ObservationValueQuality.Direct)
+        {
+            quality = ObservationQuality.Partial;
         }
 
         var identities = new Dictionary<uint, ActorIdentity>();
@@ -98,7 +110,7 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         }
 
         var dungeon = ResolveDungeon(raw, raw.Actors, diagnostics, ref quality);
-        return Build(raw, quality, dungeon, actors.ToImmutable(), diagnostics);
+        return Build(raw, quality, dungeon, actors.ToImmutable(), diagnostics, playerPose);
     }
 
     private static void ValidateRawFrame(RawObservationFrame raw)
@@ -107,6 +119,47 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         {
             throw new InvalidDataException("Raw observation frame is incomplete.");
         }
+    }
+
+    private static AnonymousPlayerPose ConvertPlayerPose(
+        RawObservationFrame frame,
+        ObservationValueQuality? qualityOverride = null,
+        string? reasonOverride = null)
+    {
+        if (frame.PlayerPose is { Position: { } rawPosition, Rotation: { } rawRotation })
+        {
+            if (!double.IsFinite(rawPosition.X)
+                || !double.IsFinite(rawPosition.Y)
+                || !double.IsFinite(rawPosition.Z)
+                || !double.IsFinite(rawRotation))
+            {
+                return new AnonymousPlayerPose(
+                    null,
+                    null,
+                    new ObservationMetadata(
+                        ObservationValueSource.PublicDalamud,
+                        ObservationValueQuality.Invalid,
+                        "observation.player.pose-invalid"));
+            }
+
+            var quality = qualityOverride ?? ObservationValueQuality.Direct;
+            var reason = quality is ObservationValueQuality.Direct ? null : reasonOverride ?? "observation.player.not-current";
+            return new AnonymousPlayerPose(
+                new Coordinate2D(rawPosition.X, rawPosition.Z),
+                Coordinate2D.FromClockwisePositiveYRotation(rawRotation),
+                new ObservationMetadata(ObservationValueSource.PublicDalamud, quality, reason));
+        }
+
+        var missingReason = reasonOverride
+            ?? frame.PlayerPose?.MissingReason
+            ?? "observation.player.pose-not-observed";
+        return new AnonymousPlayerPose(
+            null,
+            null,
+            new ObservationMetadata(
+                ObservationValueSource.PublicDalamud,
+                qualityOverride ?? ObservationValueQuality.Missing,
+                missingReason));
     }
 
     private CastSnapshot? ConvertCast(
@@ -260,7 +313,8 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         ObservationQuality quality,
         DeepDungeonContext dungeon,
         ImmutableArray<ActorSnapshot> actors,
-        ImmutableArray<string>.Builder diagnostics) =>
+        ImmutableArray<string>.Builder diagnostics,
+        AnonymousPlayerPose playerPose) =>
         new(
             SchemaVersions.WorldSnapshot,
             sequence++,
@@ -270,7 +324,8 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
             quality,
             dungeon,
             actors,
-            diagnostics.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToImmutableArray());
+            diagnostics.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToImmutableArray(),
+            playerPose);
 
     private void ResetSession(SessionKey key)
     {

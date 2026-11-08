@@ -70,3 +70,11 @@ Official Dalamud restrictions say plugins must not automate server interaction o
 - Plugin restrictions: <https://dalamud.dev/plugin-publishing/restrictions/>
 - Plugin technical considerations: <https://dalamud.dev/plugin-development/technical-considerations/>
 - Official repository criteria: <https://github.com/goatcorp/DalamudPluginsD17/blob/main/README.md>
+
+## Phase 5.5 acquisition dependency decision
+
+Public Dalamud API 15 remains the only approved live dependency. Its verified services can provide condition, territory/content, local-player/actor pose, cast and status observations, but not a typed DD floor/topology/resource snapshot.
+
+BossMod fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0` reads the missing DD state through FFXIVClientStructs submodule commit `fb26505058f33791e31c029e3678dbe70378b972`. DDCore does not add that dependency in Phase 5.5. Any future use requires an optional, version-gated, read-only adapter and separate approval; the public-only fallback must remain fully functional and fail closed.
+
+Palantir trap IPC is not a required dependency. It can expose optional hidden-trap evidence in BossMod, but absence of that provider must remain an explicit Unknown state rather than an empty trap list.

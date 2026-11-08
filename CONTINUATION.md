@@ -1,9 +1,17 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-08 JST (Phase 4.5 BossMod integration proof complete; Draft PR review pending)
+Updated: 2026-11-08 11:43 JST (Phase 5.5A implementation and CI complete)
 
 ## Objective
+
+Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
+
+Current objective: research and design Phase 5.5 observation acquisition without implementing it. Compare verified Dalamud API 15 surfaces, pinned BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, existing DDCore observation/replay/strategy code, and the original local exports. Produce an evidence-linked acquisition matrix, read-only architecture, transition/missing-data model, implementation priorities and live-test unknowns; update Draft PR #7 and stop for approval. Do not change Phase 5 production behavior, access new game internals, operate FF14/Dalamud, add BossMod runtime dependencies, start Phase 6, or merge `main`.
+
+Current objective: validate the Phase 5 read-only strategy engine against original observation exports under `C:\Users\wasur\AppData\Roaming\XIVLauncher\pluginConfigs\DDCore\recordings\exports` without modifying, deleting or committing those files. Auto-detect and summarize the exports, identify the user-labelled 2026-11-07 floor 3 to floor 4 session without inventing absent fields, determine conversion coverage into `DeepDungeonStrategyState`, execute only valid decisions, add minimal read-only validation code/tests if needed, update Draft PR #7, and stop before Phase 6 or any game operation.
+
+Current objective: implement the user-defined Phase 5 on `phase5/strategy-engine`, based on `phase4.5/bossmod-integration-proof`: add a read-only, deterministic Deep Dungeon state model and strategy engine that preserves unknown observations, uses the Phase 4 `RoomPathfinder`, returns recommendations with reasons/preconditions/risk/blocking information, and is covered by synthetic tests and full verification. This user-defined numbering intentionally treats Phase 5 as the decision-engine phase even though the original master plan labels decision logic as Phase 4 and operation infrastructure as Phase 5. Do not add gameplay execution, BossMod runtime dependency, Phase 6 work, live FF14 operation, or a `main` merge.
 
 Current objective: implement Phase 4.5 on `phase4.5/bossmod-integration-proof`: prove separately whether DDCore can reach BossMod's fixed-commit IPC surface and whether that surface provides the Deep Dungeon strategy data DDCore needs. Add only a read-only, optional, fail-closed diagnostic probe when supported by the public Dalamud IPC mechanism; do not add BossMod runtime references, private hooks, gameplay operation, Phase 5 work, deployment, live FF14 operation, or a `main` merge. Record source-line evidence, comparison, verification, and create a stacked Draft PR targeting `phase4/reuse-analysis`.
 
@@ -20,13 +28,13 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 ## Current state
 
 - Repository: `https://github.com/natukimiyabi23-eng/DDCore` (public, default branch `main`)
-- Working branch: `phase4/reuse-analysis`
+- Working branch: `phase5/strategy-engine`
 - Local path: `work/DDCore`
 - BossMod source: `https://github.com/awgil/ffxiv_bossmod`
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
 - BossMod license: BSD-3-Clause
 - DD source files found: 63, including Global shared code, Palace of the Dead, Heaven-on-High, Eureka Orthos, and Pilgrim's Traverse.
-- Source version: `0.3.1.0` (Phase 3.7 local verification complete).
+- Source version: `0.5.1.0` (Phase 5.5A local and CI verification complete).
 - Deployed version: none.
 - Documentation commit: `1217bac70961debec3201ea74e7a8e1966e5fd57`
 
@@ -65,8 +73,83 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
+- Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
+- User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
+- If Phase 5.5 implementation is approved, start only with provenance/availability, nullable coordinates and anonymized self pose. Native floor/topology access requires separate explicit approval.
+- Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered; live Dalamud/FFXIV behavior remains unverified.
+
+## Phase 5 checkpoint
+
+- Phase 5.5A started: `2026-11-08T11:25:35+09:00`.
+- Authoritative preflight: five-hour window 65% remaining; weekly window 47% remaining.
+- Estimated requirement: 58% total (investigation 8%, implementation 24%, tests/audits 12%, documentation/PR 6%, contingency 8%); projected five-hour balance `65% - 58% = 7%`.
+- Five-hour continuation automation `ddcore-phase55a-followup` was created for `2026-11-08 16:25 JST` and verified `ACTIVE`. It checks the active goal, this file, Git/build/test/CI state and remaining usage, then resumes only unfinished Phase 5.5A work.
+- Starting branch/head: `phase5/strategy-engine` at `097f936`; worktree clean; Draft PR #7 open and Draft against `phase4.5/bossmod-integration-proof`.
+- No Phase 5.5A source edit has been made at this checkpoint.
+- Implemented reusable observation source/quality/missing-reason metadata, nullable identifier-free player pose, public `LocalPlayer` acquisition, schema 4 output with schema 3 read compatibility, privacy-preserving recording and evidence-only strategy conversion.
+- Added the required origin/missing, failure, absent player, logout/content exit, legacy JSON, privacy and fail-closed tests. Intermediate suites pass Core 180/180 and Observation 43/43 (223 total).
+- The new codec read both original schema 3 exports (288 + 124 snapshots) with zero player-pose fabrication; their recorded SHA-256 hashes remain unchanged.
+- Added `docs/phase5.5a-observation-foundation.md` and updated architecture, progress and README. Native DD metadata, operations and later phases remain untouched.
+- Final local verification passed: locked restore, Release build with 0 warnings/errors, 223 tests, format, NuGet vulnerability audit and static dependency/prohibited-operation audits.
+- Package `0.5.1.0`, API 15, SHA-256 `1A9EE37D336C91F031809FA277375C7A23EE48E8D0EC10DE2CACCC79218C76C8`. Added `docs/phase5.5a-verification.md`.
+- Commit `6bc6bf3` was pushed to `phase5/strategy-engine`; Draft PR #7 remains Draft against `phase4.5/bossmod-integration-proof`.
+- Push run `42439519249` and Draft PR run `42439522374` both passed at head `6bc6bf3`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- The one-time `ddcore-phase55a-followup` automation was deleted after completion so it cannot restart completed work.
+- Live Dalamud/FFXIV verification remains the user's responsibility. Phase 5.5B, Phase 6 and `main` merge require separate explicit approval.
+
+- Phase 5.5 started: `2026-11-08T10:21:00+09:00`.
+- Authoritative preflight: five-hour window 100% remaining; weekly window 53% remaining.
+- Estimated requirement: 42% total (public API research 10%, pinned BossMod analysis 10%, DDCore/JSON reconciliation 6%, acquisition matrix/design 10%, docs/verification/PR 3%, contingency 3%); projected five-hour balance `100% - 42% = 58%`.
+- Five-hour continuation automation `ddcore-phase55-followup` was created for `2026-11-08 15:21 JST` and verified `ACTIVE`. It checks the active goal, this file, Git/doc/PR state and remaining usage, then resumes only unfinished design work.
+- The earlier reset-wait automation `ddcore-phase55-research` fired successfully at 10:20 JST and is obsolete once this run completes.
+- No Phase 5.5 production implementation, game operation, original JSON change or Phase 6 work is authorized.
+- Distributed audits completed for public Dalamud API 15, pinned BossMod DD acquisition and DDCore/replay gaps. The results are consolidated in `docs/phase5.5-observation-acquisition.md`.
+- Documentation now distinguishes confirmed public observations, unverified/internal candidates and unavailable data; it defines provenance, nullable pose, floor-epoch invalidation, adapter separation, implementation order and live-test requirements.
+- Documentation verification passed: fixed-commit source paths and official API links were checked; the two original exports remain unchanged with their recorded SHA-256 hashes.
+- Locked restore, Release build (0 warnings/errors), all 213 tests (Core 173 + Observation 40), format verification and NuGet vulnerability audit passed after the documentation-only changes.
+- Documentation commit `80acac7` was pushed to `phase5/strategy-engine`; Draft PR #7 was updated and remains Draft against `phase4.5/bossmod-integration-proof`.
+- Push run `42434441245` and Draft PR run `42434444504` both passed at head `80acac7`.
+- The one-time `ddcore-phase55-followup` and the already-fired `ddcore-phase55-research` automations were deleted after completion so they cannot restart completed work.
+- Phase 5.5 production implementation was not started. The requested result is complete and awaiting user approval.
+
+- Real-data validation started: `2026-11-08T07:37:07+09:00`.
+- Authoritative preflight: five-hour window 42% remaining; weekly window 60% remaining.
+- Estimated requirement: 30% total (research 6%, conversion/validation implementation 10%, tests 5%, audits/docs 5%, PR 2%, contingency 2%); projected five-hour balance `42% - 30% = 12%`.
+- Export folder access succeeded. Two `ddcore-export-*.json` files were detected, including candidate `ddcore-export-20261107-180939-e7bd7997efe34218aadad2a978beb81e.replay.json`.
+- Continuation automation `ddcore-phase5-live-data-followup` was scheduled once for `2026-11-08 12:37:07 JST`, created and verified `ACTIVE`. It checks the active goal, this file, Git/PR/build/test state and remaining usage, then resumes only unfinished work.
+- Production `ReplayCodec` accepted all 412 snapshots (candidate: 124). The read-only adapter and strategy engine evaluated every snapshot with 0 exceptions; all returned fail-closed `Stop` / `Unknown`, with 0 actionable decisions.
+- The candidate contains 42 HP-decrease transitions, 2 alive-to-dead/destroyed transitions, 13 casts and 19 status snapshots. It contains no floor, room graph/membership, exit, traps, pomanders, remaining time or resource readiness.
+- The floor 3 to floor 4 attribution is retained only as a user-provided truth label; the JSON does not contain a transition event or either floor number.
+- Added `WorldSnapshotStrategyAdapter`, four tests and `docs/phase5-real-data-validation.md`. Core tests pass 173/173 before the full verification matrix.
+- Full local verification passed: locked restore, Release build with 0 warnings/errors, Core 173/173 plus Observation 40/40 (213 total), format, NuGet vulnerability, Core reference and prohibited-operation scans.
+- Rebuilt package `0.5.0.0` SHA-256: `6EC28A9568A34B33221174CC4DE6E77E8E6A0EB4D8E3C6C60DBE8D06B46F2D74`.
+- Authoritative usage after local verification: five-hour window 25% remaining; weekly window 57% remaining.
+- Commit `0c0f04c` was pushed to `phase5/strategy-engine`; Draft PR #7 was updated with an aggregate-only validation summary.
+- Push run `42422135760` and Draft PR run `42422139691` both passed at head `0c0f04c`. The non-failing Node.js deprecation annotation is unchanged.
+- Continuation automation `ddcore-phase5-live-data-followup` was deleted as obsolete after the requested work and CI completed before its scheduled time.
+
+- Started: `2026-11-08T05:30:26+09:00`.
+- Authoritative preflight: five-hour window 86% remaining; weekly window 67% remaining.
+- Estimated requirement: 48% total (research 6%, implementation 17%, tests/audits 9%, documentation/PR 6%, contingency 10%); projected five-hour balance `86% - 48% = 38%`.
+- Branch: `phase5/strategy-engine`, created from clean Phase 4.5 head `07b3fd2c00cc39a0c4f2b7c59c8728345fad9764`.
+- Draft PR #6 remains open and clean, targeting `phase4/reuse-analysis`; it is not merged.
+- Five-hour continuation automation: `ddcore-phase-5-followup`, scheduled once for `2026-11-08 10:30:26 JST`, was created and verified `ACTIVE`. Its purpose was to inspect the active goal, this file, Git state, build/test state, and remaining usage, then resume only the first unfinished step or report completion. It was deleted as obsolete after Phase 5 completed well before the scheduled time.
+- No source implementation has been edited at this checkpoint.
+- Implemented immutable Unknown-preserving strategy state for dungeon/floor, 25 rooms, exit, enemies, traps, pomanders, aggregate resources and remaining time.
+- Implemented deterministic, read-only strategy decisions for fail-closed stop, danger retreat, combat continuity, resource conservation, active exit, exploration and exit search. Safe routes exclude known/unknown-danger rooms, traps and non-defeated enemies.
+- Reused only the attributed Phase 4 `RoomPathfinder`; no BossMod runtime reference or operation adapter was added.
+- Added 30 Phase 5 Core tests; the final Core suite passes 169/169 and Observation passes 40/40 (209 total).
+- Added Phase 5 design documentation, numbering reconciliation and package version `0.5.0.0`.
+- Locked restore and final Release build passed with 0 warnings/errors; all 209 tests passed; format, NuGet vulnerability, project/reference and prohibited-operation audits passed.
+- Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
+- Final diff review, commit/push and Draft PR creation completed.
+- Implementation commit `b46f020` and documentation commit `8148741` were pushed. Draft PR #7 targets `phase4.5/bossmod-integration-proof`: `https://github.com/natukimiyabi23-eng/DDCore/pull/7`.
+- CI did not initially trigger because the workflow branch filters ended at the Phase 4.5 push branch and Phase 4 PR base. Commit `1b0e938` added only the Phase 4.5 PR base and Phase 5 push branch filters.
+- Final push run `42412810484` and Draft PR run `42412814600` both passed at verified head `bc2e5dc`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run. The final continuation-only commit uses the CI skip marker to avoid recursively spawning another identical verification run.
+- Final authoritative usage checkpoint after CI and documentation closeout: five-hour window 48% remaining; weekly window 61% remaining.
+
 - Live Dalamud/FFXIV validation remains outside this phase and must not be reported as successful.
-- User review and merge decisions remain pending. Do not merge Draft PR #5 or start Phase 5 without explicit approval.
+- User review and merge decisions remain pending. Do not merge Draft PR #7 or start Phase 6 without explicit approval.
 
 ## Phase 4 checkpoint
 

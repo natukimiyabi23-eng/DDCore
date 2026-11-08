@@ -24,12 +24,49 @@ internal sealed class DalamudObservationSource(
                 false,
                 null,
                 [],
-                ["dalamud.client.not-logged-in"]);
+                ["dalamud.client.not-logged-in"],
+                RawPlayerPoseObservation.Missing("dalamud.client.not-logged-in"));
         }
 
         var actors = ImmutableArray.CreateBuilder<RawActorObservation>();
         var diagnostics = ImmutableArray.CreateBuilder<string>();
-        var localPlayerEntityId = objectTable.LocalPlayer?.EntityId;
+        uint? localPlayerEntityId = null;
+        RawPlayerPoseObservation playerPose;
+        try
+        {
+            var localPlayer = objectTable.LocalPlayer;
+            localPlayerEntityId = localPlayer?.EntityId;
+            if (localPlayer is null)
+            {
+                playerPose = RawPlayerPoseObservation.Missing("dalamud.player.not-created");
+                diagnostics.Add("dalamud.player.not-created");
+            }
+            else
+            {
+                var position = localPlayer.Position;
+                var rotation = localPlayer.Rotation;
+                if (!float.IsFinite(position.X)
+                    || !float.IsFinite(position.Y)
+                    || !float.IsFinite(position.Z)
+                    || !float.IsFinite(rotation))
+                {
+                    playerPose = RawPlayerPoseObservation.Missing("dalamud.player.pose-invalid");
+                    diagnostics.Add("dalamud.player.pose-invalid");
+                }
+                else
+                {
+                    playerPose = RawPlayerPoseObservation.Direct(
+                        new RawPosition(position.X, position.Y, position.Z),
+                        rotation);
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            playerPose = RawPlayerPoseObservation.Missing($"dalamud.player.read-failed:{exception.GetType().Name}");
+            diagnostics.Add($"dalamud.player.read-failed:{exception.GetType().Name}");
+        }
+
         foreach (var gameObject in objectTable)
         {
             if (gameObject is not ICharacter character)
@@ -77,7 +114,8 @@ internal sealed class DalamudObservationSource(
             dutyState.IsDutyStarted,
             localPlayerEntityId,
             actors.ToImmutable(),
-            diagnostics.ToImmutable());
+            diagnostics.ToImmutable(),
+            playerPose);
     }
 
     private static RawActorObservation ConvertActor(IGameObject gameObject, ICharacter character, RawActorKind kind)

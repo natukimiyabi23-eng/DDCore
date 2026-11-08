@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DDCore.Core.Geometry;
 using DDCore.Core.Model;
 using DDCore.Core.Schema;
 using DDCore.Core.World;
@@ -12,6 +13,7 @@ public sealed class MockWorldSnapshotBuilder
     private Guid _sessionId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private ObservationQuality _quality = ObservationQuality.Complete;
     private DeepDungeonContext _dungeon = new(DeepDungeonKind.EurekaOrthos, 10, 0, 897, "eureka-orthos-10", null);
+    private AnonymousPlayerPose? _playerPose;
     private readonly List<ActorSnapshot> _actors = [];
     private readonly List<string> _diagnostics = [];
 
@@ -53,6 +55,15 @@ public sealed class MockWorldSnapshotBuilder
         return this;
     }
 
+    public MockWorldSnapshotBuilder WithAnonymousPlayerPose(
+        Coordinate2D? position,
+        double? rotation,
+        ObservationMetadata metadata)
+    {
+        _playerPose = new AnonymousPlayerPose(position, rotation, metadata);
+        return this;
+    }
+
     public WorldSnapshot Build() =>
         new(
             SchemaVersions.WorldSnapshot,
@@ -63,5 +74,6 @@ public sealed class MockWorldSnapshotBuilder
             _quality,
             _dungeon,
             _actors.ToImmutableArray(),
-            _diagnostics.ToImmutableArray());
+            _diagnostics.ToImmutableArray(),
+            _playerPose);
 }

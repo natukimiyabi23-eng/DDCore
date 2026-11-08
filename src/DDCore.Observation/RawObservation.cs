@@ -12,6 +12,18 @@ public enum RawActorKind
 
 public readonly record struct RawPosition(double X, double Y, double Z);
 
+public sealed record RawPlayerPoseObservation(
+    RawPosition? Position,
+    double? Rotation,
+    string? MissingReason)
+{
+    public static RawPlayerPoseObservation Direct(RawPosition position, double rotation) =>
+        new(position, rotation, null);
+
+    public static RawPlayerPoseObservation Missing(string reason) =>
+        new(null, null, reason);
+}
+
 public sealed record RawStatusObservation(
     uint StatusId,
     uint? SourceEntityId,
@@ -50,7 +62,8 @@ public sealed record RawObservationFrame(
     bool IsDutyStarted,
     uint? LocalPlayerEntityId,
     ImmutableArray<RawActorObservation> Actors,
-    ImmutableArray<string> Diagnostics);
+    ImmutableArray<string> Diagnostics,
+    RawPlayerPoseObservation? PlayerPose = null);
 
 public interface ILiveObservationSource
 {

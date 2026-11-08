@@ -1,5 +1,46 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5A observation foundation
+
+- Added reusable source/quality/missing-reason metadata and an identifier-free nullable player pose.
+- Read public Dalamud API 15 `LocalPlayer` position/rotation without persisting the player identity; missing, exception and invalid-value paths remain explicit.
+- Raised replay/world output to schema 4 while retaining strict schema 3 read compatibility. Both original exports still decode unchanged (412 snapshots total).
+- Preserved anonymous pose through recording privacy sanitization while continuing to remove Player/PartyMember actors and references.
+- Exposed pose only as Phase 5 evidence; no room inference or actionable strategy input was invented, and Unknown/content-exit states still stop.
+- Added tests for origin/missing distinction, public read failure, absent player, logout/content exit, legacy JSON, privacy and fail-closed conversion.
+- No native access, BossMod runtime dependency, gameplay operation, Phase 5.5B, Phase 6 or `main` merge was added.
+
+## 2026-11-08 — Phase 5.5 observation acquisition research
+
+- Compared every requested P0-P2 observation with public Dalamud API 15, BossMod fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, current DDCore and the two original replay exports.
+- Confirmed public actor/self pose, cast, status, duty and `InDeepDungeon` observations, but found no verified public floor, room-map, passage, trap, pomander or DD remaining-time contract.
+- Confirmed that BossMod obtains DD ID, floor, map, party room, passage, items, chests and magicite through FFXIVClientStructs in `UpdateDeepDungeon`; this is internal, patch-sensitive access and was not implemented.
+- Preserved the user-provided 3-to-4 floor label separately from JSON facts; the 412 snapshots still contain no authoritative floor transition.
+- Designed source/quality provenance, optional pose, floor epochs, transition invalidation and a source-neutral fusion boundary.
+- Recommended the first approved slice as provenance/optional coordinates plus anonymized self pose, followed by separately gated kind/floor and topology work.
+- Added documentation only. No production code, internal access, game operation, BossMod runtime dependency, Phase 6 work or `main` merge was performed.
+
+## 2026-11-08 — Phase 5 real-data validation
+
+- Auto-detected two unmodified local replay exports and validated 412 schema-version 3 snapshots with the production replay codec.
+- Added a read-only `WorldSnapshotStrategyAdapter` that transfers only direct observations and preserves unavailable room, exit, resource and timing inputs as Unknown.
+- The user-labelled floor 3 to floor 4 candidate contains 124 snapshots, but no floor number or transition event; the label cannot be independently derived from the JSON.
+- All 412 strategy evaluations completed without exceptions and returned deterministic fail-closed `Stop` / `Unknown` results. No actionable decision was produced.
+- Added four adapter/fail-closed tests. Core tests now pass 173/173 and the full local verification is recorded in `phase5-verification.md`.
+- Phase 6 is not ready because authoritative floor, room graph/membership, exit, traps, pomanders, remaining time and resource readiness are not observed.
+
+## 2026-11-08 — User-defined Phase 5 DD strategy engine
+
+- Reconciled the explicit Phase 5 instruction with the original master plan: this branch completes a bounded decision-engine layer and does not start the original Phase 5 operation foundation.
+- Added immutable Unknown-preserving state for dungeon/floor, the complete 25-room graph, exploration/danger, exit, enemies, traps, pomanders, aggregate resource readiness and remaining time.
+- Added deterministic fail-closed decisions for danger retreat, engaged combat, resource preservation, hostile enemies, active exits, unexplored rooms and exit recheck.
+- Reused the Phase 4 attributed `RoomPathfinder` and excluded unsafe/unknown rooms, traps and non-defeated enemies from candidate routes.
+- Added 30 synthetic Core tests for normal, abnormal, missing, regressing, no-route and deterministic scenarios.
+- Locked restore, Release build, all 209 tests, format, dependency/reference, NuGet vulnerability and prohibited-operation audits passed.
+- Package `0.5.0.0`, API 15, SHA-256 `558A4A8E6C688BEEE3D9D199D93EFD0DFD80C06BCA6A9636EA503C147278BD0A`.
+- Opened stacked Draft PR #7 against `phase4.5/bossmod-integration-proof`, and confirmed final push run `42412810484` plus PR run `42412814600` passed at verified head `bc2e5dc`.
+- Live FFXIV/Dalamud and real-floor strategy behavior remain unverified; the public adapter still cannot populate the required DD room/resource state.
+
 ## 2026-11-08 — Phase 4.5 BossMod integration proof
 
 - Verified 37 fixed-commit BossMod IPC functions and separated technical reachability from DD strategy-data availability.

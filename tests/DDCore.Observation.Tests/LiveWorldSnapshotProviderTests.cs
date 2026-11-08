@@ -42,6 +42,9 @@ public sealed class LiveWorldSnapshotProviderTests
         var status = Assert.Single(actor.Statuses);
         Assert.Equal(At + TimeSpan.FromSeconds(5), status.ExpiresAt);
         Assert.Contains("observation.dungeon.eureka-orthos-floor-10.estimated-from-encounter-actor", snapshot.Diagnostics);
+        Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), snapshot.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Direct, snapshot.PlayerPose.Metadata.Quality);
+        Assert.Equal(ObservationValueSource.PublicDalamud, snapshot.PlayerPose.Metadata.Source);
     }
 
     [Fact]
@@ -108,13 +111,53 @@ public sealed class LiveWorldSnapshotProviderTests
     [Fact]
     public void MissingPlayerIsPartialAndDoesNotUseZeroPlaceholder()
     {
-        var provider = Provider(Frame(At, [Enemy(1, 0x1111)], localPlayerEntityId: 99));
+        var provider = Provider(Frame(
+            At,
+            [Enemy(1, 0x1111)],
+            localPlayerEntityId: 99,
+            playerPose: RawPlayerPoseObservation.Missing("dalamud.player.not-created")));
 
         var snapshot = provider.Capture();
 
         Assert.Equal(ObservationQuality.Partial, snapshot.Quality);
         Assert.DoesNotContain(snapshot.Actors, actor => actor.Identity.EntityId == 0);
         Assert.Contains("observation.player.unavailable", snapshot.Diagnostics);
+        Assert.Null(snapshot.PlayerPose!.Position);
+        Assert.Null(snapshot.PlayerPose.Rotation);
+        Assert.Equal(ObservationValueQuality.Missing, snapshot.PlayerPose.Metadata.Quality);
+        Assert.Equal("dalamud.player.not-created", snapshot.PlayerPose.Metadata.MissingReason);
+    }
+
+    [Fact]
+    public void PublicApiReadFailurePreservesMissingReason()
+    {
+        var provider = Provider(Frame(
+            At,
+            [Player()],
+            playerPose: RawPlayerPoseObservation.Missing("dalamud.player.read-failed:InvalidOperationException")));
+
+        var snapshot = provider.Capture();
+
+        Assert.Equal(ObservationQuality.Partial, snapshot.Quality);
+        Assert.Null(snapshot.PlayerPose!.Position);
+        Assert.Equal(ObservationValueSource.PublicDalamud, snapshot.PlayerPose.Metadata.Source);
+        Assert.Equal(ObservationValueQuality.Missing, snapshot.PlayerPose.Metadata.Quality);
+        Assert.Equal("dalamud.player.read-failed:InvalidOperationException", snapshot.PlayerPose.Metadata.MissingReason);
+    }
+
+    [Fact]
+    public void NonFinitePublicPoseIsInvalidWithoutUsingOriginFallback()
+    {
+        var provider = Provider(Frame(
+            At,
+            [Player()],
+            playerPose: RawPlayerPoseObservation.Direct(new RawPosition(double.NaN, 0, 0), 0)));
+
+        var snapshot = provider.Capture();
+
+        Assert.Null(snapshot.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Invalid, snapshot.PlayerPose.Metadata.Quality);
+        Assert.Equal("observation.player.pose-invalid", snapshot.PlayerPose.Metadata.MissingReason);
     }
 
     [Fact]
@@ -128,6 +171,9 @@ public sealed class LiveWorldSnapshotProviderTests
         Assert.Null(snapshot.Dungeon.TerritoryId);
         Assert.Null(snapshot.Dungeon.ContentId);
         Assert.Empty(snapshot.Actors);
+        Assert.Null(snapshot.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Missing, snapshot.PlayerPose.Metadata.Quality);
+        Assert.Equal("observation.player.pose-not-observed", snapshot.PlayerPose.Metadata.MissingReason);
     }
 
     [Fact]
@@ -144,6 +190,8 @@ public sealed class LiveWorldSnapshotProviderTests
         Assert.Equal(ObservationQuality.Stale, stale.Quality);
         Assert.Contains("observation.time.regressed", stale.Diagnostics);
         Assert.Empty(stale.Actors);
+        Assert.Equal(ObservationValueQuality.Stale, stale.PlayerPose!.Metadata.Quality);
+        Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), stale.PlayerPose.Position);
     }
 
     [Fact]
@@ -186,6 +234,16 @@ public sealed class LiveWorldSnapshotProviderTests
         Assert.Contains("observation.dungeon.unidentified", snapshot.Diagnostics);
     }
 
+    [Fact]
+    public void ContentExitKeepsPublicPoseButIsNotADeepDungeon()
+    {
+        var snapshot = Provider(Frame(At, [Player()], dutyStarted: false)).Capture();
+
+        Assert.Equal(DeepDungeonKind.None, snapshot.Dungeon.Kind);
+        Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), snapshot.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Direct, snapshot.PlayerPose.Metadata.Quality);
+    }
+
     private static LiveWorldSnapshotProvider Provider(RawObservationFrame frame) => new(new QueueSource(frame));
 
     internal static RawObservationFrame Frame(
@@ -194,8 +252,18 @@ public sealed class LiveWorldSnapshotProviderTests
         uint? territoryId = 777,
         uint? contentId = null,
         bool dutyStarted = true,
-        uint? localPlayerEntityId = 10) =>
-        new(at, true, territoryId, contentId, dutyStarted, localPlayerEntityId, actors, []);
+        uint? localPlayerEntityId = 10,
+        RawPlayerPoseObservation? playerPose = null) =>
+        new(
+            at,
+            true,
+            territoryId,
+            contentId,
+            dutyStarted,
+            localPlayerEntityId,
+            actors,
+            [],
+            playerPose ?? RawPlayerPoseObservation.Direct(new RawPosition(0, 0, 0), 0));
 
     internal static RawActorObservation Player() => new(
         10,

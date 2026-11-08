@@ -502,6 +502,7 @@ public static class SnapshotPrivacyFilter
             snapshot.Quality,
             snapshot.Dungeon,
             sanitizedActors,
-            snapshot.Diagnostics);
+            snapshot.Diagnostics,
+            snapshot.PlayerPose);
     }
 }

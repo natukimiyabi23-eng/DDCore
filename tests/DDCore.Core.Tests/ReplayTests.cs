@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json.Nodes;
 using DDCore.Core.Geometry;
 using DDCore.Core.Replay;
+using DDCore.Core.Schema;
 using DDCore.Core.World;
 
 namespace DDCore.Core.Tests;
@@ -113,6 +115,51 @@ public sealed class ReplayTests
         Assert.Equal(first.CapturedAt, second.CapturedAt);
         Assert.Equal(first.SessionId, second.SessionId);
         Assert.Equal(first.Dungeon, second.Dungeon);
+    }
+
+    [Fact]
+    public void LegacySchemaThreeReplayWithoutPlayerPoseRemainsReadable()
+    {
+        var codec = new ReplayCodec();
+        var current = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.1.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var root = JsonNode.Parse(codec.Serialize(current, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
+        root["schemaVersion"] = SchemaVersions.LegacyReplay;
+        root["snapshots"]![0]!["schemaVersion"] = SchemaVersions.LegacyWorldSnapshot;
+
+        var restored = codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString()));
+
+        Assert.Equal(SchemaVersions.LegacyReplay, restored.SchemaVersion);
+        var snapshot = Assert.Single(restored.Snapshots);
+        Assert.Equal(SchemaVersions.LegacyWorldSnapshot, snapshot.SchemaVersion);
+        Assert.Null(snapshot.PlayerPose);
+    }
+
+    [Fact]
+    public void CurrentReplayPreservesAnonymousPoseMetadata()
+    {
+        var snapshot = new MockWorldSnapshotBuilder()
+            .InSession(Session)
+            .At(Start)
+            .WithSequence(1)
+            .WithAnonymousPlayerPose(
+                new Coordinate2D(0, 0),
+                0,
+                new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null))
+            .Build();
+        var document = ReplayDocument.Create(Start, Session, "0.5.1.0", [snapshot], ReplayUserIntent.ExplicitCapture);
+        var codec = new ReplayCodec();
+
+        var restored = codec.Deserialize(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport));
+
+        var pose = Assert.Single(restored.Snapshots).PlayerPose!;
+        Assert.Equal(new Coordinate2D(0, 0), pose.Position);
+        Assert.Equal(ObservationValueSource.PublicDalamud, pose.Metadata.Source);
+        Assert.Equal(ObservationValueQuality.Direct, pose.Metadata.Quality);
     }
 
     private static WorldSnapshot CreateSnapshot(long sequence, DateTimeOffset at) =>
