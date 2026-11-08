@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 10:21 JST (Phase 5.5 observation acquisition research started)
+Status: complete
+Updated: 2026-11-08 10:31 JST (Phase 5.5 observation acquisition research complete)
 
 ## Objective
 
@@ -71,10 +71,9 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Phase 5.5 first unfinished step: validate the documentation diff and source links, then commit/push documentation only, update Draft PR #7, wait for CI if triggered, and stop for user approval.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
-- Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered.
-- Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this validation and must not be reported as verified.
+- If Phase 5.5 implementation is approved, start only with provenance/availability, nullable coordinates and anonymized self pose. Native floor/topology access requires separate explicit approval.
+- Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered; live Dalamud/FFXIV behavior remains unverified.
 
 ## Phase 5 checkpoint
 
@@ -88,6 +87,10 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Documentation now distinguishes confirmed public observations, unverified/internal candidates and unavailable data; it defines provenance, nullable pose, floor-epoch invalidation, adapter separation, implementation order and live-test requirements.
 - Documentation verification passed: fixed-commit source paths and official API links were checked; the two original exports remain unchanged with their recorded SHA-256 hashes.
 - Locked restore, Release build (0 warnings/errors), all 213 tests (Core 173 + Observation 40), format verification and NuGet vulnerability audit passed after the documentation-only changes.
+- Documentation commit `80acac7` was pushed to `phase5/strategy-engine`; Draft PR #7 was updated and remains Draft against `phase4.5/bossmod-integration-proof`.
+- Push run `42434441245` and Draft PR run `42434444504` both passed at head `80acac7`.
+- The one-time `ddcore-phase55-followup` and the already-fired `ddcore-phase55-research` automations were deleted after completion so they cannot restart completed work.
+- Phase 5.5 production implementation was not started. The requested result is complete and awaiting user approval.
 
 - Real-data validation started: `2026-11-08T07:37:07+09:00`.
 - Authoritative preflight: five-hour window 42% remaining; weekly window 60% remaining.
