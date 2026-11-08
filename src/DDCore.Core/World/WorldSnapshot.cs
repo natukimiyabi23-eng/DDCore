@@ -208,13 +208,28 @@ public sealed record ActorSnapshot(
     }
 }
 
+public sealed record DeepDungeonFloorRange(int Start, int End)
+{
+    public void Validate()
+    {
+        if (Start < 1 || End > 200 || Start > End || End - Start != 9 || (Start - 1) % 10 != 0)
+        {
+            throw new InvalidDataException("Deep Dungeon floor range must be an aligned ten-floor band within 1-200.");
+        }
+    }
+
+    public bool Contains(int floor) => floor >= Start && floor <= End;
+}
+
 public sealed record DeepDungeonContext(
     DeepDungeonKind Kind,
     int? Floor,
     uint? TerritoryId,
     uint? ContentId,
     string ContentKey,
-    int? Tileset)
+    int? Tileset,
+    DeepDungeonFloorRange? FloorRange = null,
+    bool? IsDeepDungeonObserved = null)
 {
     public void Validate()
     {
@@ -228,9 +243,20 @@ public sealed record DeepDungeonContext(
             throw new InvalidDataException("Deep Dungeon floor or tileset is outside the accepted range.");
         }
 
-        if (Kind == DeepDungeonKind.None && Floor is not null)
+        FloorRange?.Validate();
+        if (Floor is { } floor && FloorRange is { } range && !range.Contains(floor))
         {
-            throw new InvalidDataException("A non-Deep-Dungeon context cannot contain a floor.");
+            throw new InvalidDataException("The exact floor is outside the observed ten-floor range.");
+        }
+
+        if (Kind == DeepDungeonKind.None && (Floor is not null || FloorRange is not null || IsDeepDungeonObserved == true))
+        {
+            throw new InvalidDataException("A non-Deep-Dungeon context cannot contain Deep Dungeon evidence.");
+        }
+
+        if (Kind is not (DeepDungeonKind.None or DeepDungeonKind.Unsupported) && IsDeepDungeonObserved == false)
+        {
+            throw new InvalidDataException("A supported Deep Dungeon kind cannot contradict the public DD condition.");
         }
     }
 }
@@ -271,7 +297,15 @@ public sealed record WorldSnapshot
             Guid.NewGuid(),
             ObservationSource.LiveAdapter,
             ObservationQuality.Complete,
-            new DeepDungeonContext(isDeepDungeon ? DeepDungeonKind.Unsupported : DeepDungeonKind.None, null, null, null, contentKey, null),
+            new DeepDungeonContext(
+                isDeepDungeon ? DeepDungeonKind.Unsupported : DeepDungeonKind.None,
+                null,
+                null,
+                null,
+                contentKey,
+                null,
+                null,
+                isDeepDungeon),
             ImmutableArray<ActorSnapshot>.Empty,
             ImmutableArray<string>.Empty)
     {
@@ -298,7 +332,8 @@ public sealed record WorldSnapshot
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AnonymousPlayerPose? PlayerPose { get; }
 
-    public bool IsDeepDungeon => Dungeon.Kind != DeepDungeonKind.None;
+    public bool IsDeepDungeon => Dungeon.Kind is not (DeepDungeonKind.None or DeepDungeonKind.Unsupported)
+        || Dungeon.IsDeepDungeonObserved == true;
 
     public string ContentKey => Dungeon.ContentKey;
 

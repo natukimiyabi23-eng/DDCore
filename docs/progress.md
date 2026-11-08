@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5B B1 public classification
+
+- Added public `ConditionFlag.InDeepDungeon` observation independently from duty-start state.
+- Added a checked manifest for all 40 supported Palace of the Dead, Heaven-on-High and Eureka Orthos ten-floor bands, pinned to `ffxiv-datamining` commit `44948e4cda5846eab0baa9872122a888fcc4f1b1`.
+- Classification now requires the observed CFC row, observed territory, row-referenced territory, data-content row and short code to agree. Unknown or conflicting evidence remains unsupported.
+- Added an optional ten-floor range and direct-DD-condition evidence to `DeepDungeonContext` without changing schema 3/4 numbers. Exact floor remains `null` for public classification.
+- Removed boss-actor exact-floor inference and the shortcut that treated any started duty as a Deep Dungeon.
+- Preserved the Phase 5 fail-closed gate: a ten-floor band is evidence only and does not make the exact floor known.
+- Live Dalamud behavior remains unverified; B2/native access/game operation were not added.
+
 ## 2026-11-08 — Phase 5.5B live-evidence implementation plan
 
 - Read four original exports from the configured local folder without modifying or committing them; identified the latest valid schema-4/producer-0.5.1.0 EO capture with 34 snapshots.

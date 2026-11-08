@@ -162,6 +162,66 @@ public sealed class ReplayTests
         Assert.Equal(ObservationValueQuality.Direct, pose.Metadata.Quality);
     }
 
+    [Theory]
+    [InlineData(SchemaVersions.LegacyReplay, SchemaVersions.LegacyWorldSnapshot)]
+    [InlineData(SchemaVersions.Replay, SchemaVersions.WorldSnapshot)]
+    public void ExistingSchemaThreeAndFourWithoutB1FieldsRemainReadable(int replaySchema, int snapshotSchema)
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.1.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var root = JsonNode.Parse(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
+        root["schemaVersion"] = replaySchema;
+        var snapshotNode = root["snapshots"]![0]!.AsObject();
+        snapshotNode["schemaVersion"] = snapshotSchema;
+        var dungeon = snapshotNode["dungeon"]!.AsObject();
+        dungeon.Remove("floorRange");
+        dungeon.Remove("isDeepDungeonObserved");
+        if (replaySchema == SchemaVersions.LegacyReplay)
+        {
+            snapshotNode.Remove("playerPose");
+        }
+
+        var restored = codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString()));
+
+        var restoredDungeon = Assert.Single(restored.Snapshots).Dungeon;
+        Assert.Null(restoredDungeon.FloorRange);
+        Assert.Null(restoredDungeon.IsDeepDungeonObserved);
+    }
+
+    [Fact]
+    public void CurrentSchemaRoundTripPreservesPublicBandWithoutInventingExactFloor()
+    {
+        var snapshot = new MockWorldSnapshotBuilder()
+            .InSession(Session)
+            .At(Start)
+            .WithSequence(1)
+            .InDungeon(new DeepDungeonContext(
+                DeepDungeonKind.EurekaOrthos,
+                null,
+                1099,
+                897,
+                "eureka-orthos:1-10:public",
+                null,
+                new DeepDungeonFloorRange(1, 10),
+                true))
+            .Build();
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(Start, Session, "0.5.2.0", [snapshot], ReplayUserIntent.ExplicitCapture);
+
+        var restored = codec.Deserialize(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport));
+
+        var dungeon = Assert.Single(restored.Snapshots).Dungeon;
+        Assert.Equal(DeepDungeonKind.EurekaOrthos, dungeon.Kind);
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), dungeon.FloorRange);
+        Assert.Null(dungeon.Floor);
+        Assert.True(dungeon.IsDeepDungeonObserved);
+    }
+
     private static WorldSnapshot CreateSnapshot(long sequence, DateTimeOffset at) =>
         new MockWorldSnapshotBuilder()
             .InSession(Session)

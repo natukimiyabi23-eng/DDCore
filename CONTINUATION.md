@@ -1,9 +1,23 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 21:10 JST (Phase 5.5B research and design complete)
+Status: in_progress
+Updated: 2026-11-08 21:14 JST (Phase 5.5B B1 implementation started)
 
 ## Objective
+
+Current objective: implement only the explicitly approved Phase 5.5B B1 slice on `phase5.5b/b1-public-classification`, based on `phase5.5b/implementation-plan`: classify Palace of the Dead, Heaven-on-High and Eureka Orthos by public Dalamud API 15 duty/territory observations plus verified game-data mappings; retain a separate ten-floor band while leaving the exact floor `null`; preserve schema 3/4 compatibility; fail closed for unknown or mismatched IDs; add tests, documentation, full verification, commit/push and a stacked Draft PR targeting `phase5.5b/implementation-plan`. Do not start B2/native reads/movement/combat/input, change `DisabledExecutionGateway`, modify or commit original replay JSON, merge PR #7/#9/main, deploy, or operate FF14/Dalamud UI.
+
+- Start: `2026-11-08T21:09:49+09:00`.
+- Authoritative preflight: five-hour remaining 43%; weekly remaining 18%.
+- Estimate: 17% total including 3% contingency. Projected five-hour balance `43% - 17% = 26%`; projected weekly balance `18% - 17% = 1%`.
+- One-time continuation automation: `ddcore-phase55b-b1-followup`, verified `ACTIVE`, scheduled for `2026-11-09 02:09:49 JST` (exactly five hours after start).
+- Starting branch/head: `phase5.5b/b1-public-classification` from design commit `2e9d2d4`; worktree was clean before this continuation update.
+- Latest valid original replay: `ddcore-export-20261108-114807-8e655d1ad023455796a6a0beeba0421d.replay.json`, schema 4, producer 0.5.1.0, 34 snapshots, SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`. It remains read-only and outside Git.
+- Thread goal registration remains unavailable because an unrelated earlier FateFarmJP goal is still unfinished; this file and the verified automation hold the DDCore continuation state.
+- Implementation milestone: added explicit public DD-condition capture, checked 40-entry CFC/territory/content/short-code manifest, optional ten-floor range/direct-condition evidence, fail-closed classification, schema 3/4 compatibility tests, range-aware diagnostics/UI and strategy evidence. Removed encounter-actor exact-floor inference and ordinary-duty DD inference. Intermediate solution tests passed before the final verification matrix.
+- Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 189/189 and Observation 95/95 tests (284 total, 61 net-new B1 cases); format; NuGet vulnerability audit; dependency and prohibited-operation audits.
+- Original replay hash remains `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; no replay JSON is tracked. Package version 0.5.2.0, API 15, SHA-256 `CD1034425FFE5E9288661AAC33E4263987586191E053B32E7D68EA711BE6AC76`.
+- Exact unfinished step: commit/push, create a Draft PR targeting `phase5.5b/implementation-plan`, wait for CI, record PR/check results, delete the obsolete continuation automation, then mark this objective complete.
 
 Current objective: perform Phase 5.5B research/design only on `phase5.5b/implementation-plan`, based on Draft PR #7 and the latest original schema-4 replay. Produce `docs/phase5.5b-implementation-plan.md` with code/source-line evidence, verified replay facts, unknowns, acquisition options/risks, implementation order, tests/acceptance and explicit approval gates. Add the fixed export-folder handling rules to repository `AGENTS.md`. Do not implement Phase 5.5B functionality, native reads, gameplay operation, movement/combat/input, merge PR #7/main, modify or commit original JSON, or operate FF14/Dalamud UI.
 

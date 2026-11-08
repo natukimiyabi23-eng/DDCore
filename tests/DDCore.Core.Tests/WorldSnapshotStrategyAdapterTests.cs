@@ -29,9 +29,12 @@ public sealed class WorldSnapshotStrategyAdapterTests
     [Fact]
     public void MissingFloorAndZeroCoordinateRemainAmbiguous()
     {
-        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(floor: null));
+        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(
+            floor: null,
+            floorRange: new DeepDungeonFloorRange(1, 10)));
 
         Assert.False(conversion.State.Floor.IsKnown);
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), conversion.Evidence.ObservedFloorRange);
         Assert.Equal(1, conversion.Evidence.ZeroCoordinateActorCount);
         Assert.Contains("floor", conversion.Evidence.UnavailableStrategyFields);
         Assert.Contains("playerPosition", conversion.Evidence.UnavailableStrategyFields);
@@ -54,11 +57,15 @@ public sealed class WorldSnapshotStrategyAdapterTests
     [Fact]
     public void ConvertedIncompleteSnapshotStopsFailClosed()
     {
-        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(floor: null));
+        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(
+            floor: null,
+            floorRange: new DeepDungeonFloorRange(1, 10)));
         var decision = new DeepDungeonStrategyEngine().Evaluate(
             conversion.State,
             new DeepDungeonStrategyPolicy(TimeSpan.FromMinutes(1)));
 
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), conversion.Evidence.ObservedFloorRange);
+        Assert.False(conversion.State.Floor.IsKnown);
         Assert.Equal(StrategyAction.Stop, decision.RecommendedAction);
         Assert.Equal(StrategyRisk.Unknown, decision.Risk);
         Assert.False(decision.CanProceed);
@@ -124,7 +131,8 @@ public sealed class WorldSnapshotStrategyAdapterTests
     private static WorldSnapshot Snapshot(
         int? floor,
         AnonymousPlayerPose? playerPose = null,
-        DeepDungeonKind dungeonKind = DeepDungeonKind.EurekaOrthos)
+        DeepDungeonKind dungeonKind = DeepDungeonKind.EurekaOrthos,
+        DeepDungeonFloorRange? floorRange = null)
     {
         var identity = new ActorIdentity(100, 0);
         var cast = new CastSnapshot(
@@ -158,7 +166,15 @@ public sealed class WorldSnapshotStrategyAdapterTests
             Guid.Parse("ce0e1027-8d2f-4ac4-9e70-27d806e370a9"),
             ObservationSource.Replay,
             ObservationQuality.Partial,
-            new DeepDungeonContext(dungeonKind, floor, 1099, null, dungeonKind == DeepDungeonKind.None ? "not-deep-dungeon" : "duty-unidentified", null),
+            new DeepDungeonContext(
+                dungeonKind,
+                floor,
+                1099,
+                null,
+                dungeonKind == DeepDungeonKind.None ? "not-deep-dungeon" : "duty-unidentified",
+                null,
+                floorRange,
+                dungeonKind == DeepDungeonKind.None ? false : true),
             ImmutableArray.Create(actor),
             ImmutableArray<string>.Empty,
             playerPose);

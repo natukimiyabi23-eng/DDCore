@@ -127,6 +127,12 @@ Phase 5.5A adds a reusable `ObservationMetadata` value and an identifier-free `A
 
 Schema 4 writes this optional field. The codec accepts schema 3 documents/snapshots without it and keeps them Unknown. The privacy filter persists the anonymous pose but continues to remove Player/PartyMember actors and references. Strategy conversion exposes the pose only as evidence and does not derive room membership or bypass any existing Unknown gate.
 
+### Phase 5.5B B1 public classification boundary
+
+B1 reads only public `ICondition`, `IDutyState` and `IClientState` observations. A checked, pinned game-data manifest matches the `InDeepDungeon` condition, ContentFinderCondition row, the row's referenced territory/content/short code, and the observed territory. Only a complete match yields a supported DD kind and an aligned ten-floor `DeepDungeonFloorRange`. The exact `Floor` remains `null`.
+
+Unknown CFC rows, missing game-data rows and any mismatch produce `Unsupported` with direct DD-condition evidence and stable diagnostics. An ordinary started duty no longer becomes a Deep Dungeon merely because its kind is unsupported. Schema 3/4 documents that do not contain the additive range/condition fields remain readable; strategy conversion may expose the range as evidence but continues to keep exact floor Unknown, so the existing stop gate remains active.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.

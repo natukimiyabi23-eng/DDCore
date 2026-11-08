@@ -40,6 +40,51 @@ public sealed class WorldSnapshotTests
         Assert.Throws<InvalidDataException>(() => CreateSnapshot(floor: floor));
 
     [Fact]
+    public void TenFloorBandIsSeparateFromExactFloor()
+    {
+        var context = new DeepDungeonContext(
+            DeepDungeonKind.EurekaOrthos,
+            null,
+            1099,
+            897,
+            "eureka-orthos:1-10:public",
+            null,
+            new DeepDungeonFloorRange(1, 10),
+            true);
+
+        context.Validate();
+
+        Assert.Null(context.Floor);
+        Assert.Equal(1, context.FloorRange!.Start);
+        Assert.Equal(10, context.FloorRange.End);
+    }
+
+    [Theory]
+    [InlineData(0, 9)]
+    [InlineData(1, 11)]
+    [InlineData(2, 11)]
+    [InlineData(191, 201)]
+    public void InvalidTenFloorBandIsRejected(int start, int end) =>
+        Assert.Throws<InvalidDataException>(() => new DeepDungeonFloorRange(start, end).Validate());
+
+    [Fact]
+    public void UnsupportedLegacyDutyIsNotDeepDungeonWithoutDirectConditionEvidence()
+    {
+        var legacy = new WorldSnapshot(
+            SchemaVersions.WorldSnapshot,
+            1,
+            CapturedAt,
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            ObservationSource.Replay,
+            ObservationQuality.Partial,
+            new DeepDungeonContext(DeepDungeonKind.Unsupported, null, 1, 1, "legacy-unidentified-duty", null),
+            [],
+            []);
+
+        Assert.False(legacy.IsDeepDungeon);
+    }
+
+    [Fact]
     public void DuplicateActorIdentityIsRejected()
     {
         var actor = CreateActor();

@@ -27,6 +27,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static IClientState ClientState { get; set; } = null!;
     [PluginService] private static IObjectTable ObjectTable { get; set; } = null!;
     [PluginService] private static IDutyState DutyState { get; set; } = null!;
+    [PluginService] private static ICondition Condition { get; set; } = null!;
     [PluginService] private static IFramework Framework { get; set; } = null!;
 
     private readonly Stack<Action> cleanupActions = new();
@@ -56,7 +57,7 @@ public sealed class Plugin : IDalamudPlugin
             bossModIntegration = BossModIntegrationProbe.Check(
                 () => new DalamudBossModIpcInvoker(PluginInterface));
 
-            var observationSource = new DalamudObservationSource(ClientState, ObjectTable, DutyState);
+            var observationSource = new DalamudObservationSource(ClientState, ObjectTable, DutyState, Condition);
             var snapshotProvider = new LiveWorldSnapshotProvider(observationSource);
             var recordingDirectory = Path.Combine(PluginInterface.GetPluginConfigDirectory(), "recordings");
             observationRecorder = new ObservationRecordingService(
