@@ -141,7 +141,7 @@ No item above was tested in game during this phase.
 - UI addon names/layouts and visible timer equivalence are unverified.
 - Complete hidden-trap acquisition would require an optional third-party provider or another unverified source.
 
-Phase 5.5 implementation can begin only as the bounded, approved model/provenance and public self-pose slice. Native floor/topology access should require a separate explicit approval after the prototype/test boundary is agreed. Phase 6 is not ready.
+The bounded model/provenance and public self-pose slice is implemented in Phase 5.5A and documented in `phase5.5a-observation-foundation.md`. Native floor/topology access remains unimplemented and requires separate explicit approval. Phase 6 is not ready.
 
 ## Primary sources
 

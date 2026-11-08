@@ -14,6 +14,75 @@ public enum ObservationSource
     Simulation,
 }
 
+public enum ObservationValueSource
+{
+    Unknown,
+    PublicDalamud,
+    Replay,
+    Mock,
+    Derived,
+}
+
+public enum ObservationValueQuality
+{
+    Direct,
+    Derived,
+    Missing,
+    Unsupported,
+    Stale,
+    Invalid,
+}
+
+public sealed record ObservationMetadata(
+    ObservationValueSource Source,
+    ObservationValueQuality Quality,
+    string? MissingReason)
+{
+    public void Validate()
+    {
+        var requiresMissingReason = Quality is not (ObservationValueQuality.Direct or ObservationValueQuality.Derived);
+        if (!Enum.IsDefined(Source)
+            || !Enum.IsDefined(Quality)
+            || (Source == ObservationValueSource.Unknown
+                && Quality is (ObservationValueQuality.Direct or ObservationValueQuality.Derived))
+            || (requiresMissingReason && string.IsNullOrWhiteSpace(MissingReason))
+            || (!requiresMissingReason && !string.IsNullOrWhiteSpace(MissingReason)))
+        {
+            throw new InvalidDataException("Observation metadata has an invalid source, quality, or missing reason.");
+        }
+    }
+}
+
+public sealed record AnonymousPlayerPose(
+    Coordinate2D? Position,
+    double? Rotation,
+    ObservationMetadata Metadata)
+{
+    public void Validate()
+    {
+        ArgumentNullException.ThrowIfNull(Metadata);
+        Metadata.Validate();
+        if (Position is { } position)
+        {
+            Coordinate2D.EnsureFinite(position, nameof(Position));
+        }
+
+        if (Rotation is { } rotation)
+        {
+            Coordinate2D.EnsureFinite(rotation, nameof(Rotation));
+        }
+
+        var hasCompletePose = Position.HasValue && Rotation.HasValue;
+        if (Metadata.Quality is (ObservationValueQuality.Direct or ObservationValueQuality.Derived) && !hasCompletePose
+            || (Metadata.Quality is ObservationValueQuality.Missing or ObservationValueQuality.Unsupported or ObservationValueQuality.Invalid
+                && (Position.HasValue || Rotation.HasValue))
+            || (Metadata.Quality == ObservationValueQuality.Stale && Position.HasValue != Rotation.HasValue))
+        {
+            throw new InvalidDataException("Anonymous player pose does not match its observation quality.");
+        }
+    }
+}
+
 public enum DeepDungeonKind
 {
     None,
@@ -178,7 +247,8 @@ public sealed record WorldSnapshot
         ObservationQuality quality,
         DeepDungeonContext dungeon,
         ImmutableArray<ActorSnapshot> actors,
-        ImmutableArray<string> diagnostics)
+        ImmutableArray<string> diagnostics,
+        AnonymousPlayerPose? playerPose = null)
     {
         SchemaVersion = schemaVersion;
         Sequence = sequence;
@@ -189,6 +259,7 @@ public sealed record WorldSnapshot
         Dungeon = dungeon;
         Actors = actors;
         Diagnostics = diagnostics;
+        PlayerPose = playerPose;
         Validate();
     }
 
@@ -224,13 +295,16 @@ public sealed record WorldSnapshot
 
     public ImmutableArray<string> Diagnostics { get; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AnonymousPlayerPose? PlayerPose { get; }
+
     public bool IsDeepDungeon => Dungeon.Kind != DeepDungeonKind.None;
 
     public string ContentKey => Dungeon.ContentKey;
 
     public void Validate()
     {
-        if (SchemaVersion != SchemaVersions.WorldSnapshot
+        if (SchemaVersion is not (SchemaVersions.LegacyWorldSnapshot or SchemaVersions.WorldSnapshot)
             || Sequence < 0
             || CapturedAt == default
             || SessionId == Guid.Empty
@@ -243,6 +317,12 @@ public sealed record WorldSnapshot
         }
 
         Dungeon.Validate();
+        if (SchemaVersion == SchemaVersions.LegacyWorldSnapshot && PlayerPose is not null)
+        {
+            throw new InvalidDataException("Legacy world snapshots cannot contain the Phase 5.5A player pose field.");
+        }
+
+        PlayerPose?.Validate();
         var identities = new HashSet<ActorIdentity>();
         foreach (var actor in Actors)
         {

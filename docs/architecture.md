@@ -119,7 +119,13 @@ The Phase 5.5 research confirms that public Dalamud API 15 supplies actors, self
 
 The next observation model must therefore add source, availability, timestamp, sequence and floor-epoch provenance. Missing pose must be distinct from a valid `(0,0)` coordinate. A confirmed floor-epoch change invalidates every room-, exit-, trap- and enemy-membership observation before strategy evaluation. Public and any future optional native sources terminate at a source-neutral fusion boundary; no native type or observation provider may access execution.
 
-The full acquisition matrix, evidence and approval gates are in `phase5.5-observation-acquisition.md`. No Phase 5.5 production implementation is included in this branch.
+The full acquisition matrix, evidence and approval gates are in `phase5.5-observation-acquisition.md`. Phase 5.5A implements only the approved public self-pose/model slice described below; native DD metadata remains research-only.
+
+### Phase 5.5A implemented boundary
+
+Phase 5.5A adds a reusable `ObservationMetadata` value and an identifier-free `AnonymousPlayerPose`. The live plugin obtains the pose only from public `IObjectTable.LocalPlayer`; the Core/Observation layers remain free of Dalamud types. Nullable position and rotation distinguish unavailable data from a valid origin, while source, quality and missing reason remain replayable.
+
+Schema 4 writes this optional field. The codec accepts schema 3 documents/snapshots without it and keeps them Unknown. The privacy filter persists the anonymous pose but continues to remove Player/PartyMember actors and references. Strategy conversion exposes the pose only as evidence and does not derive room membership or bypass any existing Unknown gate.
 
 ## Safety gates
 

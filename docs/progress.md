@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5A observation foundation
+
+- Added reusable source/quality/missing-reason metadata and an identifier-free nullable player pose.
+- Read public Dalamud API 15 `LocalPlayer` position/rotation without persisting the player identity; missing, exception and invalid-value paths remain explicit.
+- Raised replay/world output to schema 4 while retaining strict schema 3 read compatibility. Both original exports still decode unchanged (412 snapshots total).
+- Preserved anonymous pose through recording privacy sanitization while continuing to remove Player/PartyMember actors and references.
+- Exposed pose only as Phase 5 evidence; no room inference or actionable strategy input was invented, and Unknown/content-exit states still stop.
+- Added tests for origin/missing distinction, public read failure, absent player, logout/content exit, legacy JSON, privacy and fail-closed conversion.
+- No native access, BossMod runtime dependency, gameplay operation, Phase 5.5B, Phase 6 or `main` merge was added.
+
 ## 2026-11-08 — Phase 5.5 observation acquisition research
 
 - Compared every requested P0-P2 observation with public Dalamud API 15, BossMod fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, current DDCore and the two original replay exports.

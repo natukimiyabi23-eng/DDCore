@@ -11,6 +11,9 @@ public sealed record StrategyObservationEvidence(
     int StatusCount,
     int DeadOrDestroyedEnemyCount,
     int ZeroCoordinateActorCount,
+    Coordinate2D? AnonymousPlayerPosition,
+    double? AnonymousPlayerRotation,
+    ObservationMetadata? PlayerPoseMetadata,
     ImmutableArray<string> UnavailableStrategyFields);
 
 public sealed record StrategyInputConversion(
@@ -49,6 +52,11 @@ public static class WorldSnapshotStrategyAdapter
             unavailable.Add("floor");
         }
 
+        if (snapshot.PlayerPose?.Position is null)
+        {
+            unavailable.Add("playerPosition");
+        }
+
         var state = new DeepDungeonStrategyState(
             snapshot.SessionId,
             snapshot.Sequence,
@@ -73,6 +81,9 @@ public static class WorldSnapshotStrategyAdapter
             enemies.Sum(static actor => actor.Statuses.Length),
             enemies.Count(static actor => actor.IsDead || actor.IsDestroyed),
             snapshot.Actors.Count(actor => actor.Position == Zero),
+            snapshot.PlayerPose?.Position,
+            snapshot.PlayerPose?.Rotation,
+            snapshot.PlayerPose?.Metadata,
             unavailable.ToImmutable());
         return new StrategyInputConversion(state, evidence);
     }

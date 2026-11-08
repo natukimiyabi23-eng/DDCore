@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 10:31 JST (Phase 5.5 observation acquisition research complete)
+Status: in_progress
+Updated: 2026-11-08 11:26 JST (Phase 5.5A implementation started)
 
 ## Objective
+
+Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
 
 Current objective: research and design Phase 5.5 observation acquisition without implementing it. Compare verified Dalamud API 15 surfaces, pinned BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, existing DDCore observation/replay/strategy code, and the original local exports. Produce an evidence-linked acquisition matrix, read-only architecture, transition/missing-data model, implementation priorities and live-test unknowns; update Draft PR #7 and stop for approval. Do not change Phase 5 production behavior, access new game internals, operate FF14/Dalamud, add BossMod runtime dependencies, start Phase 6, or merge `main`.
 
@@ -71,11 +73,25 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
+- Phase 5.5A first unfinished step: review/commit/push the verified implementation and documentation, update Draft PR #7, then wait for CI.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
 - If Phase 5.5 implementation is approved, start only with provenance/availability, nullable coordinates and anonymized self pose. Native floor/topology access requires separate explicit approval.
 - Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered; live Dalamud/FFXIV behavior remains unverified.
 
 ## Phase 5 checkpoint
+
+- Phase 5.5A started: `2026-11-08T11:25:35+09:00`.
+- Authoritative preflight: five-hour window 65% remaining; weekly window 47% remaining.
+- Estimated requirement: 58% total (investigation 8%, implementation 24%, tests/audits 12%, documentation/PR 6%, contingency 8%); projected five-hour balance `65% - 58% = 7%`.
+- Five-hour continuation automation `ddcore-phase55a-followup` was created for `2026-11-08 16:25 JST` and verified `ACTIVE`. It checks the active goal, this file, Git/build/test/CI state and remaining usage, then resumes only unfinished Phase 5.5A work.
+- Starting branch/head: `phase5/strategy-engine` at `097f936`; worktree clean; Draft PR #7 open and Draft against `phase4.5/bossmod-integration-proof`.
+- No Phase 5.5A source edit has been made at this checkpoint.
+- Implemented reusable observation source/quality/missing-reason metadata, nullable identifier-free player pose, public `LocalPlayer` acquisition, schema 4 output with schema 3 read compatibility, privacy-preserving recording and evidence-only strategy conversion.
+- Added the required origin/missing, failure, absent player, logout/content exit, legacy JSON, privacy and fail-closed tests. Intermediate suites pass Core 180/180 and Observation 43/43 (223 total).
+- The new codec read both original schema 3 exports (288 + 124 snapshots) with zero player-pose fabrication; their recorded SHA-256 hashes remain unchanged.
+- Added `docs/phase5.5a-observation-foundation.md` and updated architecture, progress and README. Native DD metadata, operations and later phases remain untouched.
+- Final local verification passed: locked restore, Release build with 0 warnings/errors, 223 tests, format, NuGet vulnerability audit and static dependency/prohibited-operation audits.
+- Package `0.5.1.0`, API 15, SHA-256 `1A9EE37D336C91F031809FA277375C7A23EE48E8D0EC10DE2CACCC79218C76C8`. Added `docs/phase5.5a-verification.md`.
 
 - Phase 5.5 started: `2026-11-08T10:21:00+09:00`.
 - Authoritative preflight: five-hour window 100% remaining; weekly window 53% remaining.

@@ -34,6 +34,8 @@ public sealed class WorldSnapshotStrategyAdapterTests
         Assert.False(conversion.State.Floor.IsKnown);
         Assert.Equal(1, conversion.Evidence.ZeroCoordinateActorCount);
         Assert.Contains("floor", conversion.Evidence.UnavailableStrategyFields);
+        Assert.Contains("playerPosition", conversion.Evidence.UnavailableStrategyFields);
+        Assert.Null(conversion.Evidence.AnonymousPlayerPosition);
     }
 
     [Fact]
@@ -64,7 +66,65 @@ public sealed class WorldSnapshotStrategyAdapterTests
         Assert.Contains(decision.BlockingReasons, reason => reason.Contains("現在の部屋", StringComparison.Ordinal));
     }
 
-    private static WorldSnapshot Snapshot(int? floor)
+    [Fact]
+    public void ObservedOriginIsNotTreatedAsMissingPlayerPosition()
+    {
+        var pose = new AnonymousPlayerPose(
+            new Coordinate2D(0, 0),
+            0,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null));
+        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(floor: 4, playerPose: pose));
+
+        Assert.Equal(new Coordinate2D(0, 0), conversion.Evidence.AnonymousPlayerPosition);
+        Assert.Equal(0, conversion.Evidence.AnonymousPlayerRotation);
+        Assert.Equal(ObservationValueQuality.Direct, conversion.Evidence.PlayerPoseMetadata!.Quality);
+        Assert.DoesNotContain("playerPosition", conversion.Evidence.UnavailableStrategyFields);
+        Assert.Equal(1, conversion.Evidence.ZeroCoordinateActorCount);
+    }
+
+    [Fact]
+    public void MissingPlayerPoseStillStopsFailClosed()
+    {
+        var pose = new AnonymousPlayerPose(
+            null,
+            null,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Missing, "dalamud.player.not-created"));
+        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(floor: 4, playerPose: pose));
+        var decision = new DeepDungeonStrategyEngine().Evaluate(
+            conversion.State,
+            new DeepDungeonStrategyPolicy(TimeSpan.FromMinutes(1)));
+
+        Assert.Null(conversion.Evidence.AnonymousPlayerPosition);
+        Assert.Equal("dalamud.player.not-created", conversion.Evidence.PlayerPoseMetadata!.MissingReason);
+        Assert.Contains("playerPosition", conversion.Evidence.UnavailableStrategyFields);
+        Assert.Equal(StrategyAction.Stop, decision.RecommendedAction);
+        Assert.False(decision.CanProceed);
+    }
+
+    [Fact]
+    public void ObservedPoseOutsideDeepDungeonDoesNotPermitStrategy()
+    {
+        var pose = new AnonymousPlayerPose(
+            new Coordinate2D(5, 6),
+            0.5,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null));
+        var conversion = WorldSnapshotStrategyAdapter.Convert(Snapshot(
+            floor: null,
+            playerPose: pose,
+            dungeonKind: DeepDungeonKind.None));
+        var decision = new DeepDungeonStrategyEngine().Evaluate(
+            conversion.State,
+            new DeepDungeonStrategyPolicy(TimeSpan.FromMinutes(1)));
+
+        Assert.Equal(StrategyAction.Stop, decision.RecommendedAction);
+        Assert.False(decision.CanProceed);
+        Assert.Equal(DeepDungeonKind.None, conversion.State.DungeonKind.RequireKnown("kind"));
+    }
+
+    private static WorldSnapshot Snapshot(
+        int? floor,
+        AnonymousPlayerPose? playerPose = null,
+        DeepDungeonKind dungeonKind = DeepDungeonKind.EurekaOrthos)
     {
         var identity = new ActorIdentity(100, 0);
         var cast = new CastSnapshot(
@@ -98,8 +158,9 @@ public sealed class WorldSnapshotStrategyAdapterTests
             Guid.Parse("ce0e1027-8d2f-4ac4-9e70-27d806e370a9"),
             ObservationSource.Replay,
             ObservationQuality.Partial,
-            new DeepDungeonContext(DeepDungeonKind.EurekaOrthos, floor, 1099, null, "duty-unidentified", null),
+            new DeepDungeonContext(dungeonKind, floor, 1099, null, dungeonKind == DeepDungeonKind.None ? "not-deep-dungeon" : "duty-unidentified", null),
             ImmutableArray.Create(actor),
-            ImmutableArray<string>.Empty);
+            ImmutableArray<string>.Empty,
+            playerPose);
     }
 }

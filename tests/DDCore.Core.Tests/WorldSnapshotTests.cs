@@ -90,11 +90,49 @@ public sealed class WorldSnapshotTests
         Assert.Equal("adapter.unsupported", Assert.Single(snapshot.Diagnostics));
     }
 
+    [Fact]
+    public void MissingPoseAndObservedOriginAreDistinct()
+    {
+        var missing = CreateSnapshot(playerPose: new AnonymousPlayerPose(
+            null,
+            null,
+            new ObservationMetadata(
+                ObservationValueSource.PublicDalamud,
+                ObservationValueQuality.Missing,
+                "dalamud.player.not-created")));
+        var origin = CreateSnapshot(playerPose: new AnonymousPlayerPose(
+            new Coordinate2D(0, 0),
+            0,
+            new ObservationMetadata(
+                ObservationValueSource.PublicDalamud,
+                ObservationValueQuality.Direct,
+                null)));
+
+        Assert.Null(missing.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Missing, missing.PlayerPose.Metadata.Quality);
+        Assert.Equal(new Coordinate2D(0, 0), origin.PlayerPose!.Position);
+        Assert.Equal(ObservationValueQuality.Direct, origin.PlayerPose.Metadata.Quality);
+    }
+
+    [Fact]
+    public void DirectPoseRequiresCoordinatesAndNoMissingReason()
+    {
+        Assert.Throws<InvalidDataException>(() => CreateSnapshot(playerPose: new AnonymousPlayerPose(
+            null,
+            null,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null))));
+        Assert.Throws<InvalidDataException>(() => CreateSnapshot(playerPose: new AnonymousPlayerPose(
+            new Coordinate2D(1, 2),
+            0,
+            new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, "unexpected"))));
+    }
+
     private static WorldSnapshot CreateSnapshot(
         int floor = 10,
         ObservationQuality quality = ObservationQuality.Complete,
         ActorSnapshot[]? actors = null,
-        string[]? diagnostics = null) =>
+        string[]? diagnostics = null,
+        AnonymousPlayerPose? playerPose = null) =>
         new(
             SchemaVersions.WorldSnapshot,
             1,
@@ -104,7 +142,8 @@ public sealed class WorldSnapshotTests
             quality,
             new DeepDungeonContext(DeepDungeonKind.EurekaOrthos, floor, 0, 897, "eureka-orthos-10", null),
             (actors ?? []).ToImmutableArray(),
-            (diagnostics ?? []).ToImmutableArray());
+            (diagnostics ?? []).ToImmutableArray(),
+            playerPose);
 
     private static ActorSnapshot CreateActor() =>
         new(

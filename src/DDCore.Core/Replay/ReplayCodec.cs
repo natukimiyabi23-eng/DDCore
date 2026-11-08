@@ -62,7 +62,7 @@ public sealed class ReplayCodec
 
     public void Validate(ReplayDocument document)
     {
-        if (document.SchemaVersion != SchemaVersions.Replay
+        if (document.SchemaVersion is not (SchemaVersions.LegacyReplay or SchemaVersions.Replay)
             || document.CreatedAtUtc == default
             || document.SessionId == Guid.Empty
             || string.IsNullOrWhiteSpace(document.ProducerVersion)
@@ -79,6 +79,8 @@ public sealed class ReplayCodec
         {
             snapshot.Validate();
             if (snapshot.SessionId != document.SessionId
+                || (document.SchemaVersion == SchemaVersions.LegacyReplay && snapshot.SchemaVersion != SchemaVersions.LegacyWorldSnapshot)
+                || (document.SchemaVersion == SchemaVersions.Replay && snapshot.SchemaVersion != SchemaVersions.WorldSnapshot)
                 || (previousSequence is not null && snapshot.Sequence <= previousSequence)
                 || (previousTime is not null && snapshot.CapturedAt < previousTime)
                 || snapshot.Actors.Length > MaximumActorsPerSnapshot
