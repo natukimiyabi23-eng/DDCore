@@ -113,6 +113,14 @@ The user-defined Phase 5 completes a bounded portion of the original master plan
 
 The engine reuses `RoomPathfinder`, attributed to BossMod's fixed-commit `FloorPathfind.cs:5-60`, but adds no BossMod runtime dependency. Live public Dalamud observations still lack authoritative room connections, exit, traps, pomanders and floor state, so the engine is not connected to live operation and cannot authorize execution. `DisabledExecutionGateway` remains the only execution implementation.
 
+### Phase 5.5 observation boundary
+
+The Phase 5.5 research confirms that public Dalamud API 15 supplies actors, self pose, casts, statuses, territory/content identifiers and a boolean `InDeepDungeon` condition, but no verified typed floor, room-map, passage, trap, pomander or DD-timer contract. BossMod obtains most of those fields from `InstanceContentDeepDungeon` through FFXIVClientStructs, which is a high-risk internal source rather than a stable public service.
+
+The next observation model must therefore add source, availability, timestamp, sequence and floor-epoch provenance. Missing pose must be distinct from a valid `(0,0)` coordinate. A confirmed floor-epoch change invalidates every room-, exit-, trap- and enemy-membership observation before strategy evaluation. Public and any future optional native sources terminate at a source-neutral fusion boundary; no native type or observation provider may access execution.
+
+The full acquisition matrix, evidence and approval gates are in `phase5.5-observation-acquisition.md`. No Phase 5.5 production implementation is included in this branch.
+
 ## Safety gates
 
 - Execution disabled by default and after every load.

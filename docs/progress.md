@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5 observation acquisition research
+
+- Compared every requested P0-P2 observation with public Dalamud API 15, BossMod fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, current DDCore and the two original replay exports.
+- Confirmed public actor/self pose, cast, status, duty and `InDeepDungeon` observations, but found no verified public floor, room-map, passage, trap, pomander or DD remaining-time contract.
+- Confirmed that BossMod obtains DD ID, floor, map, party room, passage, items, chests and magicite through FFXIVClientStructs in `UpdateDeepDungeon`; this is internal, patch-sensitive access and was not implemented.
+- Preserved the user-provided 3-to-4 floor label separately from JSON facts; the 412 snapshots still contain no authoritative floor transition.
+- Designed source/quality provenance, optional pose, floor epochs, transition invalidation and a source-neutral fusion boundary.
+- Recommended the first approved slice as provenance/optional coordinates plus anonymized self pose, followed by separately gated kind/floor and topology work.
+- Added documentation only. No production code, internal access, game operation, BossMod runtime dependency, Phase 6 work or `main` merge was performed.
+
 ## 2026-11-08 — Phase 5 real-data validation
 
 - Auto-detected two unmodified local replay exports and validated 412 schema-version 3 snapshots with the production replay codec.

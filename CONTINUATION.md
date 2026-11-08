@@ -1,9 +1,11 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 08:10 JST (Phase 5 real-data validation complete)
+Status: in_progress
+Updated: 2026-11-08 10:21 JST (Phase 5.5 observation acquisition research started)
 
 ## Objective
+
+Current objective: research and design Phase 5.5 observation acquisition without implementing it. Compare verified Dalamud API 15 surfaces, pinned BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, existing DDCore observation/replay/strategy code, and the original local exports. Produce an evidence-linked acquisition matrix, read-only architecture, transition/missing-data model, implementation priorities and live-test unknowns; update Draft PR #7 and stop for approval. Do not change Phase 5 production behavior, access new game internals, operate FF14/Dalamud, add BossMod runtime dependencies, start Phase 6, or merge `main`.
 
 Current objective: validate the Phase 5 read-only strategy engine against original observation exports under `C:\Users\wasur\AppData\Roaming\XIVLauncher\pluginConfigs\DDCore\recordings\exports` without modifying, deleting or committing those files. Auto-detect and summarize the exports, identify the user-labelled 2026-11-07 floor 3 to floor 4 session without inventing absent fields, determine conversion coverage into `DeepDungeonStrategyState`, execute only valid decisions, add minimal read-only validation code/tests if needed, update Draft PR #7, and stop before Phase 6 or any game operation.
 
@@ -69,11 +71,23 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
+- Phase 5.5 first unfinished step: validate the documentation diff and source links, then commit/push documentation only, update Draft PR #7, wait for CI if triggered, and stop for user approval.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
 - Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered.
 - Live Dalamud/FFXIV behavior and real-floor strategy quality remain outside this validation and must not be reported as verified.
 
 ## Phase 5 checkpoint
+
+- Phase 5.5 started: `2026-11-08T10:21:00+09:00`.
+- Authoritative preflight: five-hour window 100% remaining; weekly window 53% remaining.
+- Estimated requirement: 42% total (public API research 10%, pinned BossMod analysis 10%, DDCore/JSON reconciliation 6%, acquisition matrix/design 10%, docs/verification/PR 3%, contingency 3%); projected five-hour balance `100% - 42% = 58%`.
+- Five-hour continuation automation `ddcore-phase55-followup` was created for `2026-11-08 15:21 JST` and verified `ACTIVE`. It checks the active goal, this file, Git/doc/PR state and remaining usage, then resumes only unfinished design work.
+- The earlier reset-wait automation `ddcore-phase55-research` fired successfully at 10:20 JST and is obsolete once this run completes.
+- No Phase 5.5 production implementation, game operation, original JSON change or Phase 6 work is authorized.
+- Distributed audits completed for public Dalamud API 15, pinned BossMod DD acquisition and DDCore/replay gaps. The results are consolidated in `docs/phase5.5-observation-acquisition.md`.
+- Documentation now distinguishes confirmed public observations, unverified/internal candidates and unavailable data; it defines provenance, nullable pose, floor-epoch invalidation, adapter separation, implementation order and live-test requirements.
+- Documentation verification passed: fixed-commit source paths and official API links were checked; the two original exports remain unchanged with their recorded SHA-256 hashes.
+- Locked restore, Release build (0 warnings/errors), all 213 tests (Core 173 + Observation 40), format verification and NuGet vulnerability audit passed after the documentation-only changes.
 
 - Real-data validation started: `2026-11-08T07:37:07+09:00`.
 - Authoritative preflight: five-hour window 42% remaining; weekly window 60% remaining.
