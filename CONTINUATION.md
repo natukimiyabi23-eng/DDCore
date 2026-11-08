@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 20:58 JST (Phase 5.5B research and design started)
+Status: complete
+Updated: 2026-11-08 21:10 JST (Phase 5.5B research and design complete)
 
 ## Objective
 
@@ -11,6 +11,7 @@ Current objective: perform Phase 5.5B research/design only on `phase5.5b/impleme
 - Authoritative preflight: five-hour remaining 68%; weekly remaining 22%.
 - Estimate: 18% including 2% contingency. Projected five-hour balance 50%; projected weekly balance 4%.
 - One-time continuation automation: `ddcore-phase55b-design-followup`, verified `ACTIVE`, scheduled for the next `01:57:45 JST` occurrence (exactly five hours after start).
+- The one-time automation was deleted after completion so it cannot restart completed design work.
 - Thread goal registration remains unavailable because the unrelated earlier FateFarmJP goal is still unfinished/usage-limited; this file and the verified automation hold the DDCore continuation state.
 
 Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
@@ -84,7 +85,8 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Phase 5.5B research is consolidated in `docs/phase5.5b-implementation-plan.md`; repository replay rules are in `AGENTS.md`. No production/test code was changed.
 - Verified the four original replay hashes unchanged. The latest EO capture remains SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`.
 - Documentation links returned HTTP 200. Baseline Release build passed with 0 warnings/errors; Core 180/180 and Observation 43/43 tests passed (223 total); format and NuGet vulnerability checks passed.
-- Next safe step: commit, push, open a stacked Draft PR against `phase5/strategy-engine`, confirm CI if configured, mark complete and remove the one-time automation.
+- Documentation commit `ce88992` was pushed. Draft PR #9 targets `phase5/strategy-engine` and remains Draft/mergeable. The base branch workflow does not include `phase5/strategy-engine` in its PR trigger, so no GitHub CI run was created; local verification above is the recorded result.
+- Next safe step: user review and explicit approval of one bounded slice. Recommended first approval is B1 public classification/floor band only, followed separately by B2 spatial schema quality.
 - Implementation approval is still pending. Do not start B1/B2/native/topology code from this checkpoint.
 
 - Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
