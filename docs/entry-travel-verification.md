@@ -25,6 +25,7 @@ Base: `phase5/strategy-engine` at `bc75ea1`
 | `dotnet list DDCore.slnx package --vulnerable --include-transitive` | No vulnerable package reported for any project |
 | Project/dependency audit | Core has no project references; plugin references only Core and Observation; no vnavmesh, Lifestream or FFXIVClientStructs package/project reference |
 | New-source operation-token scan | No IPC subscriber, teleport, move, input, hook, scanner or client-struct operation token in the three new Core source files |
+| CI trigger coverage | Added `phase5/strategy-engine` as a pull-request base so stacked PR #8 receives the existing Windows build/test job |
 
 The broad text scan found only two expected strings: the new Japanese UI says vnavmesh/Lifestream are not connected, and the pre-existing BossMod diagnostic uses a read-only public IPC subscriber. Neither is a movement dependency or operation call.
 
