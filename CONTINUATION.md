@@ -1,9 +1,17 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 11:43 JST (Phase 5.5A implementation and CI complete)
+Status: in_progress
+Updated: 2026-11-08 20:58 JST (Phase 5.5B research and design started)
 
 ## Objective
+
+Current objective: perform Phase 5.5B research/design only on `phase5.5b/implementation-plan`, based on Draft PR #7 and the latest original schema-4 replay. Produce `docs/phase5.5b-implementation-plan.md` with code/source-line evidence, verified replay facts, unknowns, acquisition options/risks, implementation order, tests/acceptance and explicit approval gates. Add the fixed export-folder handling rules to repository `AGENTS.md`. Do not implement Phase 5.5B functionality, native reads, gameplay operation, movement/combat/input, merge PR #7/main, modify or commit original JSON, or operate FF14/Dalamud UI.
+
+- Start: `2026-11-08T20:57:45+09:00`.
+- Authoritative preflight: five-hour remaining 68%; weekly remaining 22%.
+- Estimate: 18% including 2% contingency. Projected five-hour balance 50%; projected weekly balance 4%.
+- One-time continuation automation: `ddcore-phase55b-design-followup`, verified `ACTIVE`, scheduled for the next `01:57:45 JST` occurrence (exactly five hours after start).
+- Thread goal registration remains unavailable because the unrelated earlier FateFarmJP goal is still unfinished/usage-limited; this file and the verified automation hold the DDCore continuation state.
 
 Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
 
@@ -72,6 +80,12 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Re-ran the Phase 2 Release build, 26 tests, format verification and NuGet vulnerability audit after the documentation work.
 
 ## Unfinished
+
+- Phase 5.5B research is consolidated in `docs/phase5.5b-implementation-plan.md`; repository replay rules are in `AGENTS.md`. No production/test code was changed.
+- Verified the four original replay hashes unchanged. The latest EO capture remains SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`.
+- Documentation links returned HTTP 200. Baseline Release build passed with 0 warnings/errors; Core 180/180 and Observation 43/43 tests passed (223 total); format and NuGet vulnerability checks passed.
+- Next safe step: commit, push, open a stacked Draft PR against `phase5/strategy-engine`, confirm CI if configured, mark complete and remove the one-time automation.
+- Implementation approval is still pending. Do not start B1/B2/native/topology code from this checkpoint.
 
 - Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.

@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5B live-evidence implementation plan
+
+- Read four original exports from the configured local folder without modifying or committing them; identified the latest valid schema-4/producer-0.5.1.0 EO capture with 34 snapshots.
+- Confirmed that recorded `contentId` is the public ContentFinderCondition RowId and matched row 897 plus territory 1099 to the EO 1-10 floor band in a fixed game-data dump.
+- Found that replay `objectId` currently stores `BaseId`; aggregated eight repeated BaseId-6388 actors at `(0,0)` without claiming their runtime meaning.
+- Designed public DD classification/floor-band, actor spatial quality/schema migration, separately approved exact-floor native prototype and later topology slices.
+- Added repository-wide replay handling/privacy rules in `AGENTS.md`.
+- Documentation only: no Phase 5.5B functionality, native read, game operation, execution gateway change or merge was performed.
+
 ## 2026-11-08 — Phase 5.5A observation foundation
 
 - Added reusable source/quality/missing-reason metadata and an identifier-free nullable player pose.
