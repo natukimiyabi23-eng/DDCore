@@ -84,7 +84,16 @@ Local verification:
 - original replay SHA-256 remained `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; no `*.replay.json` is tracked;
 - package: version 0.5.2.0, Dalamud API 15, SHA-256 `CD1034425FFE5E9288661AAC33E4263987586191E053B32E7D68EA711BE6AC76`.
 
-GitHub CI and Draft PR results are recorded after push. Live Dalamud loading and captures from PotD, HoH and EO remain user-run verification items.
+GitHub verification:
+
+- implementation commit: `cf54cad`;
+- CI-filter commit: `3aedc12`;
+- stacked Draft PR #10 targets `phase5.5b/implementation-plan` and remains Draft/mergeable;
+- push run `42480251741`: passed;
+- Draft PR run `42480255922`: passed;
+- the existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+
+Live Dalamud loading and captures from PotD, HoH and EO remain user-run verification items.
 
 ## Unimplemented and unverified
 

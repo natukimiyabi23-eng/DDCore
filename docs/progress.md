@@ -8,6 +8,8 @@
 - Added an optional ten-floor range and direct-DD-condition evidence to `DeepDungeonContext` without changing schema 3/4 numbers. Exact floor remains `null` for public classification.
 - Removed boss-actor exact-floor inference and the shortcut that treated any started duty as a Deep Dungeon.
 - Preserved the Phase 5 fail-closed gate: a ten-floor band is evidence only and does not make the exact floor known.
+- Release build, 284 tests, format, vulnerability and prohibited-operation audits passed; both push and Draft PR CI runs passed.
+- Pushed implementation commit `cf54cad` and opened stacked Draft PR #10 against `phase5.5b/implementation-plan`.
 - Live Dalamud behavior remains unverified; B2/native access/game operation were not added.
 
 ## 2026-11-08 — Phase 5.5B live-evidence implementation plan

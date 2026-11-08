@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 21:14 JST (Phase 5.5B B1 implementation started)
+Status: complete
+Updated: 2026-11-08 21:29 JST (Phase 5.5B B1 implementation complete)
 
 ## Objective
 
@@ -17,7 +17,10 @@ Current objective: implement only the explicitly approved Phase 5.5B B1 slice on
 - Implementation milestone: added explicit public DD-condition capture, checked 40-entry CFC/territory/content/short-code manifest, optional ten-floor range/direct-condition evidence, fail-closed classification, schema 3/4 compatibility tests, range-aware diagnostics/UI and strategy evidence. Removed encounter-actor exact-floor inference and ordinary-duty DD inference. Intermediate solution tests passed before the final verification matrix.
 - Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 189/189 and Observation 95/95 tests (284 total, 61 net-new B1 cases); format; NuGet vulnerability audit; dependency and prohibited-operation audits.
 - Original replay hash remains `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; no replay JSON is tracked. Package version 0.5.2.0, API 15, SHA-256 `CD1034425FFE5E9288661AAC33E4263987586191E053B32E7D68EA711BE6AC76`.
-- Exact unfinished step: commit/push, create a Draft PR targeting `phase5.5b/implementation-plan`, wait for CI, record PR/check results, delete the obsolete continuation automation, then mark this objective complete.
+- Implementation commit `cf54cad` and CI-filter commit `3aedc12` were pushed. Stacked Draft PR #10 targets `phase5.5b/implementation-plan`, remains Draft/mergeable, and is attached to this task.
+- Push run `42480251741` and Draft PR run `42480255922` both passed at head `3aedc12`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- The one-time `ddcore-phase55b-b1-followup` automation was deleted after completion so it cannot restart completed B1 work.
+- Safe next step: user reviews Draft PR #10 and performs the documented live checks if desired. Do not merge PR #7/#9/#10/main or start B2/native/operation work without explicit approval.
 
 Current objective: perform Phase 5.5B research/design only on `phase5.5b/implementation-plan`, based on Draft PR #7 and the latest original schema-4 replay. Produce `docs/phase5.5b-implementation-plan.md` with code/source-line evidence, verified replay facts, unknowns, acquisition options/risks, implementation order, tests/acceptance and explicit approval gates. Add the fixed export-folder handling rules to repository `AGENTS.md`. Do not implement Phase 5.5B functionality, native reads, gameplay operation, movement/combat/input, merge PR #7/main, modify or commit original JSON, or operate FF14/Dalamud UI.
 
