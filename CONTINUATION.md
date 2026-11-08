@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 11:26 JST (Phase 5.5A implementation started)
+Status: complete
+Updated: 2026-11-08 11:43 JST (Phase 5.5A implementation and CI complete)
 
 ## Objective
 
@@ -34,7 +34,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - BossMod analysis commit: `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`
 - BossMod license: BSD-3-Clause
 - DD source files found: 63, including Global shared code, Palace of the Dead, Heaven-on-High, Eureka Orthos, and Pilgrim's Traverse.
-- Source version: `0.5.0.0` (Phase 5 local and CI verification complete).
+- Source version: `0.5.1.0` (Phase 5.5A local and CI verification complete).
 - Deployed version: none.
 - Documentation commit: `1217bac70961debec3201ea74e7a8e1966e5fd57`
 
@@ -73,7 +73,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Phase 5.5A first unfinished step: review/commit/push the verified implementation and documentation, update Draft PR #7, then wait for CI.
+- Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
 - User review and merge decisions for Draft PR #7 remain pending; do not merge it or begin Phase 6 without explicit approval.
 - If Phase 5.5 implementation is approved, start only with provenance/availability, nullable coordinates and anonymized self pose. Native floor/topology access requires separate explicit approval.
 - Authoritative room/floor/exit/resource observations and action-level expected labels are still required before Phase 6 readiness can be reconsidered; live Dalamud/FFXIV behavior remains unverified.
@@ -92,6 +92,10 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Added `docs/phase5.5a-observation-foundation.md` and updated architecture, progress and README. Native DD metadata, operations and later phases remain untouched.
 - Final local verification passed: locked restore, Release build with 0 warnings/errors, 223 tests, format, NuGet vulnerability audit and static dependency/prohibited-operation audits.
 - Package `0.5.1.0`, API 15, SHA-256 `1A9EE37D336C91F031809FA277375C7A23EE48E8D0EC10DE2CACCC79218C76C8`. Added `docs/phase5.5a-verification.md`.
+- Commit `6bc6bf3` was pushed to `phase5/strategy-engine`; Draft PR #7 remains Draft against `phase4.5/bossmod-integration-proof`.
+- Push run `42439519249` and Draft PR run `42439522374` both passed at head `6bc6bf3`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- The one-time `ddcore-phase55a-followup` automation was deleted after completion so it cannot restart completed work.
+- Live Dalamud/FFXIV verification remains the user's responsibility. Phase 5.5B, Phase 6 and `main` merge require separate explicit approval.
 
 - Phase 5.5 started: `2026-11-08T10:21:00+09:00`.
 - Authoritative preflight: five-hour window 100% remaining; weekly window 53% remaining.
