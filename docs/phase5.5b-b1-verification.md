@@ -57,7 +57,24 @@ The latest valid original export under the repository-defined fixed folder rule 
 - user-provided label: Eureka Orthos;
 - checked game-data mapping: EO floors 1-10.
 
-The raw export predates B1 and remains classified as unsupported when replayed as-is. B1's regression test feeds its confirmed public IDs and checked CFC row evidence through the new classifier. This is not a claim of live B1 verification.
+The raw export predates B1 and remains classified as unsupported when replayed as-is. B1's regression test feeds its confirmed public IDs and checked CFC row evidence through the new classifier.
+
+## User-reported live verification of version 0.5.2.0
+
+On 2026-11-08 JST, the user confirmed the following result in Eureka Orthos' 1-10 floor band:
+
+- UI field: `DD種別・階層`;
+- displayed value: `オルト・エウレカ 1～10階帯（正確な階層は未取得）`;
+- assessment: the B1 public classification and ten-floor-band presentation behaved as intended for EO 1-10, while exact floor remained unclaimed.
+
+This is a user-observed live UI result. The fixed export folder still contains no producer 0.5.2.0 replay; its latest file remains the schema-4 / producer-0.5.1.0 export documented above. Therefore the UI result is not represented as replay-confirmed evidence, and no additional actor, transition or exact-floor behavior is inferred from it.
+
+| DD / band | Live status |
+| --- | --- |
+| Eureka Orthos 1-10 | User confirmed the expected version-0.5.2.0 UI display. |
+| Eureka Orthos 11-100 | Unverified. |
+| Palace of the Dead, all bands | Unverified. |
+| Heaven-on-High, all bands | Unverified. |
 
 ## Compatibility and safety
 
@@ -93,7 +110,7 @@ GitHub verification:
 - Draft PR run `42480255922`: passed;
 - the existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
 
-Live Dalamud loading and captures from PotD, HoH and EO remain user-run verification items.
+The EO 1-10 UI display is user-verified as recorded above. PotD, HoH, other EO bands, reconnect/transition behavior and replay output from version 0.5.2.0 remain unverified.
 
 ## Unimplemented and unverified
 
@@ -102,4 +119,4 @@ Live Dalamud loading and captures from PotD, HoH and EO remain user-run verifica
 - rooms, passages, exits, traps, pomanders and timer;
 - native/internal structures or memory reads;
 - movement, combat, targeting, item use and input injection;
-- live behavior of `ConditionFlag.InDeepDungeon` and CFC row availability during entry, reconnect and floor transitions.
+- live behavior of `ConditionFlag.InDeepDungeon` and CFC row availability during entry, reconnect and floor transitions outside the user-confirmed EO 1-10 display case.

@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-11-08 — B1 live UI result and B2 implementation plan
+
+- Recorded the user-confirmed DDCore 0.5.2.0 UI result for Eureka Orthos 1-10: the DD field displayed `オルト・エウレカ 1～10階帯（正確な階層は未取得）`.
+- Kept Palace of the Dead, Heaven-on-High and every other floor band explicitly unverified.
+- Rechecked the fixed replay folder: no producer-0.5.2.0 export exists, so the UI result is labelled user-observed rather than replay-confirmed.
+- Added the B2 actor spatial-quality/schema-5 implementation plan with explicit legacy migration, generic origin quarantine, consumer gates, tests, acceptance criteria and approval boundary.
+- Documentation only. No B2 code, native access, game operation, deployment or merge was performed.
+
 ## 2026-11-08 — Phase 5.5B B1 public classification
 
 - Added public `ConditionFlag.InDeepDungeon` observation independently from duty-start state.

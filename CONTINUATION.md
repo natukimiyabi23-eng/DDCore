@@ -1,9 +1,21 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 21:29 JST (Phase 5.5B B1 implementation complete)
+Status: in_progress
+Updated: 2026-11-08 21:48 JST (B1 live result documentation and B2 planning started)
 
 ## Objective
+
+Current objective: document the user-reported DDCore 0.5.2.0 live result that Eureka Orthos 1-10 displayed as `オルト・エウレカ 1～10階帯（正確な階層は未取得）`, while explicitly retaining Palace of the Dead, Heaven-on-High and all other floor bands as unverified. Then produce a source-grounded Phase 5.5B B2 implementation plan for actor spatial quality and schema 5 migration. Documentation only: do not implement B2, change production/test code, merge PR #7/#9/#10/main, deploy, or operate FF14/Dalamud.
+
+- Start: `2026-11-08T21:45:35+09:00`.
+- Authoritative preflight: five-hour remaining 99%; weekly remaining 100%.
+- Estimate: 8% including contingency. Projected five-hour balance `99% - 8% = 91%`; projected weekly balance `100% - 8% = 92%`.
+- One-time continuation automation: `ddcore-phase55b-b2-plan-followup`, verified `ACTIVE`, scheduled for `2026-11-09 02:45:35 JST` (exactly five hours after start).
+- Branch/head: `phase5.5b/b1-public-classification` at `fa689b4`; worktree was clean before this continuation update. Draft PR #10 remains open and Draft; no merge is authorized.
+- Replay folder recheck: four original exports remain present. The latest is still schema 4 / producer 0.5.1.0 with 34 snapshots and SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; there is no new 0.5.2.0 replay export. The B1 UI result is therefore recorded as a user-reported live observation, not replay-confirmed evidence.
+- Documentation milestone: updated the B1 verification with the exact user-confirmed EO 1-10 display and an explicit unverified matrix; added `docs/phase5.5b-b2-implementation-plan.md` covering schema 5 model/codec migration, generic coordinate qualification, consumer safety gates, tests, acceptance criteria, live verification and approval boundaries. Updated the master Phase 5.5B plan, progress and README links. No production/test code changed.
+- Documentation checks passed: local Markdown targets exist, referenced current Dalamud API pages returned HTTP 200, `git diff --check` found no whitespace error, and the four original export hashes/metadata remain unchanged.
+- Exact unfinished step: commit/push the documentation-only change to Draft PR #10, wait for CI, record final PR/check state, delete the continuation automation, mark complete and stop for B2 approval.
 
 Current objective: implement only the explicitly approved Phase 5.5B B1 slice on `phase5.5b/b1-public-classification`, based on `phase5.5b/implementation-plan`: classify Palace of the Dead, Heaven-on-High and Eureka Orthos by public Dalamud API 15 duty/territory observations plus verified game-data mappings; retain a separate ten-floor band while leaving the exact floor `null`; preserve schema 3/4 compatibility; fail closed for unknown or mismatched IDs; add tests, documentation, full verification, commit/push and a stacked Draft PR targeting `phase5.5b/implementation-plan`. Do not start B2/native reads/movement/combat/input, change `DisabledExecutionGateway`, modify or commit original replay JSON, merge PR #7/#9/main, deploy, or operate FF14/Dalamud UI.
 
