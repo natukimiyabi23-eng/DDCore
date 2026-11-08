@@ -1,9 +1,24 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-08 22:22 JST (Phase 5.5B B2 implementation completed)
+Updated: 2026-11-08 22:53 JST (Phase 5.5C research/design complete)
 
 ## Objective
+
+Current objective: research and design Phase 5.5C exact-floor observation from read-only public Dalamud API 15 chat events. Produce only `docs/phase5.5c-chat-floor-investigation.md`, `docs/phase5.5c-chat-floor-design.md`, and `docs/phase5.5c-live-verification-plan.md`, grounded in verified API/source evidence and the user-confirmed Japanese example `地下9階`. Do not implement DDCore functionality, subscribe to chat at runtime, access private structures, operate FF14/Dalamud, change B2 behavior, merge any PR/main, or proceed beyond the approval boundary.
+
+- Start: `2026-11-08T22:22:48+09:00`. Per the user's standing instruction, no weekly-limit check or token estimate was performed.
+- One-time continuation automation: `ddcore-phase55c-chat-floor-design-followup`, verified `ACTIVE`, scheduled for `2026-11-09 03:22:48 JST` (exactly five hours after start).
+- Starting branch/head: `phase5.5c/chat-floor-design` from completed B2 head `6072b40`; worktree was clean before this continuation update. Draft PR #11 remains open and unmerged.
+- Thread goal registration cannot be replaced because the existing FateFarmJP goal remains `usageLimited`; this file and the verified automation hold the Phase 5.5C continuation state.
+- User-provided fact: EO floor transition visibly produced `転移が実行された！` followed by `地下9階`. Chat event reception, chat type, payload structure and ordering are not yet verified.
+- Research milestone: verified the installed API 15.0.3.9 contract and matching public commit `3e47d4f`, identified structured `LogMessage` plus displayed `ChatMessage` candidates, and found pinned game-data rows 7248, 7270 and 9218. Event receipt, parameter mapping, ordering and PotD/HoH use remain explicitly unverified.
+- Documentation milestone: created the three approved Phase 5.5C documents, added README/progress links, and preserved exact-floor Unknown unless a future live-verified structured event agrees with B1. No production/test code, schema, runtime subscription, game operation or merge changed.
+- Validation milestone: all local relative links resolve, all checked external evidence links returned HTTP 200, and `git diff --check` passed. No build/test rerun is required for this documentation-only diff; the B2 base remains the previously verified 301-test head.
+- Documentation commit `db4d3d2` was pushed. Draft PR #12 targets `phase5.5b/b2-actor-spatial-schema5`, is open, Draft and mergeable; no PR or branch was merged.
+- GitHub Actions did not start because the current workflow filters do not include this documentation branch/base pair. This is recorded as not run, not passed. The documentation-only diff passed local link and whitespace validation; no code/build behavior changed.
+- Safe next step: user reviews Draft PR #12 and decides whether to approve the diagnostics-only public chat/log event probe. Do not implement, deploy, activate, merge, or operate FF14/Dalamud without a new explicit instruction.
+- The one-time `ddcore-phase55c-chat-floor-design-followup` automation is to be deleted at completion so it cannot restart completed design work.
 
 Current objective: implement only approved Phase 5.5B B2.1-B2.4 on `phase5.5b/b2-actor-spatial-schema5` using `docs/phase5.5b-b2-implementation-plan.md`: actor spatial `Usable`/`Quarantined`/`Missing`, origin quarantine without BaseId-specific rules, schema 5 output with schema 3/4 read compatibility and legacy `objectId` to `baseId` migration, fail-closed consumers, tests, Release/audits/CI, package and Draft PR. Preserve `DisabledExecutionGateway`; do not add native/internal access, game operation, B2-external features, deployment, activation or merges.
 
