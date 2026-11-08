@@ -11,6 +11,7 @@ Current objective: research API 15 and optional movement providers, then impleme
 - Authoritative preflight: five-hour remaining 95%; weekly remaining 26%.
 - Estimate: 24% including research, implementation, tests, docs/PR and 2% contingency. Projected five-hour balance 71%; projected weekly balance 2%.
 - One-time continuation automation: `ddcore-eo-entry-travel-followup`, verified `ACTIVE`, scheduled for the next `01:40:07 JST` occurrence (exactly five hours after start). It must resume only unfinished work and never enable gameplay operation.
+- The one-time automation was deleted after completion so it cannot restart completed work.
 - Thread goal registration could not be replaced because the earlier FateFarmJP goal remains unfinished/usage-limited. This file and the verified ACTIVE automation are the authoritative DDCore continuation state.
 
 Current objective: implement the explicitly approved Phase 5.5A slice on `phase5/strategy-engine`: provenance/quality/missing-reason observations, nullable coordinates that distinguish absence from a valid origin, anonymous public-Dalamud player pose, backward-compatible replay decoding, and fail-closed Phase 5 conversion. Add the required tests, documentation, full verification and CI, then update Draft PR #7. Do not add native/internal access, BossMod runtime dependency, gameplay operation, Phase 5.5B/Phase 6 work, or merge `main`.
@@ -84,7 +85,7 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 - Entry-travel foundation implementation and documentation are complete on `feature/eo-entry-travel-foundation`.
 - Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 200/200 and Observation 43/43 tests (243 total); format; NuGet vulnerability; project/reference and new-source prohibited-operation audits.
 - Package version `0.5.2.0`, SHA-256 `102F4F229401EFC6F1444E8DA681D07409D638A3FA7FAA99B5ABDE9670E481E0`.
-- Commits `c6299b2` and `83ba44c` were pushed. Draft PR #8 targets `phase5/strategy-engine`; Windows CI run `42477673812` passed.
+- Commits `c6299b2`, `83ba44c` and `db8eddd` were pushed. Draft PR #8 targets `phase5/strategy-engine`; final Windows CI run `42477779434` passed.
 - Next safe step: wait for user review. A separately approved slice must resolve world coordinates/capabilities and add a no-op diagnostic before any operation adapter. Do not enable teleport, movement or NPC interaction from this checkpoint.
 - No movement/teleport/NPC IPC or live FF14 operation has been added. User approval remains mandatory before any operation adapter.
 
