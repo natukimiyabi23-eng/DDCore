@@ -27,6 +27,10 @@ public sealed record LiveObservationDiagnostics(
     DeepDungeonFloorRange? FloorRange,
     int EnemyCount,
     int CastingEnemyCount,
+    int UsableSpatialCount,
+    int QuarantinedSpatialCount,
+    int MissingSpatialCount,
+    string? LatestSpatialReason,
     int HazardCount,
     MechanicSafetyAssessment Safety,
     ImmutableArray<string> Reasons,
@@ -39,6 +43,10 @@ public sealed record LiveObservationDiagnostics(
         null,
         0,
         0,
+        0,
+        0,
+        0,
+        null,
         0,
         MechanicSafetyAssessment.UnknownOrUnsupported,
         ["observation.waiting"],
@@ -129,6 +137,10 @@ public sealed class ObservationRuntime : IDisposable
                 snapshot.Dungeon.FloorRange,
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Cast?.Lifecycle == CastLifecycle.Casting),
+                snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Usable),
+                snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Quarantined),
+                snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Missing),
+                snapshot.Actors.Select(actor => actor.Spatial.ReasonCode).LastOrDefault(static reason => !string.IsNullOrWhiteSpace(reason)),
                 analysis.Frame.Hazards.Length,
                 analysis.Frame.Safety,
                 reasons,
@@ -146,6 +158,10 @@ public sealed class ObservationRuntime : IDisposable
                 null,
                 0,
                 0,
+                0,
+                0,
+                0,
+                null,
                 0,
                 MechanicSafetyAssessment.InvalidObservation,
                 [$"observation.capture-failed:{exception.GetType().Name}"],
@@ -178,6 +194,10 @@ public sealed class ObservationRuntime : IDisposable
             diagnostics.FloorRange,
             diagnostics.EnemyCount,
             diagnostics.CastingEnemyCount,
+            diagnostics.UsableSpatialCount,
+            diagnostics.QuarantinedSpatialCount,
+            diagnostics.MissingSpatialCount,
+            diagnostics.LatestSpatialReason,
             diagnostics.HazardCount,
             diagnostics.Safety,
             hazardSignature,
@@ -195,7 +215,9 @@ public sealed class ObservationRuntime : IDisposable
                 : DiagnosticSeverity.Information;
         var floorRange = diagnostics.FloorRange is { } range ? $"{range.Start}-{range.End}" : "unknown";
         var message = $"state={diagnostics.State}, dungeon={diagnostics.DungeonKind}, floor={diagnostics.Floor?.ToString() ?? "unknown"}, floorRange={floorRange}, "
-            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, hazards={diagnostics.HazardCount}, safety={diagnostics.Safety}";
+            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, spatialUsable={diagnostics.UsableSpatialCount}, "
+            + $"spatialQuarantined={diagnostics.QuarantinedSpatialCount}, spatialMissing={diagnostics.MissingSpatialCount}, "
+            + $"spatialReason={diagnostics.LatestSpatialReason ?? "none"}, hazards={diagnostics.HazardCount}, safety={diagnostics.Safety}";
         if (frame.Hazards.Length > 0)
         {
             var hazards = string.Join(

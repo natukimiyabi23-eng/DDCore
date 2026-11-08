@@ -176,7 +176,16 @@ public sealed class GancanaghAnalyzerTests
     public void CastLocationAndRotationComeFromCastObservation()
     {
         var actor = Actor(1, GancanaghAnalyzer.PachypodiumMineObjectId, new(-295, -300), GancanaghAnalyzer.MandrashockSingleActionId, Start, Start.AddSeconds(5));
-        actor = actor with { Cast = actor.Cast! with { TargetLocation = new Coordinate2D(-290, -299), Rotation = 1.25 } };
+        actor = actor with
+        {
+            Cast = actor.Cast! with
+            {
+                TargetLocation = new Coordinate2D(-290, -299),
+                TargetLocationMetadata = new ObservationMetadata(ObservationValueSource.Mock, ObservationValueQuality.Derived, null),
+                TargetLocationUsability = SpatialUsability.Usable,
+                Rotation = 1.25,
+            },
+        };
 
         var hazard = Assert.Single(Analyze(Snapshot(1, Start, actor)).Frame.Hazards);
         Assert.Equal(new Coordinate2D(-290, -299), hazard.Origin);

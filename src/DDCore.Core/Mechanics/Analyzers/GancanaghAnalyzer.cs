@@ -114,8 +114,8 @@ public sealed class GancanaghAnalyzer : IMechanicAnalyzer
     }
 
     private static bool IsEncounterActor(ActorSnapshot actor) =>
-        actor.Kind == ActorKind.Enemy && actor.ObjectId is BossObjectId or PachypodiumMineObjectId;
+        actor.Kind == ActorKind.Enemy && actor.BaseId is BossObjectId or PachypodiumMineObjectId;
 
     private static bool IsKnownNonHazardCast(ActorSnapshot actor, uint actionId) =>
-        actor.ObjectId == BossObjectId && actionId == AuthoritativeShriekActionId;
+        actor.BaseId == BossObjectId && actionId == AuthoritativeShriekActionId;
 }

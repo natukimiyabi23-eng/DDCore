@@ -35,7 +35,8 @@ public sealed class WorldSnapshotStrategyAdapterTests
 
         Assert.False(conversion.State.Floor.IsKnown);
         Assert.Equal(new DeepDungeonFloorRange(1, 10), conversion.Evidence.ObservedFloorRange);
-        Assert.Equal(1, conversion.Evidence.ZeroCoordinateActorCount);
+        Assert.Equal(1, conversion.Evidence.UsableActorPositionCount);
+        Assert.Equal(0, conversion.Evidence.QuarantinedActorPositionCount);
         Assert.Contains("floor", conversion.Evidence.UnavailableStrategyFields);
         Assert.Contains("playerPosition", conversion.Evidence.UnavailableStrategyFields);
         Assert.Null(conversion.Evidence.AnonymousPlayerPosition);
@@ -86,7 +87,7 @@ public sealed class WorldSnapshotStrategyAdapterTests
         Assert.Equal(0, conversion.Evidence.AnonymousPlayerRotation);
         Assert.Equal(ObservationValueQuality.Direct, conversion.Evidence.PlayerPoseMetadata!.Quality);
         Assert.DoesNotContain("playerPosition", conversion.Evidence.UnavailableStrategyFields);
-        Assert.Equal(1, conversion.Evidence.ZeroCoordinateActorCount);
+        Assert.Equal(1, conversion.Evidence.UsableActorPositionCount);
     }
 
     [Fact]
@@ -142,7 +143,9 @@ public sealed class WorldSnapshotStrategyAdapterTests
             At.AddSeconds(2),
             0,
             null,
-            new Coordinate2D(10, 20));
+            new Coordinate2D(10, 20),
+            new ObservationMetadata(ObservationValueSource.Mock, ObservationValueQuality.Derived, null),
+            SpatialUsability.Usable);
         var actor = new ActorSnapshot(
             identity,
             500,

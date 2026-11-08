@@ -32,10 +32,10 @@ public sealed class LiveWorldSnapshotProviderTests
         Assert.Equal(new DeepDungeonFloorRange(1, 10), snapshot.Dungeon.FloorRange);
         Assert.Equal((uint?)1099, snapshot.Dungeon.TerritoryId);
         Assert.True(snapshot.Dungeon.IsDeepDungeonObserved);
-        var actor = Assert.Single(snapshot.Actors, item => item.ObjectId == GancanaghAnalyzer.BossObjectId);
-        Assert.Equal(-300, actor.Position.X);
-        Assert.Equal(-300, actor.Position.Y);
-        Assert.Equal(Math.PI / 2, actor.Rotation, 10);
+        var actor = Assert.Single(snapshot.Actors, item => item.BaseId == GancanaghAnalyzer.BossObjectId);
+        Assert.Equal(-300, actor.Spatial.Position!.Value.X);
+        Assert.Equal(-300, actor.Spatial.Position.Value.Y);
+        Assert.Equal(Math.PI / 2, actor.Spatial.Rotation!.Value, 10);
         Assert.NotNull(actor.Cast);
         Assert.Equal(At - TimeSpan.FromSeconds(1), actor.Cast!.StartedAt);
         Assert.Equal(At + TimeSpan.FromSeconds(3), actor.Cast.FinishesAt);
@@ -51,6 +51,52 @@ public sealed class LiveWorldSnapshotProviderTests
     }
 
     [Fact]
+    public void ExactOriginActorIsPreservedButQuarantined()
+    {
+        var snapshot = Provider(Frame(At, [Player(), Enemy(1, 6388, position: new RawPosition(0, 1, 0))])).Capture();
+        var actor = Assert.Single(snapshot.Actors, item => item.BaseId == 6388);
+
+        Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), actor.Spatial.Position);
+        Assert.Equal(SpatialUsability.Quarantined, actor.Spatial.Usability);
+        Assert.Equal(ActorSpatialQualifier.OriginReason, actor.Spatial.ReasonCode);
+    }
+
+    [Fact]
+    public void QuarantinedTargetCannotCreateDerivedCastLocation()
+    {
+        var target = Enemy(2, 6388, gameObjectId: 200, position: new RawPosition(0, 0, 0));
+        var caster = Enemy(
+            1,
+            GancanaghAnalyzer.BossObjectId,
+            gameObjectId: 100,
+            cast: new RawCastObservation(GancanaghAnalyzer.MandrastormActionId, 1, 4, 200));
+
+        var snapshot = Provider(Frame(At, [Player(), caster, target])).Capture();
+        var cast = snapshot.Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast!;
+
+        Assert.Null(cast.TargetLocation);
+        Assert.Equal(SpatialUsability.Missing, cast.TargetLocationUsability);
+        Assert.Contains(snapshot.Diagnostics, reason => reason.StartsWith("observation.cast.target-location.unusable", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void SpatialAcquisitionFailureKeepsActorAsMissingEvidence()
+    {
+        var raw = Enemy(1, 1234) with
+        {
+            Position = null,
+            Rotation = null,
+            SpatialMissingReason = "dalamud.actor.spatial-read-failed:test",
+        };
+
+        var actor = Assert.Single(Provider(Frame(At, [Player(), raw])).Capture().Actors, item => item.BaseId == 1234);
+
+        Assert.Equal(SpatialUsability.Missing, actor.Spatial.Usability);
+        Assert.Null(actor.Spatial.Position);
+        Assert.Equal("dalamud.actor.spatial-read-failed:test", actor.Spatial.ReasonCode);
+    }
+
+    [Fact]
     public void EmitsInterruptedLifecycleWhenCastStopsEarly()
     {
         var source = new QueueSource(
@@ -61,7 +107,7 @@ public sealed class LiveWorldSnapshotProviderTests
         provider.Capture();
         var stopped = provider.Capture();
 
-        Assert.Equal(CastLifecycle.Interrupted, stopped.Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast?.Lifecycle);
+        Assert.Equal(CastLifecycle.Interrupted, stopped.Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast?.Lifecycle);
     }
 
     [Fact]
@@ -75,7 +121,7 @@ public sealed class LiveWorldSnapshotProviderTests
         provider.Capture();
         var stopped = provider.Capture();
 
-        Assert.Equal(CastLifecycle.Completed, stopped.Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast?.Lifecycle);
+        Assert.Equal(CastLifecycle.Completed, stopped.Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast?.Lifecycle);
     }
 
     [Fact]
@@ -205,8 +251,8 @@ public sealed class LiveWorldSnapshotProviderTests
             Frame(At.AddSeconds(1), [Player(), Enemy(1, GancanaghAnalyzer.BossObjectId, cast: Cast(2.02, 5))]));
         var provider = new LiveWorldSnapshotProvider(source);
 
-        var first = provider.Capture().Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast!;
-        var second = provider.Capture().Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast!;
+        var first = provider.Capture().Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast!;
+        var second = provider.Capture().Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast!;
 
         Assert.Equal(first.StartedAt, second.StartedAt);
         Assert.Equal(first.FinishesAt, second.FinishesAt);
@@ -220,8 +266,8 @@ public sealed class LiveWorldSnapshotProviderTests
             Frame(At.AddSeconds(1), [Player(), Enemy(1, GancanaghAnalyzer.BossObjectId, cast: Cast(0.2, 5))]));
         var provider = new LiveWorldSnapshotProvider(source);
 
-        var first = provider.Capture().Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast!;
-        var second = provider.Capture().Actors.Single(actor => actor.ObjectId == GancanaghAnalyzer.BossObjectId).Cast!;
+        var first = provider.Capture().Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast!;
+        var second = provider.Capture().Actors.Single(actor => actor.BaseId == GancanaghAnalyzer.BossObjectId).Cast!;
 
         Assert.NotEqual(first.StartedAt, second.StartedAt);
         Assert.Equal(At.AddSeconds(0.8), second.StartedAt);

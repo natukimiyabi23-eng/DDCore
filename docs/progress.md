@@ -1,5 +1,16 @@
 # Progress
 
+## 2026-11-08 — Phase 5.5B B2 actor spatial quality and schema 5
+
+- Added explicit actor spatial `Usable`, `Quarantined` and `Missing` states with source, quality and stable reason evidence.
+- Preserved exact `(0,0)` separately from missing data and quarantined it without any BaseId-specific production rule.
+- Raised new replay/world output to schema 5 and added strict schema 3/4 DTO migration from legacy `objectId` to normalized `BaseId`.
+- Required usable position and rotation before hazard geometry; uncertain evidence remains unknown/unsupported and does not feed rooms, routes or distances.
+- Added aggregate-only Japanese spatial diagnostics while retaining player/party privacy filtering.
+- Read all six original schema 3/4 exports in place without modification: 1,298 snapshots and 14,359 actor observations normalized successfully, all legacy positions quarantined.
+- Added 17 B2 tests; 301 tests pass at the implementation checkpoint. Final audits and CI are recorded in `phase5.5b-b2-verification.md`.
+- No internal/native access, game operation, deployment or merge was performed.
+
 ## 2026-11-08 — B1 live UI result and B2 implementation plan
 
 - Recorded the user-confirmed DDCore 0.5.2.0 UI result for Eureka Orthos 1-10: the DD field displayed `オルト・エウレカ 1～10階帯（正確な階層は未取得）`.

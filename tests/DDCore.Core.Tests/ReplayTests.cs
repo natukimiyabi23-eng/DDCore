@@ -127,16 +127,16 @@ public sealed class ReplayTests
             "0.5.1.0",
             [CreateSnapshot(1, Start)],
             ReplayUserIntent.ExplicitCapture);
-        var root = JsonNode.Parse(codec.Serialize(current, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
-        root["schemaVersion"] = SchemaVersions.LegacyReplay;
-        root["snapshots"]![0]!["schemaVersion"] = SchemaVersions.LegacyWorldSnapshot;
+        var root = CreateLegacyRoot(codec, current, SchemaVersions.LegacyReplayV3, SchemaVersions.LegacyWorldSnapshotV3);
 
         var restored = codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString()));
 
-        Assert.Equal(SchemaVersions.LegacyReplay, restored.SchemaVersion);
+        Assert.Equal(SchemaVersions.Replay, restored.SchemaVersion);
         var snapshot = Assert.Single(restored.Snapshots);
-        Assert.Equal(SchemaVersions.LegacyWorldSnapshot, snapshot.SchemaVersion);
+        Assert.Equal(SchemaVersions.WorldSnapshot, snapshot.SchemaVersion);
         Assert.Null(snapshot.PlayerPose);
+        Assert.Equal(0x3D54u, Assert.Single(snapshot.Actors).BaseId);
+        Assert.Equal(SpatialUsability.Quarantined, Assert.Single(snapshot.Actors).Spatial.Usability);
     }
 
     [Fact]
@@ -163,8 +163,8 @@ public sealed class ReplayTests
     }
 
     [Theory]
-    [InlineData(SchemaVersions.LegacyReplay, SchemaVersions.LegacyWorldSnapshot)]
-    [InlineData(SchemaVersions.Replay, SchemaVersions.WorldSnapshot)]
+    [InlineData(SchemaVersions.LegacyReplayV3, SchemaVersions.LegacyWorldSnapshotV3)]
+    [InlineData(SchemaVersions.LegacyReplayV4, SchemaVersions.LegacyWorldSnapshotV4)]
     public void ExistingSchemaThreeAndFourWithoutB1FieldsRemainReadable(int replaySchema, int snapshotSchema)
     {
         var codec = new ReplayCodec();
@@ -174,14 +174,12 @@ public sealed class ReplayTests
             "0.5.1.0",
             [CreateSnapshot(1, Start)],
             ReplayUserIntent.ExplicitCapture);
-        var root = JsonNode.Parse(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
-        root["schemaVersion"] = replaySchema;
+        var root = CreateLegacyRoot(codec, document, replaySchema, snapshotSchema);
         var snapshotNode = root["snapshots"]![0]!.AsObject();
-        snapshotNode["schemaVersion"] = snapshotSchema;
         var dungeon = snapshotNode["dungeon"]!.AsObject();
         dungeon.Remove("floorRange");
         dungeon.Remove("isDeepDungeonObserved");
-        if (replaySchema == SchemaVersions.LegacyReplay)
+        if (replaySchema == SchemaVersions.LegacyReplayV3)
         {
             snapshotNode.Remove("playerPose");
         }
@@ -191,6 +189,7 @@ public sealed class ReplayTests
         var restoredDungeon = Assert.Single(restored.Snapshots).Dungeon;
         Assert.Null(restoredDungeon.FloorRange);
         Assert.Null(restoredDungeon.IsDeepDungeonObserved);
+        Assert.Equal(SpatialUsability.Quarantined, Assert.Single(restored.Snapshots[0].Actors).Spatial.Usability);
     }
 
     [Fact]
@@ -222,6 +221,88 @@ public sealed class ReplayTests
         Assert.True(dungeon.IsDeepDungeonObserved);
     }
 
+    [Fact]
+    public void SchemaFiveWritesBaseIdAndQualifiedSpatialDataOnly()
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.3.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+
+        var json = Encoding.UTF8.GetString(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport));
+
+        Assert.Contains("\"schemaVersion\":5", json, StringComparison.Ordinal);
+        Assert.Contains("\"baseId\":", json, StringComparison.Ordinal);
+        Assert.Contains("\"spatial\":", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"objectId\":", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MixedLegacySchemaPairIsRejected()
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.3.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var root = CreateLegacyRoot(codec, document, SchemaVersions.LegacyReplayV3, SchemaVersions.LegacyWorldSnapshotV4);
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString())));
+    }
+
+    [Fact]
+    public void DuplicateJsonPropertyIsRejected()
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.3.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var json = Encoding.UTF8.GetString(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport));
+        json = json.Insert(1, "\"schemaVersion\":5,");
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(Encoding.UTF8.GetBytes(json)));
+    }
+
+    [Fact]
+    public void SchemaFiveRejectsLegacyObjectIdAlias()
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.3.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var root = JsonNode.Parse(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
+        root["snapshots"]![0]!["actors"]![0]!["objectId"] = 1234;
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString())));
+    }
+
+    [Fact]
+    public void SchemaFiveRejectsPartialSpatialPair()
+    {
+        var codec = new ReplayCodec();
+        var document = ReplayDocument.Create(
+            Start,
+            Session,
+            "0.5.3.0",
+            [CreateSnapshot(1, Start)],
+            ReplayUserIntent.ExplicitCapture);
+        var root = JsonNode.Parse(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
+        root["snapshots"]![0]!["actors"]![0]!["spatial"]!["rotation"] = null;
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(Encoding.UTF8.GetBytes(root.ToJsonString())));
+    }
+
     private static WorldSnapshot CreateSnapshot(long sequence, DateTimeOffset at) =>
         new MockWorldSnapshotBuilder()
             .InSession(Session)
@@ -246,4 +327,37 @@ public sealed class ReplayTests
             null,
             null,
             ImmutableArray<StatusSnapshot>.Empty);
+
+    private static JsonObject CreateLegacyRoot(
+        ReplayCodec codec,
+        ReplayDocument document,
+        int replaySchema,
+        int snapshotSchema)
+    {
+        var root = JsonNode.Parse(codec.Serialize(document, ReplayUserIntent.ExplicitCaptureAndExport))!.AsObject();
+        root["schemaVersion"] = replaySchema;
+        foreach (var snapshotNode in root["snapshots"]!.AsArray().Select(node => node!.AsObject()))
+        {
+            snapshotNode["schemaVersion"] = snapshotSchema;
+            foreach (var actor in snapshotNode["actors"]!.AsArray().Select(node => node!.AsObject()))
+            {
+                var spatial = actor["spatial"]!.AsObject();
+                actor["objectId"] = actor["baseId"]!.DeepClone();
+                actor["position"] = spatial["position"]!.DeepClone();
+                actor["rotation"] = spatial["rotation"]!.DeepClone();
+                actor.Remove("baseId");
+                actor.Remove("spatial");
+                if (actor["cast"] is JsonObject cast)
+                {
+                    cast.Remove("targetLocationMetadata");
+                    cast.Remove("targetLocationUsability");
+                    cast.Remove("targetLocationReasonCode");
+                    cast.Remove("rotationUsability");
+                    cast.Remove("rotationReasonCode");
+                }
+            }
+        }
+
+        return root;
+    }
 }

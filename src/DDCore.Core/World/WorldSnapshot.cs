@@ -31,6 +31,14 @@ public enum ObservationValueQuality
     Unsupported,
     Stale,
     Invalid,
+    LegacyUnqualified,
+}
+
+public enum SpatialUsability
+{
+    Usable,
+    Quarantined,
+    Missing,
 }
 
 public sealed record ObservationMetadata(
@@ -83,6 +91,75 @@ public sealed record AnonymousPlayerPose(
     }
 }
 
+public sealed record ActorSpatialObservation(
+    Coordinate2D? Position,
+    double? Rotation,
+    ObservationMetadata Metadata,
+    SpatialUsability Usability,
+    string? ReasonCode)
+{
+    public static ActorSpatialObservation Usable(
+        Coordinate2D position,
+        double rotation,
+        ObservationValueSource source = ObservationValueSource.Mock) =>
+        new(position, rotation, new ObservationMetadata(source, ObservationValueQuality.Direct, null), SpatialUsability.Usable, null);
+
+    public static ActorSpatialObservation Quarantined(
+        Coordinate2D position,
+        double rotation,
+        ObservationMetadata metadata,
+        string reasonCode) =>
+        new(position, rotation, metadata, SpatialUsability.Quarantined, reasonCode);
+
+    public static ActorSpatialObservation Missing(ObservationMetadata metadata, string reasonCode) =>
+        new(null, null, metadata, SpatialUsability.Missing, reasonCode);
+
+    [JsonIgnore]
+    public Coordinate2D? UsablePosition => Usability == SpatialUsability.Usable ? Position : null;
+
+    [JsonIgnore]
+    public double? UsableRotation => Usability == SpatialUsability.Usable ? Rotation : null;
+
+    public void Validate()
+    {
+        ArgumentNullException.ThrowIfNull(Metadata);
+        Metadata.Validate();
+        if (!Enum.IsDefined(Usability))
+        {
+            throw new InvalidDataException("Actor spatial usability is invalid.");
+        }
+
+        if (Position is { } position)
+        {
+            Coordinate2D.EnsureFinite(position, nameof(Position));
+        }
+
+        if (Rotation is { } rotation)
+        {
+            Coordinate2D.EnsureFinite(rotation, nameof(Rotation));
+        }
+
+        var complete = Position.HasValue && Rotation.HasValue;
+        if (Position.HasValue != Rotation.HasValue
+            || (Usability == SpatialUsability.Usable
+                && (!complete
+                    || Metadata.Quality is not (ObservationValueQuality.Direct or ObservationValueQuality.Derived)
+                    || !string.IsNullOrWhiteSpace(ReasonCode)))
+            || (Usability == SpatialUsability.Quarantined
+                && (!complete
+                    || string.IsNullOrWhiteSpace(ReasonCode)
+                    || (Metadata.MissingReason is not null && Metadata.MissingReason != ReasonCode)))
+            || (Usability == SpatialUsability.Missing
+                && (complete
+                    || string.IsNullOrWhiteSpace(ReasonCode)
+                    || Metadata.Quality is ObservationValueQuality.Direct or ObservationValueQuality.Derived
+                    || Metadata.MissingReason != ReasonCode)))
+        {
+            throw new InvalidDataException("Actor spatial observation does not match its usability.");
+        }
+    }
+}
+
 public enum DeepDungeonKind
 {
     None,
@@ -126,8 +203,17 @@ public sealed record CastSnapshot(
     DateTimeOffset FinishesAt,
     double Rotation,
     ActorIdentity? Target,
-    Coordinate2D? TargetLocation)
+    Coordinate2D? TargetLocation,
+    ObservationMetadata? TargetLocationMetadata = null,
+    SpatialUsability TargetLocationUsability = SpatialUsability.Missing,
+    string? TargetLocationReasonCode = null,
+    SpatialUsability RotationUsability = SpatialUsability.Usable,
+    string? RotationReasonCode = null)
 {
+    [JsonIgnore]
+    public Coordinate2D? UsableTargetLocation =>
+        TargetLocationUsability == SpatialUsability.Usable ? TargetLocation : null;
+
     public void Validate(DateTimeOffset capturedAt)
     {
         if (ActionId == 0 || !Enum.IsDefined(Lifecycle) || StartedAt == default || FinishesAt < StartedAt)
@@ -147,6 +233,31 @@ public sealed record CastSnapshot(
         {
             Coordinate2D.EnsureFinite(location, nameof(TargetLocation));
         }
+
+        if (!Enum.IsDefined(TargetLocationUsability)
+            || !Enum.IsDefined(RotationUsability)
+            || RotationUsability == SpatialUsability.Missing
+            || (RotationUsability == SpatialUsability.Usable && RotationReasonCode is not null)
+            || (RotationUsability == SpatialUsability.Quarantined && string.IsNullOrWhiteSpace(RotationReasonCode))
+            || (TargetLocation is null
+                && (TargetLocationMetadata is not null
+                    || TargetLocationUsability != SpatialUsability.Missing
+                    || TargetLocationReasonCode is not null))
+            || (TargetLocation is not null
+                && (TargetLocationMetadata is null
+                    || TargetLocationUsability == SpatialUsability.Missing
+                    || (TargetLocationUsability == SpatialUsability.Usable
+                        && (TargetLocationMetadata.Quality is not (ObservationValueQuality.Direct or ObservationValueQuality.Derived)
+                            || TargetLocationReasonCode is not null))
+                    || (TargetLocationUsability == SpatialUsability.Quarantined
+                        && (string.IsNullOrWhiteSpace(TargetLocationReasonCode)
+                            || (TargetLocationMetadata.MissingReason is not null
+                                && TargetLocationMetadata.MissingReason != TargetLocationReasonCode))))))
+        {
+            throw new InvalidDataException("Cast target location does not match its spatial usability.");
+        }
+
+        TargetLocationMetadata?.Validate();
     }
 }
 
@@ -167,12 +278,12 @@ public sealed record StatusSnapshot(
     }
 }
 
+[method: JsonConstructor]
 public sealed record ActorSnapshot(
     ActorIdentity Identity,
-    uint ObjectId,
+    uint BaseId,
     ActorKind Kind,
-    Coordinate2D Position,
-    double Rotation,
+    ActorSpatialObservation Spatial,
     double HitboxRadius,
     uint CurrentHp,
     uint MaximumHp,
@@ -183,6 +294,38 @@ public sealed record ActorSnapshot(
     CastSnapshot? Cast,
     ImmutableArray<StatusSnapshot> Statuses)
 {
+    public ActorSnapshot(
+        ActorIdentity identity,
+        uint baseId,
+        ActorKind kind,
+        Coordinate2D position,
+        double rotation,
+        double hitboxRadius,
+        uint currentHp,
+        uint maximumHp,
+        bool isDead,
+        bool isDestroyed,
+        bool isInCombat,
+        ActorIdentity? target,
+        CastSnapshot? cast,
+        ImmutableArray<StatusSnapshot> statuses)
+        : this(
+            identity,
+            baseId,
+            kind,
+            ActorSpatialObservation.Usable(position, rotation),
+            hitboxRadius,
+            currentHp,
+            maximumHp,
+            isDead,
+            isDestroyed,
+            isInCombat,
+            target,
+            cast,
+            statuses)
+    {
+    }
+
     /// <summary>
     /// Actor and cast rotations use mathematical radians: zero points along positive X and positive values rotate
     /// counter-clockwise toward positive Y. A game adapter must convert FFXIV/BossMod clockwise-from-positive-Z
@@ -191,8 +334,8 @@ public sealed record ActorSnapshot(
     public void Validate(DateTimeOffset capturedAt)
     {
         Identity.Validate();
-        Coordinate2D.EnsureFinite(Position, nameof(Position));
-        Coordinate2D.EnsureFinite(Rotation, nameof(Rotation));
+        ArgumentNullException.ThrowIfNull(Spatial);
+        Spatial.Validate();
         Coordinate2D.EnsureFinite(HitboxRadius, nameof(HitboxRadius));
         if (!Enum.IsDefined(Kind) || HitboxRadius < 0 || MaximumHp < CurrentHp || Statuses.IsDefault)
         {
@@ -339,7 +482,7 @@ public sealed record WorldSnapshot
 
     public void Validate()
     {
-        if (SchemaVersion is not (SchemaVersions.LegacyWorldSnapshot or SchemaVersions.WorldSnapshot)
+        if (SchemaVersion != SchemaVersions.WorldSnapshot
             || Sequence < 0
             || CapturedAt == default
             || SessionId == Guid.Empty
@@ -352,11 +495,6 @@ public sealed record WorldSnapshot
         }
 
         Dungeon.Validate();
-        if (SchemaVersion == SchemaVersions.LegacyWorldSnapshot && PlayerPose is not null)
-        {
-            throw new InvalidDataException("Legacy world snapshots cannot contain the Phase 5.5A player pose field.");
-        }
-
         PlayerPose?.Validate();
         var identities = new HashSet<ActorIdentity>();
         foreach (var actor in Actors)

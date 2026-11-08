@@ -51,6 +51,34 @@ public sealed class CastHazardTrackerTests
             PersistentDuration: TimeSpan.FromSeconds(1)).Validate());
     }
 
+    [Fact]
+    public void QuarantinedActorCoordinateCannotCreateHazard()
+    {
+        var actor = Actor(CastLifecycle.Casting) with
+        {
+            Spatial = ActorSpatialObservation.Quarantined(
+                new Coordinate2D(0, 0),
+                0,
+                new ObservationMetadata(ObservationValueSource.PublicDalamud, ObservationValueQuality.Direct, null),
+                "actor.spatial.origin-unverified"),
+        };
+        var definitions = new Dictionary<uint, CastHazardDefinition>
+        {
+            [100] = new(100, new CircleAoe(5), HazardSeverity.Dangerous, "test"),
+        };
+
+        var result = CastHazardTracker.Reconcile(
+            Snapshot(1, Start, actor),
+            "test",
+            definitions,
+            _ => true,
+            ImmutableDictionary<string, HazardInstance>.Empty);
+
+        Assert.Empty(result.Hazards);
+        Assert.True(result.ObservationUncertain);
+        Assert.Contains(result.Diagnostics, reason => reason.StartsWith("cast-hazard.spatial-unusable", StringComparison.Ordinal));
+    }
+
     private static WorldSnapshot Snapshot(long sequence, DateTimeOffset at, ActorSnapshot actor) =>
         new MockWorldSnapshotBuilder()
             .WithSequence(sequence)

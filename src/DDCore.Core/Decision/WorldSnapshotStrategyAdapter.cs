@@ -10,7 +10,10 @@ public sealed record StrategyObservationEvidence(
     int CastingEnemyCount,
     int StatusCount,
     int DeadOrDestroyedEnemyCount,
-    int ZeroCoordinateActorCount,
+    int UsableActorPositionCount,
+    int QuarantinedActorPositionCount,
+    int MissingActorPositionCount,
+    ImmutableArray<string> SpatialReasonCodes,
     Coordinate2D? AnonymousPlayerPosition,
     double? AnonymousPlayerRotation,
     ObservationMetadata? PlayerPoseMetadata,
@@ -27,8 +30,6 @@ public sealed record StrategyInputConversion(
 /// </summary>
 public static class WorldSnapshotStrategyAdapter
 {
-    private static readonly Coordinate2D Zero = new(0, 0);
-
     private static readonly ImmutableArray<string> AlwaysUnavailableFields =
     [
         "currentRoom",
@@ -81,7 +82,16 @@ public static class WorldSnapshotStrategyAdapter
             enemies.Count(static actor => actor.Cast?.Lifecycle == CastLifecycle.Casting),
             enemies.Sum(static actor => actor.Statuses.Length),
             enemies.Count(static actor => actor.IsDead || actor.IsDestroyed),
-            snapshot.Actors.Count(actor => actor.Position == Zero),
+            snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Usable),
+            snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Quarantined),
+            snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Missing),
+            snapshot.Actors
+                .Select(actor => actor.Spatial.ReasonCode)
+                .Where(static reason => !string.IsNullOrWhiteSpace(reason))
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal)
+                .Select(static reason => reason!)
+                .ToImmutableArray(),
             snapshot.PlayerPose?.Position,
             snapshot.PlayerPose?.Rotation,
             snapshot.PlayerPose?.Metadata,

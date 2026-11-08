@@ -1,9 +1,25 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-08 21:54 JST (B1 live result documented and B2 plan completed)
+Status: in_progress
+Updated: 2026-11-08 22:03 JST (Phase 5.5B B2 implementation started)
 
 ## Objective
+
+Current objective: implement only approved Phase 5.5B B2.1-B2.4 on `phase5.5b/b2-actor-spatial-schema5` using `docs/phase5.5b-b2-implementation-plan.md`: actor spatial `Usable`/`Quarantined`/`Missing`, origin quarantine without BaseId-specific rules, schema 5 output with schema 3/4 read compatibility and legacy `objectId` to `baseId` migration, fail-closed consumers, tests, Release/audits/CI, package and Draft PR. Preserve `DisabledExecutionGateway`; do not add native/internal access, game operation, B2-external features, deployment, activation or merges.
+
+- Start: `2026-11-08T22:00:33+09:00`. Per the user's current instruction, no weekly-limit check or new token estimate was performed.
+- One-time continuation automation: `ddcore-phase55b-b2-followup`, verified `ACTIVE`, scheduled for `2026-11-09 03:00:33 JST` (exactly five hours after start). It checks this file, Git/build/test/CI state and resumes only if unfinished.
+- Starting branch/head: `phase5.5b/b2-actor-spatial-schema5` from B1 completion head `d548e9a`; worktree was clean before this continuation update.
+- Thread goal registration cannot be replaced because the existing FateFarmJP goal is still `usageLimited`; DDCore continuation state is held here and by the verified one-time automation.
+- Original replay exports remain read-only under the fixed `AGENTS.md` folder rule. Do not modify, relocate, delete or commit them.
+- Exact unfinished step: inspect all actor spatial/schema consumers, then implement B2.1 model and versioned replay migration before B2.2-B2.4.
+- B2.1-B2.3 implementation milestone: schema 5 current model/output, explicit schema 3/4 DTO migration, legacy `objectId` to normalized `BaseId`, actor `Usable`/`Quarantined`/`Missing`, exact-origin quarantine without BaseId-specific logic, public-adapter missing/invalid handling, usable-only cast/hazard gates, strategy aggregates and Japanese diagnostics are implemented. `DisabledExecutionGateway` and all game-operation boundaries are unchanged.
+- Tests currently pass 301/301 (Core 197, Observation 104), including 17 net-new B2 cases.
+- Read-only compatibility check: all six original exports currently present in the fixed `AGENTS.md` folder decoded through the production schema-5 codec (schema 3: 412 snapshots; schema 4: 886 snapshots; total 1,298). Legacy actor coordinates normalized as quarantined; no original was rewritten.
+- Exact unfinished step: update B2 verification/live-test documentation, run final Release/format/vulnerability/dependency/prohibited-operation audits, verify package version/hash and original hashes, commit/push, create the stacked Draft PR, wait for CI, then delete the follow-up automation and stop for approval.
+- Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 197/197 and Observation 104/104 tests (301 total, 17 net-new B2); format; NuGet vulnerability; dependency and prohibited-operation audits. Package version 0.5.3.0, API 15, SHA-256 `322C89CB24E5AF94DDFC9CCE06CC39D8E10438363D091A6577FDCDB0E9A0ABD9`.
+- All six original replay hashes remained unchanged after read-only compatibility validation; no `*.replay.json` is tracked by Git.
+- Exact unfinished step: review/stage the diff, commit/push, open a Draft PR targeting `phase5.5b/b1-public-classification`, wait for both CI paths, record final state, delete the continuation automation, and stop for approval.
 
 Current objective: document the user-reported DDCore 0.5.2.0 live result that Eureka Orthos 1-10 displayed as `オルト・エウレカ 1～10階帯（正確な階層は未取得）`, while explicitly retaining Palace of the Dead, Heaven-on-High and all other floor bands as unverified. Then produce a source-grounded Phase 5.5B B2 implementation plan for actor spatial quality and schema 5 migration. Documentation only: do not implement B2, change production/test code, merge PR #7/#9/#10/main, deploy, or operate FF14/Dalamud.
 
