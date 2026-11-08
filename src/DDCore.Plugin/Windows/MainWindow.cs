@@ -167,7 +167,14 @@ internal sealed class MainWindow : Window, IDisposable
             DDCore.Core.World.DeepDungeonKind.None => "DD外",
             _ => "未対応・識別不能",
         };
-        return diagnostics.Floor is { } floor ? $"{kind} {floor}階（推定を含む）" : kind;
+        if (diagnostics.Floor is { } floor)
+        {
+            return $"{kind} {floor}階";
+        }
+
+        return diagnostics.FloorRange is { } range
+            ? $"{kind} {range.Start}～{range.End}階帯（正確な階層は未取得）"
+            : kind;
     }
 
     private void DrawRecording()

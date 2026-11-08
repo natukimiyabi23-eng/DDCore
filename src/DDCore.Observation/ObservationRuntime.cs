@@ -24,6 +24,7 @@ public sealed record LiveObservationDiagnostics(
     LiveObservationState State,
     DeepDungeonKind DungeonKind,
     int? Floor,
+    DeepDungeonFloorRange? FloorRange,
     int EnemyCount,
     int CastingEnemyCount,
     int HazardCount,
@@ -34,6 +35,7 @@ public sealed record LiveObservationDiagnostics(
     public static LiveObservationDiagnostics Waiting { get; } = new(
         LiveObservationState.Waiting,
         DeepDungeonKind.None,
+        null,
         null,
         0,
         0,
@@ -124,6 +126,7 @@ public sealed class ObservationRuntime : IDisposable
                 ConvertState(snapshot.Quality),
                 snapshot.Dungeon.Kind,
                 snapshot.Dungeon.Floor,
+                snapshot.Dungeon.FloorRange,
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Cast?.Lifecycle == CastLifecycle.Casting),
                 analysis.Frame.Hazards.Length,
@@ -139,6 +142,7 @@ public sealed class ObservationRuntime : IDisposable
             Volatile.Write(ref current, new LiveObservationDiagnostics(
                 LiveObservationState.Invalid,
                 DeepDungeonKind.Unsupported,
+                null,
                 null,
                 0,
                 0,
@@ -171,6 +175,7 @@ public sealed class ObservationRuntime : IDisposable
             diagnostics.State,
             diagnostics.DungeonKind,
             diagnostics.Floor,
+            diagnostics.FloorRange,
             diagnostics.EnemyCount,
             diagnostics.CastingEnemyCount,
             diagnostics.HazardCount,
@@ -188,7 +193,8 @@ public sealed class ObservationRuntime : IDisposable
             : diagnostics.State is LiveObservationState.Partial or LiveObservationState.Unsupported
                 ? DiagnosticSeverity.Warning
                 : DiagnosticSeverity.Information;
-        var message = $"state={diagnostics.State}, dungeon={diagnostics.DungeonKind}, floor={diagnostics.Floor?.ToString() ?? "unknown"}, "
+        var floorRange = diagnostics.FloorRange is { } range ? $"{range.Start}-{range.End}" : "unknown";
+        var message = $"state={diagnostics.State}, dungeon={diagnostics.DungeonKind}, floor={diagnostics.Floor?.ToString() ?? "unknown"}, floorRange={floorRange}, "
             + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, hazards={diagnostics.HazardCount}, safety={diagnostics.Safety}";
         if (frame.Hazards.Length > 0)
         {

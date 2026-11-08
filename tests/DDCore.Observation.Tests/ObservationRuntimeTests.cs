@@ -19,7 +19,7 @@ public sealed class ObservationRuntimeTests
     }
 
     [Fact]
-    public void ConnectsObservationToGancanaghAnalyzerWithoutClaimingSafety()
+    public void TenFloorBandDoesNotPretendExactBossFloorOrClaimSafety()
     {
         var frame = LiveWorldSnapshotProviderTests.Frame(
             At,
@@ -39,9 +39,11 @@ public sealed class ObservationRuntimeTests
         tick.Raise();
 
         Assert.Equal(LiveObservationState.Partial, runtime.Current.State);
-        Assert.Equal(1, runtime.Current.HazardCount);
+        Assert.Equal(0, runtime.Current.HazardCount);
         Assert.Equal(MechanicSafetyAssessment.UnknownOrUnsupported, runtime.Current.Safety);
         Assert.Equal(DeepDungeonKind.EurekaOrthos, runtime.Current.DungeonKind);
+        Assert.Null(runtime.Current.Floor);
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), runtime.Current.FloorRange);
     }
 
     [Fact]

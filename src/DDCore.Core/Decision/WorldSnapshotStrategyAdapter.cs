@@ -14,6 +14,7 @@ public sealed record StrategyObservationEvidence(
     Coordinate2D? AnonymousPlayerPosition,
     double? AnonymousPlayerRotation,
     ObservationMetadata? PlayerPoseMetadata,
+    DeepDungeonFloorRange? ObservedFloorRange,
     ImmutableArray<string> UnavailableStrategyFields);
 
 public sealed record StrategyInputConversion(
@@ -84,6 +85,7 @@ public static class WorldSnapshotStrategyAdapter
             snapshot.PlayerPose?.Position,
             snapshot.PlayerPose?.Rotation,
             snapshot.PlayerPose?.Metadata,
+            snapshot.Dungeon.FloorRange,
             unavailable.ToImmutable());
         return new StrategyInputConversion(state, evidence);
     }

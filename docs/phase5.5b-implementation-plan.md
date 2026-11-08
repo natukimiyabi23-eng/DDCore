@@ -2,6 +2,8 @@
 
 ## 1. Scope and conclusion
 
+Status update (2026-11-08 JST): B1 is implemented in Draft PR #10. The user confirmed the expected version-0.5.2.0 UI display in Eureka Orthos 1-10; all other DD/bands remain unverified. B2 remains unimplemented and is specified in `docs/phase5.5b-b2-implementation-plan.md` pending explicit approval.
+
 Phase 5.5B should first make public duty identity and actor spatial quality trustworthy. It should **not** add native Deep Dungeon reads in the same change. The latest live replay proves that public `TerritoryType` and `ContentFinderCondition` identifiers are available and that the anonymous player pose works, but the current adapter does not interpret the duty row and the actor schema cannot distinguish a semantically usable position from a suspicious zero value.
 
 Recommended slices, each separately reviewable:
@@ -35,9 +37,9 @@ The existing fail-closed behavior is correct: public actor data is not fabricate
 
 ### Dalamud API 15
 
-- [`IDutyState.ContentFinderCondition`](https://dalamud.dev/api/api16/Dalamud.Plugin.Services/Interfaces/IDutyState/) is a `RowRef<ContentFinderCondition>` for the current duty; `IsDutyStarted` is a separate state.
-- [`IDutyState` duty events](https://dalamud.dev/api/api16/Dalamud.Plugin.Services/Interfaces/IDutyState/) provide lifecycle signals but are not exact DD-floor events.
-- [`IObjectTable`](https://dalamud.dev/api/api16/Dalamud.Plugin.Services/Interfaces/IObjectTable/) supplies spawned objects and `LocalPlayer`.
+- [`IDutyState.ContentFinderCondition`](https://dalamud.dev/api/Dalamud.Plugin.Services/Interfaces/IDutyState/) is a `RowRef<ContentFinderCondition>` for the current duty; `IsDutyStarted` is a separate state.
+- [`IDutyState` duty events](https://dalamud.dev/api/Dalamud.Plugin.Services/Interfaces/IDutyState/) provide lifecycle signals but are not exact DD-floor events.
+- [`IObjectTable`](https://dalamud.dev/api/Dalamud.Plugin.Services/Interfaces/IObjectTable/) supplies spawned objects and `LocalPlayer`.
 - API 15 / .NET 10 is the current project baseline. Public services reviewed expose no typed exact DD floor, 25-room map, passage, pomander or DD timer contract.
 
 ### Game-data mapping evidence
@@ -188,7 +190,7 @@ Add complete map/current-room/passage observations, validate against planmap geo
 ### Global acceptance
 
 - `DisabledExecutionGateway` is unchanged and remains the only execution gateway;
-- the existing 223 tests on Draft PR #7 plus new tests pass; Release build, format, vulnerability and prohibited-operation audits pass;
+- the existing 284 tests at completed B1 plus new B2 tests pass; Release build, format, vulnerability and prohibited-operation audits pass;
 - original replay hashes are unchanged and no raw replay is committed;
 - same normalized input produces the same fused observation and strategy result;
 - incomplete/conflicting data produces `Stop` / Unknown, never a fabricated safe result;
@@ -198,8 +200,8 @@ Add complete map/current-room/passage observations, validate against planmap geo
 
 The following must each be approved before implementation:
 
-1. **B1 public DD classification/floor-band implementation** and the supported mapping manifest.
-2. **B2 schema 5 actor spatial-quality migration**, including the `objectId` to `baseId` semantic correction.
+1. **B1 public DD classification/floor-band implementation** and the supported mapping manifest. Approved and implemented in Draft PR #10; this does not authorize B2.
+2. **B2 schema 5 actor spatial-quality migration**, including the `objectId` to `baseId` semantic correction. Still awaiting explicit approval.
 3. **Any FFXIVClientStructs/native read**, beginning with exact floor only. Approval for floor does not authorize rooms, passage, resources or writes.
 4. **Planmap/geometry parsing** and any packaged game-data cache or generated manifest.
 5. **UI extraction** if chosen as an alternative exact-floor source.
@@ -214,4 +216,4 @@ None of these approvals authorizes movement, combat, target changes, item use, i
 - Compare self pose, visible room and any future native room value, including a legitimate room zero.
 - Record before/after passage activation and a confirmed floor transition.
 
-Phase 5.5B implementation is feasible as bounded slices. The recommended immediate approval is **B1 only**, followed by B2. Native exact-floor work remains a separate high-risk decision.
+Phase 5.5B implementation remains feasible as bounded slices. B1 is complete and the next proposed slice is B2, but B2 remains approval-gated. Native exact-floor work remains a separate high-risk decision.

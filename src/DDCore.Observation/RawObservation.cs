@@ -54,6 +54,12 @@ public sealed record RawActorObservation(
     RawCastObservation? Cast,
     ImmutableArray<RawStatusObservation> Statuses);
 
+public sealed record RawContentFinderConditionObservation(
+    uint RowId,
+    uint ReferencedTerritoryId,
+    uint DataContentId,
+    string ShortCode);
+
 public sealed record RawObservationFrame(
     DateTimeOffset CapturedAt,
     bool IsLoggedIn,
@@ -63,7 +69,9 @@ public sealed record RawObservationFrame(
     uint? LocalPlayerEntityId,
     ImmutableArray<RawActorObservation> Actors,
     ImmutableArray<string> Diagnostics,
-    RawPlayerPoseObservation? PlayerPose = null);
+    RawPlayerPoseObservation? PlayerPose = null,
+    bool IsInDeepDungeon = false,
+    RawContentFinderConditionObservation? ContentFinderCondition = null);
 
 public interface ILiveObservationSource
 {

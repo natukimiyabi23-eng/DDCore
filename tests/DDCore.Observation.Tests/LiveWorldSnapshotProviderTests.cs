@@ -28,8 +28,10 @@ public sealed class LiveWorldSnapshotProviderTests
 
         Assert.Equal(ObservationQuality.Partial, snapshot.Quality);
         Assert.Equal(DeepDungeonKind.EurekaOrthos, snapshot.Dungeon.Kind);
-        Assert.Equal(10, snapshot.Dungeon.Floor);
-        Assert.Equal((uint?)777, snapshot.Dungeon.TerritoryId);
+        Assert.Null(snapshot.Dungeon.Floor);
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), snapshot.Dungeon.FloorRange);
+        Assert.Equal((uint?)1099, snapshot.Dungeon.TerritoryId);
+        Assert.True(snapshot.Dungeon.IsDeepDungeonObserved);
         var actor = Assert.Single(snapshot.Actors, item => item.ObjectId == GancanaghAnalyzer.BossObjectId);
         Assert.Equal(-300, actor.Position.X);
         Assert.Equal(-300, actor.Position.Y);
@@ -41,7 +43,8 @@ public sealed class LiveWorldSnapshotProviderTests
         Assert.Equal((ulong)2, actor.Cast.Target?.EntityId);
         var status = Assert.Single(actor.Statuses);
         Assert.Equal(At + TimeSpan.FromSeconds(5), status.ExpiresAt);
-        Assert.Contains("observation.dungeon.eureka-orthos-floor-10.estimated-from-encounter-actor", snapshot.Diagnostics);
+        Assert.Contains("observation.dungeon.public-identified:EurekaOrthos:1-10", snapshot.Diagnostics);
+        Assert.Contains("observation.dungeon.exact-floor-unavailable-public-api", snapshot.Diagnostics);
         Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), snapshot.PlayerPose!.Position);
         Assert.Equal(ObservationValueQuality.Direct, snapshot.PlayerPose.Metadata.Quality);
         Assert.Equal(ObservationValueSource.PublicDalamud, snapshot.PlayerPose.Metadata.Source);
@@ -225,19 +228,90 @@ public sealed class LiveWorldSnapshotProviderTests
     }
 
     [Fact]
-    public void UnidentifiedDutyIsUnsupportedRatherThanDeepDungeonSafe()
+    public void OrdinaryStartedDutyIsNotTreatedAsDeepDungeon()
     {
-        var snapshot = Provider(Frame(At, [Player()], dutyStarted: true)).Capture();
+        var snapshot = Provider(Frame(At, [Player()], dutyStarted: true, isInDeepDungeon: false)).Capture();
+
+        Assert.Equal(DeepDungeonKind.None, snapshot.Dungeon.Kind);
+        Assert.Null(snapshot.Dungeon.Floor);
+        Assert.Null(snapshot.Dungeon.FloorRange);
+        Assert.False(snapshot.IsDeepDungeon);
+    }
+
+    [Fact]
+    public void UnknownDeepDungeonContentFailsClosed()
+    {
+        var snapshot = Provider(Frame(
+            At,
+            [Player()],
+            territoryId: 9999,
+            contentId: 9999,
+            isInDeepDungeon: true,
+            contentFinderCondition: new RawContentFinderConditionObservation(9999, 9999, 9999, "unknown"))).Capture();
 
         Assert.Equal(DeepDungeonKind.Unsupported, snapshot.Dungeon.Kind);
         Assert.Null(snapshot.Dungeon.Floor);
+        Assert.Null(snapshot.Dungeon.FloorRange);
+        Assert.True(snapshot.IsDeepDungeon);
+        Assert.Contains("observation.dungeon.content-finder-condition-unknown", snapshot.Diagnostics);
         Assert.Contains("observation.dungeon.unidentified", snapshot.Diagnostics);
+    }
+
+    [Fact]
+    public void TerritoryMismatchFailsClosedWithoutKeepingBand()
+    {
+        var snapshot = Provider(Frame(At, [Player()], territoryId: 1100)).Capture();
+
+        Assert.Equal(DeepDungeonKind.Unsupported, snapshot.Dungeon.Kind);
+        Assert.Null(snapshot.Dungeon.FloorRange);
+        Assert.Contains("observation.dungeon.territory-mismatch", snapshot.Diagnostics);
+    }
+
+    [Fact]
+    public void DeepDungeonConditionWithoutContentRowFailsClosed()
+    {
+        var snapshot = Provider(Frame(
+            At,
+            [Player()],
+            contentId: null,
+            isInDeepDungeon: true,
+            contentFinderCondition: null)).Capture();
+
+        Assert.Equal(DeepDungeonKind.Unsupported, snapshot.Dungeon.Kind);
+        Assert.Null(snapshot.Dungeon.FloorRange);
+        Assert.Contains("observation.dungeon.content-finder-condition-missing", snapshot.Diagnostics);
+    }
+
+    [Fact]
+    public void DutyStartFlagDoesNotEraseAvailablePublicDeepDungeonIdentity()
+    {
+        var snapshot = Provider(Frame(At, [Player()], dutyStarted: false, isInDeepDungeon: true)).Capture();
+
+        Assert.Equal(DeepDungeonKind.EurekaOrthos, snapshot.Dungeon.Kind);
+        Assert.Equal(new DeepDungeonFloorRange(1, 10), snapshot.Dungeon.FloorRange);
+        Assert.Null(snapshot.Dungeon.Floor);
+    }
+
+    [Fact]
+    public void DeepDungeonConditionChangeStartsNewSession()
+    {
+        var source = new QueueSource(
+            Frame(At, [Player()], isInDeepDungeon: false),
+            Frame(At.AddSeconds(1), [Player()], isInDeepDungeon: true));
+        var provider = new LiveWorldSnapshotProvider(source);
+
+        var outside = provider.Capture();
+        var inside = provider.Capture();
+
+        Assert.NotEqual(outside.SessionId, inside.SessionId);
+        Assert.Equal(0, inside.Sequence);
+        Assert.Equal(DeepDungeonKind.EurekaOrthos, inside.Dungeon.Kind);
     }
 
     [Fact]
     public void ContentExitKeepsPublicPoseButIsNotADeepDungeon()
     {
-        var snapshot = Provider(Frame(At, [Player()], dutyStarted: false)).Capture();
+        var snapshot = Provider(Frame(At, [Player()], dutyStarted: false, isInDeepDungeon: false)).Capture();
 
         Assert.Equal(DeepDungeonKind.None, snapshot.Dungeon.Kind);
         Assert.Equal(new DDCore.Core.Geometry.Coordinate2D(0, 0), snapshot.PlayerPose!.Position);
@@ -249,11 +323,13 @@ public sealed class LiveWorldSnapshotProviderTests
     internal static RawObservationFrame Frame(
         DateTimeOffset at,
         ImmutableArray<RawActorObservation> actors,
-        uint? territoryId = 777,
-        uint? contentId = null,
+        uint? territoryId = 1099,
+        uint? contentId = 897,
         bool dutyStarted = true,
         uint? localPlayerEntityId = 10,
-        RawPlayerPoseObservation? playerPose = null) =>
+        RawPlayerPoseObservation? playerPose = null,
+        bool isInDeepDungeon = true,
+        RawContentFinderConditionObservation? contentFinderCondition = null) =>
         new(
             at,
             true,
@@ -263,7 +339,11 @@ public sealed class LiveWorldSnapshotProviderTests
             localPlayerEntityId,
             actors,
             [],
-            playerPose ?? RawPlayerPoseObservation.Direct(new RawPosition(0, 0, 0), 0));
+            playerPose ?? RawPlayerPoseObservation.Direct(new RawPosition(0, 0, 0), 0),
+            isInDeepDungeon,
+            contentFinderCondition ?? (contentId == 897
+                ? new RawContentFinderConditionObservation(897, 1099, 60031, "dd003_001")
+                : null));
 
     internal static RawActorObservation Player() => new(
         10,

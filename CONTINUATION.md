@@ -1,9 +1,42 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-08 21:10 JST (Phase 5.5B research and design complete)
+Updated: 2026-11-08 21:54 JST (B1 live result documented and B2 plan completed)
 
 ## Objective
+
+Current objective: document the user-reported DDCore 0.5.2.0 live result that Eureka Orthos 1-10 displayed as `オルト・エウレカ 1～10階帯（正確な階層は未取得）`, while explicitly retaining Palace of the Dead, Heaven-on-High and all other floor bands as unverified. Then produce a source-grounded Phase 5.5B B2 implementation plan for actor spatial quality and schema 5 migration. Documentation only: do not implement B2, change production/test code, merge PR #7/#9/#10/main, deploy, or operate FF14/Dalamud.
+
+- Start: `2026-11-08T21:45:35+09:00`.
+- Authoritative preflight: five-hour remaining 99%; weekly remaining 100%.
+- Estimate: 8% including contingency. Projected five-hour balance `99% - 8% = 91%`; projected weekly balance `100% - 8% = 92%`.
+- One-time continuation automation: `ddcore-phase55b-b2-plan-followup`, verified `ACTIVE`, scheduled for `2026-11-09 02:45:35 JST` (exactly five hours after start).
+- Branch/head: `phase5.5b/b1-public-classification` at `fa689b4`; worktree was clean before this continuation update. Draft PR #10 remains open and Draft; no merge is authorized.
+- Replay folder recheck: four original exports remain present. The latest is still schema 4 / producer 0.5.1.0 with 34 snapshots and SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; there is no new 0.5.2.0 replay export. The B1 UI result is therefore recorded as a user-reported live observation, not replay-confirmed evidence.
+- Documentation milestone: updated the B1 verification with the exact user-confirmed EO 1-10 display and an explicit unverified matrix; added `docs/phase5.5b-b2-implementation-plan.md` covering schema 5 model/codec migration, generic coordinate qualification, consumer safety gates, tests, acceptance criteria, live verification and approval boundaries. Updated the master Phase 5.5B plan, progress and README links. No production/test code changed.
+- Documentation checks passed: local Markdown targets exist, referenced current Dalamud API pages returned HTTP 200, `git diff --check` found no whitespace error, and the four original export hashes/metadata remain unchanged.
+- Documentation commit `9c81652` was pushed to `phase5.5b/b1-public-classification`. Draft PR #10 remains open, Draft and mergeable; no PR or branch was merged.
+- Final CI passed at `9c81652`: push run `42482184581` and pull-request run `42482187065` both completed successfully.
+- PR #10 now distinguishes the user-reported v0.5.2.0 EO 1-10 UI result from replay evidence, keeps all other DD/bands unverified, and identifies B2 as planning only.
+- B2 production code and tests were not implemented. Safe next step is user review and explicit approval or revision of `docs/phase5.5b-b2-implementation-plan.md`.
+- The one-time `ddcore-phase55b-b2-plan-followup` automation is to be deleted at completion so it cannot restart completed documentation work.
+
+Current objective: implement only the explicitly approved Phase 5.5B B1 slice on `phase5.5b/b1-public-classification`, based on `phase5.5b/implementation-plan`: classify Palace of the Dead, Heaven-on-High and Eureka Orthos by public Dalamud API 15 duty/territory observations plus verified game-data mappings; retain a separate ten-floor band while leaving the exact floor `null`; preserve schema 3/4 compatibility; fail closed for unknown or mismatched IDs; add tests, documentation, full verification, commit/push and a stacked Draft PR targeting `phase5.5b/implementation-plan`. Do not start B2/native reads/movement/combat/input, change `DisabledExecutionGateway`, modify or commit original replay JSON, merge PR #7/#9/main, deploy, or operate FF14/Dalamud UI.
+
+- Start: `2026-11-08T21:09:49+09:00`.
+- Authoritative preflight: five-hour remaining 43%; weekly remaining 18%.
+- Estimate: 17% total including 3% contingency. Projected five-hour balance `43% - 17% = 26%`; projected weekly balance `18% - 17% = 1%`.
+- One-time continuation automation: `ddcore-phase55b-b1-followup`, verified `ACTIVE`, scheduled for `2026-11-09 02:09:49 JST` (exactly five hours after start).
+- Starting branch/head: `phase5.5b/b1-public-classification` from design commit `2e9d2d4`; worktree was clean before this continuation update.
+- Latest valid original replay: `ddcore-export-20261108-114807-8e655d1ad023455796a6a0beeba0421d.replay.json`, schema 4, producer 0.5.1.0, 34 snapshots, SHA-256 `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`. It remains read-only and outside Git.
+- Thread goal registration remains unavailable because an unrelated earlier FateFarmJP goal is still unfinished; this file and the verified automation hold the DDCore continuation state.
+- Implementation milestone: added explicit public DD-condition capture, checked 40-entry CFC/territory/content/short-code manifest, optional ten-floor range/direct-condition evidence, fail-closed classification, schema 3/4 compatibility tests, range-aware diagnostics/UI and strategy evidence. Removed encounter-actor exact-floor inference and ordinary-duty DD inference. Intermediate solution tests passed before the final verification matrix.
+- Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 189/189 and Observation 95/95 tests (284 total, 61 net-new B1 cases); format; NuGet vulnerability audit; dependency and prohibited-operation audits.
+- Original replay hash remains `7890DDB45657AF6BAD9EDD2A9CEBFD4F336B8CB7D9EE68B8E38CBE3D361B39D2`; no replay JSON is tracked. Package version 0.5.2.0, API 15, SHA-256 `CD1034425FFE5E9288661AAC33E4263987586191E053B32E7D68EA711BE6AC76`.
+- Implementation commit `cf54cad` and CI-filter commit `3aedc12` were pushed. Stacked Draft PR #10 targets `phase5.5b/implementation-plan`, remains Draft/mergeable, and is attached to this task.
+- Push run `42480251741` and Draft PR run `42480255922` both passed at head `3aedc12`. The existing `actions/upload-artifact@v4` Node.js 20 deprecation annotation did not fail either run.
+- The one-time `ddcore-phase55b-b1-followup` automation was deleted after completion so it cannot restart completed B1 work.
+- Safe next step: user reviews Draft PR #10 and performs the documented live checks if desired. Do not merge PR #7/#9/#10/main or start B2/native/operation work without explicit approval.
 
 Current objective: perform Phase 5.5B research/design only on `phase5.5b/implementation-plan`, based on Draft PR #7 and the latest original schema-4 replay. Produce `docs/phase5.5b-implementation-plan.md` with code/source-line evidence, verified replay facts, unknowns, acquisition options/risks, implementation order, tests/acceptance and explicit approval gates. Add the fixed export-folder handling rules to repository `AGENTS.md`. Do not implement Phase 5.5B functionality, native reads, gameplay operation, movement/combat/input, merge PR #7/main, modify or commit original JSON, or operate FF14/Dalamud UI.
 

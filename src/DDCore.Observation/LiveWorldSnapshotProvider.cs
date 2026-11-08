@@ -20,7 +20,7 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
     {
         var raw = source.Capture();
         ValidateRawFrame(raw);
-        var currentKey = new SessionKey(raw.IsLoggedIn, raw.TerritoryId, raw.ContentId);
+        var currentKey = new SessionKey(raw.IsLoggedIn, raw.TerritoryId, raw.ContentId, raw.IsInDeepDungeon);
         if (sessionKey is null || sessionKey != currentKey)
         {
             ResetSession(currentKey);
@@ -31,7 +31,7 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
             var staleDiagnostics = raw.Diagnostics.ToBuilder();
             staleDiagnostics.Add("observation.time.regressed");
             var staleQuality = ObservationQuality.Partial;
-            var staleDungeon = ResolveDungeon(raw, raw.Actors, staleDiagnostics, ref staleQuality);
+            var staleDungeon = ResolveDungeon(raw, staleDiagnostics, ref staleQuality);
             return Build(
                 raw,
                 ObservationQuality.Stale,
@@ -109,7 +109,7 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
             activeCasts.Remove(missingIdentity);
         }
 
-        var dungeon = ResolveDungeon(raw, raw.Actors, diagnostics, ref quality);
+        var dungeon = ResolveDungeon(raw, diagnostics, ref quality);
         return Build(raw, quality, dungeon, actors.ToImmutable(), diagnostics, playerPose);
     }
 
@@ -273,40 +273,59 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
 
     private static DeepDungeonContext ResolveDungeon(
         RawObservationFrame frame,
-        ImmutableArray<RawActorObservation> actors,
         ImmutableArray<string>.Builder diagnostics,
         ref ObservationQuality quality)
     {
-        if (actors.Any(actor => actor.BaseId is 0x3D54 or 0x3D55))
+        if (!frame.IsInDeepDungeon)
         {
-            quality = ObservationQuality.Partial;
-            diagnostics.Add("observation.dungeon.eureka-orthos-floor-10.estimated-from-encounter-actor");
-            return new DeepDungeonContext(
-                DeepDungeonKind.EurekaOrthos,
-                10,
-                frame.TerritoryId,
-                frame.ContentId,
-                "eureka-orthos-10:estimated",
-                null);
+            return NotInDungeon(frame);
         }
 
-        if (frame.IsDutyStarted)
+        quality = ObservationQuality.Partial;
+        if (DeepDungeonContentRegistry.TryResolve(
+                frame.TerritoryId,
+                frame.ContentId,
+                frame.ContentFinderCondition,
+                out var definition,
+                out var reasonCode))
         {
-            diagnostics.Add("observation.dungeon.unidentified");
+            var identified = definition!;
+            diagnostics.Add($"{reasonCode}:{identified.Kind}:{identified.FloorRange.Start}-{identified.FloorRange.End}");
+            diagnostics.Add("observation.dungeon.exact-floor-unavailable-public-api");
             return new DeepDungeonContext(
-                DeepDungeonKind.Unsupported,
+                identified.Kind,
                 null,
                 frame.TerritoryId,
                 frame.ContentId,
-                "duty-unidentified",
-                null);
+                $"{ContentKey(identified.Kind)}:{identified.FloorRange.Start}-{identified.FloorRange.End}:public",
+                null,
+                identified.FloorRange,
+                true);
         }
 
-        return NotInDungeon(frame);
+        diagnostics.Add(reasonCode);
+        diagnostics.Add("observation.dungeon.unidentified");
+        return new DeepDungeonContext(
+            DeepDungeonKind.Unsupported,
+            null,
+            frame.TerritoryId,
+            frame.ContentId,
+            "deep-dungeon-unidentified",
+            null,
+            null,
+            true);
     }
 
     private static DeepDungeonContext NotInDungeon(RawObservationFrame frame) =>
-        new(DeepDungeonKind.None, null, frame.TerritoryId, frame.ContentId, "not-deep-dungeon", null);
+        new(DeepDungeonKind.None, null, frame.TerritoryId, frame.ContentId, "not-deep-dungeon", null, null, false);
+
+    private static string ContentKey(DeepDungeonKind kind) => kind switch
+    {
+        DeepDungeonKind.PalaceOfTheDead => "palace-of-the-dead",
+        DeepDungeonKind.HeavenOnHigh => "heaven-on-high",
+        DeepDungeonKind.EurekaOrthos => "eureka-orthos",
+        _ => "deep-dungeon-unidentified",
+    };
 
     private WorldSnapshot Build(
         RawObservationFrame raw,
@@ -337,7 +356,11 @@ public sealed class LiveWorldSnapshotProvider(ILiveObservationSource source) : I
         activeCasts.Clear();
     }
 
-    private readonly record struct SessionKey(bool IsLoggedIn, uint? TerritoryId, uint? ContentId);
+    private readonly record struct SessionKey(
+        bool IsLoggedIn,
+        uint? TerritoryId,
+        uint? ContentId,
+        bool IsInDeepDungeon);
 
     private readonly record struct CastObservationState(CastSnapshot Cast, double LastCurrentSeconds);
 }

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -9,7 +10,8 @@ namespace DDCore.Plugin.Observation;
 internal sealed class DalamudObservationSource(
     IClientState clientState,
     IObjectTable objectTable,
-    IDutyState dutyState) : ILiveObservationSource
+    IDutyState dutyState,
+    ICondition condition) : ILiveObservationSource
 {
     public RawObservationFrame Capture()
     {
@@ -97,9 +99,40 @@ internal sealed class DalamudObservationSource(
         }
 
         uint? contentId = null;
-        if (dutyState.IsDutyStarted && dutyState.ContentFinderCondition.RowId != 0)
+        RawContentFinderConditionObservation? contentFinderCondition = null;
+        try
         {
-            contentId = dutyState.ContentFinderCondition.RowId;
+            var conditionRow = dutyState.ContentFinderCondition;
+            if (conditionRow.RowId != 0)
+            {
+                contentId = conditionRow.RowId;
+                if (conditionRow.ValueNullable is { } row)
+                {
+                    contentFinderCondition = new RawContentFinderConditionObservation(
+                        row.RowId,
+                        row.TerritoryType.RowId,
+                        row.Content.RowId,
+                        row.ShortCode.ToString());
+                }
+                else
+                {
+                    diagnostics.Add("dalamud.content-finder-condition.row-unavailable");
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            diagnostics.Add($"dalamud.content-finder-condition.read-failed:{exception.GetType().Name}");
+        }
+
+        var isInDeepDungeon = false;
+        try
+        {
+            isInDeepDungeon = condition[ConditionFlag.InDeepDungeon];
+        }
+        catch (Exception exception)
+        {
+            diagnostics.Add($"dalamud.deep-dungeon.condition-read-failed:{exception.GetType().Name}");
         }
 
         diagnostics.Add("dalamud.cast.location.unavailable-public-api");
@@ -115,7 +148,9 @@ internal sealed class DalamudObservationSource(
             localPlayerEntityId,
             actors.ToImmutable(),
             diagnostics.ToImmutable(),
-            playerPose);
+            playerPose,
+            isInDeepDungeon,
+            contentFinderCondition);
     }
 
     private static RawActorObservation ConvertActor(IGameObject gameObject, ICharacter character, RawActorKind kind)
