@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-08 20:40 JST (Eureka Orthos entry-travel foundation started)
+Status: complete
+Updated: 2026-11-08 20:54 JST (Eureka Orthos entry-travel foundation complete)
 
 ## Objective
 
@@ -81,10 +81,11 @@ Phase 2ブランチを基点に `phase3/mechanics-foundation` を作成し、ゲ
 
 ## Unfinished
 
-- Entry-travel foundation implementation and documentation are present on `feature/eo-entry-travel-foundation`.
+- Entry-travel foundation implementation and documentation are complete on `feature/eo-entry-travel-foundation`.
 - Final local verification passed: locked restore; Release build with 0 warnings/errors; Core 200/200 and Observation 43/43 tests (243 total); format; NuGet vulnerability; project/reference and new-source prohibited-operation audits.
 - Package version `0.5.2.0`, SHA-256 `102F4F229401EFC6F1444E8DA681D07409D638A3FA7FAA99B5ABDE9670E481E0`.
-- Next safe step: commit, push and open a stacked Draft PR against `phase5/strategy-engine`; confirm CI; then mark this continuation complete and remove the one-time follow-up automation.
+- Commits `c6299b2` and `83ba44c` were pushed. Draft PR #8 targets `phase5/strategy-engine`; Windows CI run `42477673812` passed.
+- Next safe step: wait for user review. A separately approved slice must resolve world coordinates/capabilities and add a no-op diagnostic before any operation adapter. Do not enable teleport, movement or NPC interaction from this checkpoint.
 - No movement/teleport/NPC IPC or live FF14 operation has been added. User approval remains mandatory before any operation adapter.
 
 - Phase 5.5A implementation, documentation, local verification, push, Draft PR #7 update and CI are complete.
