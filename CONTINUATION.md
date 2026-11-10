@@ -1,7 +1,24 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-11 03:42 JST (Phase 5.6 environment-recognition research and design complete)
+Updated: 2026-11-11 07:04 JST (Stage 5.6A environment-object diagnostics complete)
+
+## Current Stage 5.6A objective
+
+Implement the approved public-API-only environment-object diagnostic on `phase5.6a/environment-object-diagnostics`, based on Phase 5.6 Draft PR #14. Capture only `EventObj`, `Treasure`, and `Aetheryte` through copied public `IObjectTable`/`IGameObject` values; keep the feature initial-OFF, explicit start/stop, anonymous, bounded, local-only, versioned independently, and disconnected from replay schemas, floor diagnostics, strategy, BFS, and execution. Add Japanese UI, confirmation-gated export/delete, tests, documentation, package, Draft PR and CI. Do not operate FF14/Dalamud/UI, access native/private APIs, merge existing PRs/main, or start Stage 5.6B.
+
+- Start: `2026-11-11T06:50:15+09:00`.
+- Authoritative preflight: five-hour remaining 100%; weekly remaining 35%. Estimated requirement including contingency: 55%; projected five-hour balance `100% - 55% = 45%`.
+- One-time continuation automation: `ddcore-stage56a-followup`, verified `ACTIVE`, scheduled for `2026-11-11 11:50:15 JST`.
+- Starting base: Phase 5.6 head `3b8241e`; Draft PR #14 remains open/Draft with CI passing and must not be changed or merged.
+- Work branch: `phase5.6a/environment-object-diagnostics`, created from `3b8241e` with a clean worktree.
+- Implementation milestone: added a separate pure-C# environment-object recorder/schema, public `IObjectTable` adapter, Japanese opt-in UI, anonymous session-scoped identities, disappearance/ID-reuse handling, coordinate quality, bounded local persistence, preview/export/delete, tests and documentation. The feature remains disconnected from replay schemas, `WorldSnapshot`, BFS, strategy and execution.
+- Local verification milestone: locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 and Observation 156/156 tests passed (353 total); format and NuGet vulnerability audits passed; dependency/prohibited-operation and diff checks passed.
+- Package milestone: version `0.5.6.0`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `109B2E30DBDA3CED15D0842E917D33DB718FEE6501DEF7381B242E84A2B87A32`. Nothing was deployed or activated.
+- Git milestone: implementation commit `1f55eff` and CI-target commit `a58a996` were pushed. Draft PR #15 targets `phase5.6/environment-research`, remains open/Draft/clean, and PR #13, PR #14 and `main` remain unmodified and unmerged.
+- CI milestone: push run `42910823477` and pull-request run `42910833365` both passed restore, Release build, all tests and package upload. The upstream `actions/upload-artifact@v4` Node.js 20 deprecation annotation is non-failing.
+- User verification still required: load package `0.5.6.0`, explicitly start/stop the independent environment-object diagnostic in a DD, inspect the privacy preview, export it, and verify EventObj/Treasure/Aetheryte observations, object disappearance, floor transition and DD exit/re-entry. No live capture has been performed.
+- Safe next step: wait for user live verification. Do not deploy, activate, operate FF14/Dalamud/UI, merge, classify object meaning, connect data to topology/BFS/strategy, or start Stage 5.6B without explicit approval.
 
 ## Current Phase 5.6 objective
 

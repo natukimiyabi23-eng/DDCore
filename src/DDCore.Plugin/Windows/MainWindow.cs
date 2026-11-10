@@ -14,6 +14,8 @@ internal sealed class MainWindow : Window, IDisposable
     private bool deletionConfirmed;
     private bool chatFloorExportConfirmed;
     private bool chatFloorDeletionConfirmed;
+    private bool environmentObjectExportConfirmed;
+    private bool environmentObjectDeletionConfirmed;
 
     public MainWindow(Plugin plugin)
         : base("DDCore##Main")
@@ -52,6 +54,10 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+        DrawEnvironmentObjectDiagnostics();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
         DrawModes();
         ImGui.Spacing();
         ImGui.Separator();
@@ -62,7 +68,7 @@ internal sealed class MainWindow : Window, IDisposable
     private void DrawStatus()
     {
         ImGui.TextUnformatted("ディープダンジョン攻略基盤");
-        ImGui.TextDisabled("Phase 5.5D: 読み取り専用観測・匿名化階層イベント診断");
+        ImGui.TextDisabled("Stage 5.6A: 読み取り専用観測・匿名化環境オブジェクト診断");
         ImGui.Spacing();
 
         ImGui.TextUnformatted("現在のモード");
@@ -367,6 +373,81 @@ internal sealed class MainWindow : Window, IDisposable
         ChatFloorCandidateQuality.Unverified => "未検証",
         ChatFloorCandidateQuality.ConsistentCandidate => "階層帯と整合（未検証）",
         ChatFloorCandidateQuality.Conflict => "B1観測と矛盾",
+        _ => "不明",
+    };
+
+    private void DrawEnvironmentObjectDiagnostics()
+    {
+        var status = plugin.EnvironmentObjectStatus;
+        var preview = status.Preview;
+        ImGui.TextUnformatted("環境オブジェクト診断（実機検証用）");
+        ImGui.TextDisabled("初期状態はOFFです。公開APIの汎用情報だけを匿名・有界で記録し、対象の意味は断定しません。");
+        ImGui.Spacing();
+        DrawValue("診断状態", EnvironmentObjectStateText(status.State));
+        DrawValue("記録件数", $"{preview.SampleCount}フレーム / 最新{preview.ObjectCount}件");
+        DrawValue("記録容量", FormatBytes(preview.StoredBytes));
+        DrawValue("ObjectKind", $"EventObj {preview.EventObjectCount} / Treasure {preview.TreasureCount} / Aetheryte {preview.AetheryteCount}");
+        DrawValue("座標品質", $"使用可 {preview.UsableCount} / 隔離 {preview.QuarantinedCount} / 欠損 {preview.MissingCount}");
+        DrawValue("最新の診断理由", preview.LatestReason ?? status.LatestError ?? "なし");
+        DrawValue("保存先", status.RecordingPath ?? "未作成");
+
+        ImGui.Spacing();
+        using (ImRaii.Disabled(status.State == EnvironmentObjectRecordingState.Recording))
+        {
+            if (ImGui.Button("環境診断開始", new Vector2(140, 32)))
+            {
+                environmentObjectExportConfirmed = false;
+                environmentObjectDeletionConfirmed = false;
+                plugin.StartEnvironmentObjectDiagnostics();
+            }
+        }
+
+        ImGui.SameLine();
+        using (ImRaii.Disabled(status.State != EnvironmentObjectRecordingState.Recording))
+        {
+            if (ImGui.Button("環境診断停止", new Vector2(140, 32))) plugin.StopEnvironmentObjectDiagnostics();
+        }
+
+        if (preview.SampleCount > 0 && ImGui.TreeNode("匿名化した保存内容を確認##EnvironmentObjects"))
+        {
+            DrawValue("最終観測", preview.LastObservedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "未観測");
+            ImGui.BulletText("BaseIdとObjectKindは意味を確定せず、公開APIの観測値として保存します。");
+            ImGui.BulletText("生のEntityId/GameObjectId、名前、チャット、プレイヤー識別情報は保存しません。");
+            ImGui.BulletText("正確な階層が不明な間は、同一フロア継続を保証しません。");
+            ImGui.Checkbox("環境診断の保存内容を確認しました", ref environmentObjectExportConfirmed);
+            ImGui.TreePop();
+        }
+
+        using (ImRaii.Disabled(status.State == EnvironmentObjectRecordingState.Recording || preview.SampleCount == 0 || !environmentObjectExportConfirmed))
+        {
+            if (ImGui.Button("環境診断を出力", new Vector2(150, 32)))
+                plugin.ExportEnvironmentObjectDiagnostics(environmentObjectExportConfirmed);
+        }
+
+        ImGui.SameLine();
+        ImGui.Checkbox("環境診断の削除を確認", ref environmentObjectDeletionConfirmed);
+        ImGui.SameLine();
+        using (ImRaii.Disabled(status.State == EnvironmentObjectRecordingState.Recording || preview.SampleCount == 0 || !environmentObjectDeletionConfirmed))
+        {
+            if (ImGui.Button("環境診断削除", new Vector2(140, 32)))
+            {
+                plugin.DeleteEnvironmentObjectDiagnostics(environmentObjectDeletionConfirmed);
+                environmentObjectDeletionConfirmed = false;
+                environmentObjectExportConfirmed = false;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(status.ExportPath)) DrawValue("出力先", status.ExportPath);
+        if (!string.IsNullOrWhiteSpace(status.StopReason)) DrawValue("停止理由", status.StopReason);
+    }
+
+    private static string EnvironmentObjectStateText(EnvironmentObjectRecordingState state) => state switch
+    {
+        EnvironmentObjectRecordingState.Off => "OFF",
+        EnvironmentObjectRecordingState.Recording => "診断中",
+        EnvironmentObjectRecordingState.Stopped => "停止・保存済み",
+        EnvironmentObjectRecordingState.LimitReached => "上限到達・停止",
+        EnvironmentObjectRecordingState.Faulted => "保存エラー・停止",
         _ => "不明",
     };
 

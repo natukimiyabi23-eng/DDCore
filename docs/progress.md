@@ -248,3 +248,13 @@
 - Reverified the original schema-5 floor 3-4 replay as 105 snapshots and 1,535 actor observations (641 usable, 894 quarantined, 0 missing) without modifying it.
 - Added Japanese opt-in controls, privacy preview, local export and confirmed deletion. Live FFXIV/Dalamud behavior remains unverified and requires user operation.
 - Pushed implementation commit `84aac4c`, opened stacked Draft PR #13 against `phase5.5c/chat-floor-design`, and confirmed both push and pull-request GitHub Actions runs passed.
+
+## 2026-11-11 — Stage 5.6A environment object diagnostics
+
+- Created `phase5.6a/environment-object-diagnostics` from the unmerged Phase 5.6 design branch; PR #13, PR #14 and `main` remain untouched.
+- Added an explicit-start public-API adapter for `EventObj`, `Treasure` and `Aetheryte`; `IGameObject` references are copied to values during the framework callback and never retained.
+- Added session-scoped anonymous IDs, disappearance/runtime-ID reuse handling and nullable `Usable` / `Quarantined` / `Missing` coordinate quality.
+- Added independent schema-1 JSON with 512 KiB, 1,000-sample, 15-minute and 250 ms limits. Raw runtime IDs, names, chat and player identity are not serialized.
+- Added Japanese start/stop, summary, privacy preview, confirmed export and confirmed deletion controls. Recording remains OFF by default.
+- Kept environment observations outside `WorldSnapshot`, BFS and strategy decisions; no semantic object classification or game operation was added.
+- Live Dalamud and FFXIV behavior remains unverified and requires the documented user-run procedure.
