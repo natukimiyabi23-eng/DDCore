@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-11 02:11 JST (recording 0.5.4.2 EO floor 1-to-2 live verification)
+Status: complete
+Updated: 2026-11-11 02:18 JST (0.5.4.2 EO floor 1-to-2 live verification recorded)
 
 ## Current live-verification record objective
 
@@ -14,7 +14,10 @@ Record the user-confirmed DDCore 0.5.4.2 Phase 5.5D live result for Eureka Ortho
 - User-reported confirmed scenario: DDCore 0.5.4.2, EO floor 1 to 2; schema 2 recorded LogMessage 7248 with zero parameters, LogMessage 7270 with integer parameter index 0/value 2 and candidate floor 2, and ChatMessage LogKind 57 with candidate floor 2; both floor candidates were consistent with EO 1-10; three events and no errors; visible game/chat floor was 2.
 - Original evidence milestone: inspected `ddcore-chat-floor-20261110-170934.diagnostic.json` read-only; schema 2, producer 0.5.4.2, 1,680 bytes, three entries, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`. The entries match the user report and expose no chat-text or identity field. The original remains outside Git.
 - Documentation milestone: updated the Phase 5.5D verification and progress records with a strict single-scenario confirmation boundary. No code or package changed.
-- Exact unfinished step: validate the documentation diff, commit/push, update Draft PR #13, wait for CI, record completion and remove the one-time continuation automation.
+- Documentation commit `7177c34` was pushed and Draft PR #13 was updated without changing code or package. Push run `42862848976` and pull-request run `42862859537` both passed the existing build-and-test workflow.
+- Confirmed scope: only the observed Japanese-client EO floor-1-to-floor-2 transition on 0.5.4.2. All wider DD/floor/language/version mappings remain unverified, and exact floor remains disconnected from strategy/execution.
+- Safe next step: wait for another explicitly requested live-verification or development instruction. Do not merge, operate FF14/Dalamud, or advance phases.
+- The one-time `ddcore-phase55d-live-verification-record-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes.
 
 ## Current live-failure objective
 
