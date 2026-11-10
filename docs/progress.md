@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-11-11 — Phase 5.5D EO floor 1-to-2 live verification
+
+- Inspected the original schema-2 diagnostic read-only: producer 0.5.4.2, three entries, no retained chat text or identity fields, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`.
+- Confirmed for this single EO floor-1-to-floor-2 transition: row 7248 with zero parameters, row 7270 with integer index 0/value 2 and consistent candidate 2, then ChatMessage kind 57 with consistent candidate 2.
+- Recorded the user's independent visible floor-2/chat confirmation and no-error result separately from the JSON facts.
+- Kept every other EO floor/band, Palace of the Dead, Heaven-on-High, row 9218, other languages, ordering generalization, reload/re-entry and future-version behavior explicitly unverified.
+- Documentation only: the original JSON was not modified or committed; no code, strategy integration, execution behavior, merge, or next-phase work changed.
+
 ## 2026-11-11 — Phase 5.5D live callback failure correction
 
 - Recorded the user-reproduced EO floor-transition failure separately from unverified row/parameter semantics: zero events/bytes and `chat-floor.log-callback-failed:InvalidOperationException` on 0.5.4.1.

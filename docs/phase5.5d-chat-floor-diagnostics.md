@@ -23,6 +23,20 @@ Version `0.5.4.2` uses a bounded, testable capture helper and `ToImmutable()` in
 
 The exception message, chat body, sender, payload, and player identifiers remain excluded. Exact-floor candidates remain diagnostic-only and are not connected to replay, world state, strategy, or execution.
 
+### 0.5.4.2 live verification: Eureka Orthos floor 1 to 2
+
+The user completed one successful Japanese-client live capture while moving from Eureka Orthos floor 1 to floor 2. The original schema-2 diagnostic was inspected read-only at `ddcore-chat-floor-20261110-170934.diagnostic.json`; it was not modified or added to Git. The file is 1,680 bytes, declares producer `0.5.4.2`, contains three entries, and has SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`.
+
+Facts present in that original diagnostic:
+
+1. Sequence 1 is `LogMessage` row `7248`, `parameterCount: 0`, no integer parameters, no floor candidate, EO context and band 1-10.
+2. Sequence 2 is `LogMessage` row `7270`, `parameterCount: 1`, integer parameter index `0` / value `2`, candidate floor `2`, quality `consistentCandidate`, EO context and band 1-10.
+3. Sequence 3 is `ChatMessage` kind `57`, candidate floor `2`, quality `consistentCandidate`, EO context and band 1-10.
+
+The user separately confirmed that the game screen and chat displayed floor 2 and that the diagnostic completed with three events and no error. This independent visible result agrees with both floor candidates. The exported model contains no chat body, sender, character/account identifier, entity, or payload field.
+
+This evidence verifies only the observed `0.5.4.2` EO floor-1-to-floor-2 transition. It does not establish that the same rows, parameter position, chat kind, callback order, or cross-surface delivery apply to other EO floors or bands, Palace of the Dead, Heaven-on-High, another client language, reload/re-entry cases, or future game/Dalamud versions. Exact floor remains diagnostic-only and is not promoted into `WorldSnapshot` or strategy.
+
 ## Verified API contract
 
 The adapter uses only installed Dalamud API 15 public contracts:
@@ -46,18 +60,18 @@ The maintenance-window review rechecked the installed XML contract and matching 
 - Dalamud catches subscriber exceptions around both dispatch paths. DDCore now also catches its own extraction/context failures, faults only the opt-in diagnostic recorder, and stores a fixed reason plus exception type rather than an exception message.
 - [`DalamudChatFloorDiagnosticSource.Dispose`](../src/DDCore.Plugin/Observation/DalamudChatFloorDiagnosticSource.cs) removes both subscriptions idempotently. Plugin cleanup is LIFO, so the source is detached before the recorder is disposed.
 
-No source establishes that `7248`, `7270`, or `9218` is delivered for any DD. Integer position/type, duplicate delivery across surfaces, and live ordering remain unverified.
+Static source alone does not establish that `7248`, `7270`, or `9218` is delivered for any DD. The single EO floor-1-to-floor-2 capture above now verifies receipt of `7248`, `7270` with integer index 0/value 2, and ChatMessage kind 57 for that scenario only. Row `9218`, every other DD/floor/band, alternate ordering, and generalized duplicate behavior remain unverified.
 
 ## Candidate evidence and safety meaning
 
-The probe recognizes game-data candidates `7248`, `7270`, and `9218`, plus displayed chat kind `57`. These mappings remain live-unverified:
+The probe recognizes game-data candidates `7248`, `7270`, and `9218`, plus displayed chat kind `57`. The table distinguishes the one observed EO transition from wider unverified coverage:
 
 | Candidate | Static evidence | Runtime meaning in 5.5D |
 | --- | --- | --- |
-| `7248` | Japanese game-data text `転移が実行された！` | Transition-marker candidate only; never a floor |
-| `7270` | Japanese text `地下UNKNOWN階` | One plausible integer parameter becomes an unverified floor candidate |
+| `7248` | Japanese game-data text `転移が実行された！`; received once during EO 1→2 | Transition-marker candidate only; never a floor; other transitions unverified |
+| `7270` | Japanese text `地下UNKNOWN階`; received during EO 1→2 with index 0/value 2 | One plausible integer parameter becomes an unverified floor candidate; wider mapping unverified |
 | `9218` | Japanese text `第UNKNOWN層` | One plausible integer parameter becomes an unverified floor candidate |
-| chat kind `57` | `SystemMessage` | Exact Japanese displayed-text match becomes an unverified cross-check |
+| chat kind `57` | `SystemMessage`; received during EO 1→2 with candidate 2 | Exact Japanese displayed-text match becomes an unverified cross-check; wider delivery unverified |
 
 Exactly one integer in `1..200` is required. Missing or ambiguous parameters produce no floor. A candidate matching B1's DD kind and ten-floor range is labelled `ConsistentCandidate`, not verified. A mismatch is `Conflict`; no B1 DD context is never treated as a valid floor.
 
@@ -116,7 +130,7 @@ The added tests cover exact range boundaries 1/10/11, missing/ambiguous/repeated
 6. Check the preview box and export the diagnostic JSON.
 7. Record the visible game floor separately. Do not infer success merely from a candidate value.
 
-For each DD, verify actual callback receipt, row ID, parameter count/index, chat kind, ordering between transition and floor rows, duplicate delivery across both event surfaces, reload behavior, and range conflicts. Palace of the Dead, Heaven-on-High, Eureka Orthos, all candidate IDs, and all language behavior remain live-unverified at implementation time.
+For each remaining scenario, verify actual callback receipt, row ID, parameter count/index, chat kind, ordering between transition and floor rows, duplicate delivery across both event surfaces, reload behavior, and range conflicts. Only EO floor 1→2 on 0.5.4.2 has the live evidence recorded above. All other EO floors/bands, Palace of the Dead, Heaven-on-High, row `9218`, other languages, reload/re-entry and game-version behavior remain unverified.
 
 ### Capture checklist
 
@@ -131,7 +145,7 @@ For each DD, verify actual callback receipt, row ID, parameter count/index, chat
 - [ ] Confirm the exported JSON contains no chat body, sender, character/account identifier, entity or payload bytes.
 - [ ] If the count is zero, report it as ambiguous and do not claim event absence or success.
 - [ ] Repeat after plugin reload/diagnostic restart and after DD exit/re-entry; previous entries must not become current floor state.
-- [ ] Repeat independently for Palace of the Dead, Heaven-on-High and Eureka Orthos before claiming support for each.
+- [ ] Repeat independently for untested EO floors/bands, Palace of the Dead and Heaven-on-High before claiming wider support.
 
 ## Acceptance boundary
 
@@ -145,4 +159,4 @@ Automated tests verify parsing, B1 reconciliation, ambiguity/conflict behavior, 
 - Direct/transitive NuGet vulnerability audit: no known vulnerable package reported.
 - Dependency/prohibited-operation audit: no new package, BossMod runtime reference, private/native access, movement, combat, targeting, item, navigation or input operation; `DisabledExecutionGateway` remains wired.
 - Package: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, final SHA-256 `A50CB1ACF59A3616840AB5B163FF7F5633CE9734530E019CBA117C788446F7E5`.
-- Live callback receipt and all candidate mappings remain unverified.
+- Live verification now covers one EO floor-1-to-floor-2 transition on 0.5.4.2 as documented above. All broader mappings and exact-floor strategy use remain unverified and unimplemented.

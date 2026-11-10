@@ -1,7 +1,20 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-11 02:00 JST (0.5.4.2 live callback correction complete; awaiting user retest)
+Status: in_progress
+Updated: 2026-11-11 02:11 JST (recording 0.5.4.2 EO floor 1-to-2 live verification)
+
+## Current live-verification record objective
+
+Record the user-confirmed DDCore 0.5.4.2 Phase 5.5D live result for Eureka Orthos floor 1 to 2, verify the anonymous schema-2 diagnostic original read-only when locally available, distinguish this single confirmed scenario from every untested DD/floor/event mapping, update documentation and Draft PR #13 only, and stop. Do not change code, rewrite or commit the original JSON, generalize the event contract, merge, operate FF14/Dalamud, or advance phases.
+
+- Start: `2026-11-11T02:11:31+09:00`.
+- Authoritative preflight: five-hour remaining 73%; weekly remaining 45%. Estimated requirement including contingency: 10%; projected five-hour balance `73% - 10% = 63%`.
+- One-time continuation automation: `ddcore-phase55d-live-verification-record-followup`, verified `ACTIVE`, scheduled for `2026-11-11 07:11:31 JST`.
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` at `1efca16`; worktree clean; Draft PR #13 open/Draft with both checks passing.
+- User-reported confirmed scenario: DDCore 0.5.4.2, EO floor 1 to 2; schema 2 recorded LogMessage 7248 with zero parameters, LogMessage 7270 with integer parameter index 0/value 2 and candidate floor 2, and ChatMessage LogKind 57 with candidate floor 2; both floor candidates were consistent with EO 1-10; three events and no errors; visible game/chat floor was 2.
+- Original evidence milestone: inspected `ddcore-chat-floor-20261110-170934.diagnostic.json` read-only; schema 2, producer 0.5.4.2, 1,680 bytes, three entries, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`. The entries match the user report and expose no chat-text or identity field. The original remains outside Git.
+- Documentation milestone: updated the Phase 5.5D verification and progress records with a strict single-scenario confirmation boundary. No code or package changed.
+- Exact unfinished step: validate the documentation diff, commit/push, update Draft PR #13, wait for CI, record completion and remove the one-time continuation automation.
 
 ## Current live-failure objective
 
