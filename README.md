@@ -40,6 +40,8 @@ BossModの調査結果を参考にしつつ、実行時にBossModへ依存しな
 - 正確な階層を推測せず、未知IDや対応不一致を安全停止へ渡すPhase 5.5B B1モデル
 - Actor座標を使用可・隔離・欠損に分け、原点と欠損を区別するPhase 5.5B B2モデル
 - schema 5出力と、旧`objectId`を`baseId`へ正規化して隔離するschema 3・4読み込み互換
+- 初期OFF・明示開始で候補IDと数値だけを記録する匿名化階層イベント診断
+- B1階層帯との整合・矛盾を表示しつつ、正確な階層を攻略判断へ渡さないPhase 5.5D境界
 
 Phase 5にも、移動、戦闘、魔土器、ターゲット、オブジェクト操作、入力注入、ゲーム状態を書き換えるフックは含まれていません。BossModバイナリや内部メモリにも依存しません。戦略エンジンは合成または将来の正規化済み入力を計算するだけで、現在の公開API観測から部屋・出口・罠・魔土器状態を生成しません。AssistedとAutonomousは将来用の定義のみで、現在のビルドでは選択できません。
 
@@ -87,7 +89,7 @@ src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip
 - Dalamud: API 15 / .NET 10
 - BossModライセンス: BSD-3-Clause
 
-[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[Phase 4再利用分析](docs/phase4-reuse-analysis.md)、[Phase 4検証記録](docs/phase4-verification.md)、[Phase 4.5 BossMod連携実証](docs/phase4.5-bossmod-integration.md)、[Phase 4.5検証記録](docs/phase4.5-verification.md)、[Phase 5戦略設計](docs/phase5-strategy-engine.md)、[Phase 5検証記録](docs/phase5-verification.md)、[Phase 5実データ検証](docs/phase5-real-data-validation.md)、[Phase 5.5観測情報取得調査](docs/phase5.5-observation-acquisition.md)、[Phase 5.5A観測基盤](docs/phase5.5a-observation-foundation.md)、[Phase 5.5A検証記録](docs/phase5.5a-verification.md)、[Phase 5.5B設計](docs/phase5.5b-implementation-plan.md)、[Phase 5.5B B1検証記録](docs/phase5.5b-b1-verification.md)、[Phase 5.5B B2実装計画](docs/phase5.5b-b2-implementation-plan.md)、[Phase 5.5B B2検証記録](docs/phase5.5b-b2-verification.md)、[Phase 5.5Cチャット階層調査](docs/phase5.5c-chat-floor-investigation.md)、[Phase 5.5C設計](docs/phase5.5c-chat-floor-design.md)、[Phase 5.5C実機検証計画](docs/phase5.5c-live-verification-plan.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)を参照してください。
+[マスタープラン](docs/DDCore_Codex_MasterPlan.md)、[Phase 3設計](docs/phase3-mechanics-design.md)、[Phase 3精度レビュー](docs/phase3-accuracy-review.md)、[Phase 3.6観測アダプター](docs/phase3-live-observation.md)、[Phase 3.7診断・記録仕様](docs/phase3-diagnostics-recording.md)、[Phase 4再利用分析](docs/phase4-reuse-analysis.md)、[Phase 4検証記録](docs/phase4-verification.md)、[Phase 4.5 BossMod連携実証](docs/phase4.5-bossmod-integration.md)、[Phase 4.5検証記録](docs/phase4.5-verification.md)、[Phase 5戦略設計](docs/phase5-strategy-engine.md)、[Phase 5検証記録](docs/phase5-verification.md)、[Phase 5実データ検証](docs/phase5-real-data-validation.md)、[Phase 5.5観測情報取得調査](docs/phase5.5-observation-acquisition.md)、[Phase 5.5A観測基盤](docs/phase5.5a-observation-foundation.md)、[Phase 5.5A検証記録](docs/phase5.5a-verification.md)、[Phase 5.5B設計](docs/phase5.5b-implementation-plan.md)、[Phase 5.5B B1検証記録](docs/phase5.5b-b1-verification.md)、[Phase 5.5B B2実装計画](docs/phase5.5b-b2-implementation-plan.md)、[Phase 5.5B B2検証記録](docs/phase5.5b-b2-verification.md)、[Phase 5.5Cチャット階層調査](docs/phase5.5c-chat-floor-investigation.md)、[Phase 5.5C設計](docs/phase5.5c-chat-floor-design.md)、[Phase 5.5C実機検証計画](docs/phase5.5c-live-verification-plan.md)、[Phase 5.5D診断仕様・検証手順](docs/phase5.5d-chat-floor-diagnostics.md)、[実機テスト手順](docs/phase3-live-test-procedure.md)を参照してください。
 
 ## 配布上の注意
 

@@ -1,9 +1,76 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-08 22:53 JST (Phase 5.5C research/design complete)
+Updated: 2026-11-11 02:18 JST (0.5.4.2 EO floor 1-to-2 live verification recorded)
+
+## Current live-verification record objective
+
+Record the user-confirmed DDCore 0.5.4.2 Phase 5.5D live result for Eureka Orthos floor 1 to 2, verify the anonymous schema-2 diagnostic original read-only when locally available, distinguish this single confirmed scenario from every untested DD/floor/event mapping, update documentation and Draft PR #13 only, and stop. Do not change code, rewrite or commit the original JSON, generalize the event contract, merge, operate FF14/Dalamud, or advance phases.
+
+- Start: `2026-11-11T02:11:31+09:00`.
+- Authoritative preflight: five-hour remaining 73%; weekly remaining 45%. Estimated requirement including contingency: 10%; projected five-hour balance `73% - 10% = 63%`.
+- One-time continuation automation: `ddcore-phase55d-live-verification-record-followup`, verified `ACTIVE`, scheduled for `2026-11-11 07:11:31 JST`.
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` at `1efca16`; worktree clean; Draft PR #13 open/Draft with both checks passing.
+- User-reported confirmed scenario: DDCore 0.5.4.2, EO floor 1 to 2; schema 2 recorded LogMessage 7248 with zero parameters, LogMessage 7270 with integer parameter index 0/value 2 and candidate floor 2, and ChatMessage LogKind 57 with candidate floor 2; both floor candidates were consistent with EO 1-10; three events and no errors; visible game/chat floor was 2.
+- Original evidence milestone: inspected `ddcore-chat-floor-20261110-170934.diagnostic.json` read-only; schema 2, producer 0.5.4.2, 1,680 bytes, three entries, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`. The entries match the user report and expose no chat-text or identity field. The original remains outside Git.
+- Documentation milestone: updated the Phase 5.5D verification and progress records with a strict single-scenario confirmation boundary. No code or package changed.
+- Documentation commit `7177c34` was pushed and Draft PR #13 was updated without changing code or package. Push run `42862848976` and pull-request run `42862859537` both passed the existing build-and-test workflow.
+- Confirmed scope: only the observed Japanese-client EO floor-1-to-floor-2 transition on 0.5.4.2. All wider DD/floor/language/version mappings remain unverified, and exact floor remains disconnected from strategy/execution.
+- Safe next step: wait for another explicitly requested live-verification or development instruction. Do not merge, operate FF14/Dalamud, or advance phases.
+- The one-time `ddcore-phase55d-live-verification-record-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes.
+
+## Current live-failure objective
+
+Investigate and minimally fix the user-reproduced Phase 5.5D failure where an EO floor transition stops diagnostics with `chat-floor.log-callback-failed:InvalidOperationException` before any event is recorded. Determine the failing stage in `DalamudChatFloorDiagnosticSource.OnLogMessage` and its callees against the public Dalamud API 15 contract, add privacy-safe fixed stage reason codes if needed, preserve fail-closed behavior, run all tests/build/audits, update Draft PR #13, and produce a new package. Do not infer live event IDs/parameters, store chat text/identity, connect exact floor to strategy, merge, operate FF14/Dalamud, or advance phases.
+
+- Start: `2026-11-11T01:49:23+09:00`.
+- Authoritative preflight: five-hour remaining 99%; weekly remaining 49%. Estimated requirement including contingency: 30%; projected five-hour balance `99% - 30% = 69%`.
+- One-time continuation automation: `ddcore-chat-floor-callback-fix-followup`, verified `ACTIVE`, scheduled for `2026-11-11 06:49:23 JST`.
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` at `e366549`; worktree clean.
+- User live evidence: EO floor 1 to 2, diagnostics enabled, zero events/zero bytes/no candidate, reason `chat-floor.log-callback-failed:InvalidOperationException`, stop reason `chat-floor.log-callback-failed`.
+- Exact unfinished step: inspect `OnLogMessage`, public API 15 `ILogMessage`, integer parameter extraction, DD context capture and recorder registration; identify reproducible exception paths before editing production code.
+- Root cause identified: the callback used `ImmutableArray.Builder.MoveToImmutable()` after collecting only typed integer parameters. The .NET contract throws `InvalidOperationException` whenever builder Count differs from Capacity; the live zero-entry failure matches this pre-record code path. Dalamud's current API 15 implementation returns `false` for non-integer `TryGetIntParameter` values and exposes the callback object only during the callback.
+- Minimal fix milestone: replaced the move with tested immutable copying through a pure bounded capture helper, added sparse/empty parameter regression tests, and split LogMessage callback failures into fixed status/id/parameter-count/parameter-read/context/record reason codes. Version is now `0.5.4.2`; exact-floor promotion and strategy remain unchanged.
+- Local verification milestone: targeted callback tests passed; locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 and Observation 141/141 tests passed (338 total); format and NuGet vulnerability audits passed.
+- Package milestone: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, final SHA-256 `A50CB1ACF59A3616840AB5B163FF7F5633CE9734530E019CBA117C788446F7E5`. Nothing was deployed or activated.
+- Final audit passed: no new BossMod runtime reference, private/native access or game-operation API; `DisabledExecutionGateway` remains active.
+- Implementation commit `20e6ae5` was pushed and Draft PR #13 was updated. Push run `42860101055` and pull-request run `42860115156` both passed.
+- User verification still required: manually install/reload package `0.5.4.2`, opt in to floor diagnostics before a DD floor transition, then stop/export and verify that recording no longer faults. Candidate IDs, parameter mapping and live delivery remain unverified.
+- Safe next step: wait for the user's 0.5.4.2 live retest. Do not merge, operate FF14/Dalamud, connect exact floor to strategy, or advance phases.
+- The one-time `ddcore-chat-floor-callback-fix-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes.
 
 ## Objective
+
+Current objective: harden the existing Phase 5.5D implementation on Draft PR #13 without advancing phases: review the public Dalamud API 15 `IChatGui.LogMessage`/`ChatMessage` contracts and failure modes, strengthen anonymous floor-diagnostic tests, rerun schema-5 replay regressions using original exports read-only, document filter gaps and a bounded opt-in fallback proposal, complete the live-verification checklist, run Release/all tests/audits/CI, and update the same Draft PR. Keep live event receipt explicitly unverified; do not merge, operate FF14/Dalamud, or start Phase 5.6.
+
+- Start: `2026-11-10T11:56:21+09:00`.
+- Authoritative preflight: five-hour remaining 100%; weekly remaining 66%. Estimate 45% including contingency; projected five-hour balance `100% - 45% = 55%`.
+- One-time continuation automation: `ddcore-phase55d-hardening-followup`, verified `ACTIVE`, scheduled for `2026-11-10 16:56:21 JST` (exactly five hours after start).
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` at `efa37f0930a7c0c03656cc6b2bcfce54d46841c7`; worktree was clean. Draft PR #13 is open/Draft against `phase5.5c/chat-floor-design`; both existing CI checks passed.
+- Baseline: package 0.5.4.0 and 319 tests were previously verified, but candidate IDs, integer parameter mapping, event order/duplication and all three DD live behavior remain unverified.
+- API/code hardening milestone: rechecked installed API 15.0.3.9 XML and matching public commit `3e47d4f`; added strict unsupported-kind/invalid-value rejection, bounded parameter count with index/value preservation, callback/recording exception containment, zero-event ambiguity UI, 16 net-new edge tests and an explicit no-promotion boundary.
+- Replay milestone: all six schema-5 originals in the fixed export folder decoded through production `ReplayCodec` without modification. Each has one session, EO kind, 1-10 band, usable player pose and no exact floor; actor quality aggregates were recorded in `docs/phase5.5d-chat-floor-diagnostics.md`. The user-supplied 1-4/9-10 labels remain separate from JSON facts.
+- Documentation milestone: added API dispatch evidence, duplicate/reorder semantics, empty-diagnostic risk, bounded metadata-only fallback proposal and complete live checklist. Live event receipt remains unverified.
+- Final local verification passed: locked restore; Release build 0 warnings/errors; Core 197/197 and Observation 138/138 tests (335 total); format; NuGet vulnerability; dependency/prohibited-operation and diff checks. Package 0.5.4.1 / API 15 is `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `8D0B19B7E700DCCDA91B500C7A7E3A2711C00071D4113EABDBA85A9CD0DEFC71`.
+- Hardening implementation commit `f3aaa46` was pushed and Draft PR #13 was updated. Push run `42747787368` and pull-request run `42747792173` both passed; the non-failing `actions/upload-artifact@v4` Node.js 20 deprecation annotation remains upstream workflow maintenance only.
+- No deployment, activation, FF14/Dalamud/UI operation, exact-floor promotion, PR merge or next-phase work was performed. Candidate IDs, parameter mapping, event order/duplicates and per-DD delivery remain live-unverified.
+- Safe next step: user reviews Draft PR #13 and performs the documented 0.5.4.1 live diagnostic after maintenance. If the result is zero events, treat it as ambiguous and request separate approval before implementing the bounded metadata-only discovery proposal.
+- The one-time `ddcore-phase55d-hardening-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes, so completed work cannot restart.
+
+Current objective: implement only Phase 5.5D on `phase5.5d/chat-floor-diagnostics`: an explicit opt-in, read-only public `IChatGui.LogMessage`/`ChatMessage` diagnostic probe for candidate rows 7248/7270/9218 and LogKind 57; record only bounded anonymous metadata, reconcile candidates with B1 kind/range without feeding exact floor into strategy, expose Japanese diagnostics/export, preserve schema 3/4/5 compatibility, B2 spatial gates and `DisabledExecutionGateway`, add tests/docs/package and a stacked Draft PR. Do not operate FF14/Dalamud, send/suppress chat, access private memory, merge any PR/main, or proceed beyond Phase 5.5D.
+
+- Start: `2026-11-09T02:50:29+09:00`.
+- Verified usage: five-hour remaining 99%, weekly remaining 84%. Estimate 25% including contingency; projected five-hour balance `99% - 25% = 74%`.
+- One-time continuation automation: `ddcore-phase55d-diagnostics-followup`, verified `ACTIVE`, scheduled for `2026-11-09 07:50:29 JST`.
+- Phase 5.5C gate passed: final head `bce0e72`; Draft PR #12 is open/Draft/mergeable; its three documents are pushed; tree was clean. CI did not run because the workflow branch/base filters excluded the documentation stack, so CI is recorded as not run rather than passed.
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` from Phase 5.5C head `bce0e72`.
+- Implementation milestone: added the opt-in API 15 `LogMessage` / `ChatMessage` adapter, pure candidate analyzer, independent bounded schema-1 anonymous recorder/export, Japanese UI, 18 new tests and Phase 5.5D documentation. Exact-floor candidates remain outside `WorldSnapshot` and strategy state.
+- Original replay recheck passed unchanged: schema 5 / producer 0.5.3.0, 105 snapshots, 1,535 actor observations (641 usable, 894 quarantined, 0 missing), SHA-256 `A21CDE46C934A7A94D747638B6A2F0262459E53E00E4B1DA89B651872D63B90F`.
+- Local verification passed: Release build 0 warnings/errors; Core 197/197 and Observation 122/122 tests (319 total, 18 new); format; NuGet vulnerability; dependency/prohibited-operation checks. Package 0.5.4.0 / API 15 is `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `C77DC90AE46C7A35AC12B88D67913DC6FEED9347FA2C89ACA264A26C35CBCB39`.
+- Implementation commit `84aac4c` was pushed. Draft PR #13 targets `phase5.5c/chat-floor-design`, is open/Draft/mergeable, and no branch or PR was merged.
+- GitHub Actions passed at the implementation head: push run `42507903657` and Draft PR run `42507933803`.
+- User verification still required: manually load package 0.5.4.0, opt in to **階層診断開始** before a DD floor transition, stop and export afterward, and compare the anonymous event candidate with the visibly confirmed floor. Candidate IDs, parameter mapping, order, duplicate delivery and all three DDs remain live-unverified.
+- No deployment, activation, FF14/Dalamud/UI operation or exact-floor strategy integration was performed. Safe next step is review of Draft PR #13 and user-run live diagnostics; do not start another phase without explicit approval.
 
 Current objective: research and design Phase 5.5C exact-floor observation from read-only public Dalamud API 15 chat events. Produce only `docs/phase5.5c-chat-floor-investigation.md`, `docs/phase5.5c-chat-floor-design.md`, and `docs/phase5.5c-live-verification-plan.md`, grounded in verified API/source evidence and the user-confirmed Japanese example `地下9階`. Do not implement DDCore functionality, subscribe to chat at runtime, access private structures, operate FF14/Dalamud, change B2 behavior, merge any PR/main, or proceed beyond the approval boundary.
 

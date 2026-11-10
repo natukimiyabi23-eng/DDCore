@@ -1,5 +1,29 @@
 # Progress
 
+## 2026-11-11 — Phase 5.5D EO floor 1-to-2 live verification
+
+- Inspected the original schema-2 diagnostic read-only: producer 0.5.4.2, three entries, no retained chat text or identity fields, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`.
+- Confirmed for this single EO floor-1-to-floor-2 transition: row 7248 with zero parameters, row 7270 with integer index 0/value 2 and consistent candidate 2, then ChatMessage kind 57 with consistent candidate 2.
+- Recorded the user's independent visible floor-2/chat confirmation and no-error result separately from the JSON facts.
+- Kept every other EO floor/band, Palace of the Dead, Heaven-on-High, row 9218, other languages, ordering generalization, reload/re-entry and future-version behavior explicitly unverified.
+- Documentation only: the original JSON was not modified or committed; no code, strategy integration, execution behavior, merge, or next-phase work changed.
+
+## 2026-11-11 — Phase 5.5D live callback failure correction
+
+- Recorded the user-reproduced EO floor-transition failure separately from unverified row/parameter semantics: zero events/bytes and `chat-floor.log-callback-failed:InvalidOperationException` on 0.5.4.1.
+- Identified the deterministic pre-record cause as `ImmutableArray.Builder.MoveToImmutable()` with unequal Count/Capacity, not a confirmed Dalamud event-ID or parameter change.
+- Replaced it with bounded immutable copying, added sparse/empty parameter regression coverage, and split callback failures into fixed privacy-safe stage reason codes.
+- Kept diagnostics initial-OFF and read-only; no chat text/identity, exact-floor strategy integration, native access, gameplay operation, merge, or next-phase work was added.
+- Release 0.5.4.2 builds with zero warnings/errors; Core 197/197 and Observation 141/141 tests pass (338 total), with format and vulnerability checks passing. Live retest remains required.
+
+## 2026-11-10 — Phase 5.5D offline hardening
+
+- Rechecked the installed/public Dalamud API 15 `LogMessage` and `ChatMessage` contracts and dispatch implementation at pinned commit `3e47d4f`; no event ID, parameter mapping, cross-surface order or DD coverage was promoted to verified.
+- Added fail-closed callback/recording exception handling, strict invalid-kind/value rejection, integer index/value preservation in independent diagnostic schema 2, and a zero-event ambiguity notice without broadening the allowlist or collecting chat text.
+- Expanded edge-case coverage for boundaries, ambiguity, duplicates, reversed order, different DD context, limits, stop/restart/dispose and privacy.
+- Read all six local schema-5 originals through the production codec without modification. They preserve EO 1-10 classification, one session per file, nullable exact floor, player pose and B2 actor quality; they do not prove exact-floor event reception.
+- Added a bounded, opt-in metadata-only fallback proposal and completed the live checklist. Live verification remains pending; Phase 5.6 and PR merges remain prohibited.
+
 ## 2026-11-08 — Phase 5.5C chat exact-floor investigation and design
 
 - Confirmed from the installed Dalamud API 15.0.3.9 contract that public `IChatGui` exposes both structured `LogMessage` and displayed `ChatMessage` callbacks.
@@ -202,3 +226,14 @@
 - Locked restore and Release build passed with 0 warnings/errors; 173 tests passed (Core 139, Observation 34).
 - Format verification and NuGet vulnerability audit passed; Core has no project references and the package contains both provenance manifests plus the BSD notice.
 - Pushed implementation commit `0d07b68`, opened Draft PR #5 against `phase3/diagnostics-and-recording`, and confirmed both push and PR GitHub Actions runs passed.
+
+## 2026-11-09 — Phase 5.5D chat floor diagnostics
+
+- Confirmed Phase 5.5C Draft PR #12 is complete as a design phase; its public-event candidates remain live-unverified.
+- Added an explicit-start, read-only `IChatGui.LogMessage` / `ChatMessage` probe for candidate rows 7248, 7270 and 9218 and system chat kind 57.
+- Stored only bounded row IDs, integer parameters, timestamps and B1 reconciliation results; chat text, sender and player identity are not retained.
+- Kept candidate floors out of `WorldSnapshot` and the Phase 5 strategy engine. Matching B1 evidence remains labelled consistent but unverified; conflicts stay explicit.
+- Added independent schema-1 diagnostic export with 256-entry, 256 KiB and 15-minute limits. Replay schema 5 and schema 3/4 read compatibility are unchanged.
+- Reverified the original schema-5 floor 3-4 replay as 105 snapshots and 1,535 actor observations (641 usable, 894 quarantined, 0 missing) without modifying it.
+- Added Japanese opt-in controls, privacy preview, local export and confirmed deletion. Live FFXIV/Dalamud behavior remains unverified and requires user operation.
+- Pushed implementation commit `84aac4c`, opened stacked Draft PR #13 against `phase5.5c/chat-floor-design`, and confirmed both push and pull-request GitHub Actions runs passed.
