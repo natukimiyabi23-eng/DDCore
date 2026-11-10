@@ -1,5 +1,16 @@
 # Progress
 
+## 2026-11-11 — Phase 5.6 environment-recognition research and design
+
+- Rechecked the installed Dalamud API 15.0.3.9 public contracts at product commit `17cd86dfacbc1016c6e5aac0d49833b774ce037c` for object, client, duty, framework, game-data and game-GUI observations.
+- Confirmed public generic player/object identity, kind, targetability, position and rotation, but found no public typed contract for the current DD room graph, room index, passage progress, collision/navmesh, structured floor map or hidden traps.
+- Rechecked BossMod fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`: its topology uses native `InstanceContentDeepDungeon.MapData`, room geometry uses static Lumina `planmap.lgb`, and hidden-trap support can use Palantir IPC. These sources are not treated as public DDCore observations.
+- Read all six schema-5 originals without modification: 869 snapshots, 10,225 Enemy observations, 8,214 usable coordinates, 2,011 quarantined coordinates and 869 anonymous player poses. They contain no EventObject/Treasure, room, passage, wall or exit fields.
+- Designed a source/quality/epoch-aware environment model, strict floor-transition invalidation, and a topology gate that refuses BFS unless a fresh complete reciprocal 25-room graph and endpoints are Confirmed.
+- Proposed a public-object diagnostics slice first, followed by separately approved semantic mapping, static-geometry feasibility, topology-source decision and read-only BFS integration stages.
+- Added the documentation branch to the existing CI push allowlist because the workflow did not report checks for the stacked Phase 5.6 PR; no job steps, permissions or implementation behavior changed.
+- Documentation only. No implementation code, replay original, private/native access, gameplay operation, execution gateway, existing PR or merge changed.
+
 ## 2026-11-11 — Phase 5.5D EO floor 1-to-2 live verification
 
 - Inspected the original schema-2 diagnostic read-only: producer 0.5.4.2, three entries, no retained chat text or identity fields, SHA-256 `12969A9D4BA6B4D57959F5742CAD52A4C641D8B52432A10778D698E89E748378`.

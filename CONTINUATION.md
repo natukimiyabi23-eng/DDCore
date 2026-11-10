@@ -1,7 +1,27 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-11 02:18 JST (0.5.4.2 EO floor 1-to-2 live verification recorded)
+Updated: 2026-11-11 03:42 JST (Phase 5.6 environment-recognition research and design complete)
+
+## Current Phase 5.6 objective
+
+Research and design a read-only Deep Dungeon environment-recognition foundation using only verified Dalamud API 15 public contracts, the fixed BossMod source commit, existing DDCore models/pathfinding, and original schema-5 replays read-only. Produce `docs/phase5.6-environment-research.md`, `docs/phase5.6-environment-model.md`, and `docs/phase5.6-implementation-plan.md`, update progress, open a stacked Draft PR, and stop. Do not change implementation code, modify/commit replay originals, access private memory, operate the game, merge, or start implementation.
+
+- Start: `2026-11-11T02:23:05+09:00`.
+- Authoritative preflight: five-hour remaining 61%; weekly remaining 43%. Estimated requirement including contingency: 48%; projected five-hour balance `61% - 48% = 13%`.
+- One-time continuation automation: `ddcore-phase56-environment-design-followup`, verified `ACTIVE`, scheduled for `2026-11-11 07:23:05 JST`.
+- Starting base: completed Phase 5.5D head `c1ef53c`; Draft PR #13 remains open/Draft with both CI checks passing and must not be changed.
+- Work branch: `phase5.6/environment-research`, created from `c1ef53c` with a clean worktree.
+- Public API milestone: inspected installed Dalamud API 15.0.3.9 at product commit `17cd86dfacbc1016c6e5aac0d49833b774ce037c`. Public generic object/player pose, identity, kind, targetability and position are available; no typed public DD room graph, room index, passage progress, collision/navmesh, structured floor map or hidden-trap contract was found.
+- BossMod milestone: fixed commit evidence confirms native `InstanceContentDeepDungeon.MapData`/progress/party-room/chests, static Lumina `planmap.lgb` room geometry and optional Palantir hidden-trap IPC. These are documented as non-public or separately sourced inputs, not DDCore public observations.
+- Replay milestone: read all six schema-5 originals without modification: 869 snapshots, 10,225 Enemy observations, 8,214 usable and 2,011 quarantined coordinates, 869 anonymous player poses, and no EventObject/Treasure/room/passage/wall/exit fields.
+- Documentation milestone: created the three required Phase 5.6 documents and updated README/progress. Local relative links resolve, all 16 external source links returned HTTP 200, `git diff --check` passed, and no replay is tracked.
+- Git milestone: documentation commit `e6fbe43` and CI-target commit `8ad8d59` were pushed on `phase5.6/environment-research`. The CI allowlist change adds only this documentation branch to push validation; job steps, permissions and runtime behavior did not change.
+- Draft PR #14 targets `phase5.5d/chat-floor-diagnostics`, remains open/Draft/mergeable, and PR #13/main were not modified or merged.
+- CI milestone: push run `42867187194` passed restore, Release build, all tests and package upload at head `8ad8d59`. The upstream `actions/upload-artifact@v4` Node.js 20 deprecation annotation is non-failing.
+- No local build/test rerun was required for the documentation-only content diff; GitHub CI performed the full build/test path. No plugin package was deployed or activated.
+- User verification still required: review the Confirmed/Candidate/Unavailable classifications and decide whether to approve Stage 5.6A, the initial-OFF read-only generic environment-object diagnostic. No live environment-object capture has been performed.
+- Safe next step: wait for user review. Do not merge, operate FF14/Dalamud, start Stage 5.6A, use native/private access, or connect topology/BFS to strategy without a new explicit instruction.
 
 ## Current live-verification record objective
 
