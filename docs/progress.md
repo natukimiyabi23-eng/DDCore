@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-11-10 — Phase 5.5D offline hardening
+
+- Rechecked the installed/public Dalamud API 15 `LogMessage` and `ChatMessage` contracts and dispatch implementation at pinned commit `3e47d4f`; no event ID, parameter mapping, cross-surface order or DD coverage was promoted to verified.
+- Added fail-closed callback/recording exception handling, strict invalid-kind/value rejection, integer index/value preservation in independent diagnostic schema 2, and a zero-event ambiguity notice without broadening the allowlist or collecting chat text.
+- Expanded edge-case coverage for boundaries, ambiguity, duplicates, reversed order, different DD context, limits, stop/restart/dispose and privacy.
+- Read all six local schema-5 originals through the production codec without modification. They preserve EO 1-10 classification, one session per file, nullable exact floor, player pose and B2 actor quality; they do not prove exact-floor event reception.
+- Added a bounded, opt-in metadata-only fallback proposal and completed the live checklist. Live verification remains pending; Phase 5.6 and PR merges remain prohibited.
+
 ## 2026-11-08 — Phase 5.5C chat exact-floor investigation and design
 
 - Confirmed from the installed Dalamud API 15.0.3.9 contract that public `IChatGui` exposes both structured `LogMessage` and displayed `ChatMessage` callbacks.

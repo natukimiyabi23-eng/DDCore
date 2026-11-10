@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.5.4.0</Version>
+    <Version>0.5.4.1</Version>
     <AssemblyName>DDCore</AssemblyName>
     <RootNamespace>DDCore.Plugin</RootNamespace>
     <Author>natukimiyabi23-eng</Author>

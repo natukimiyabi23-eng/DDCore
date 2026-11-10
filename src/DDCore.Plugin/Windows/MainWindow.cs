@@ -291,6 +291,10 @@ internal sealed class MainWindow : Window, IDisposable
         DrawValue("最新候補", status.Latest?.CandidateFloor is { } floor ? $"地下{floor}階（未検証候補）" : "なし");
         DrawValue("候補品質", status.Latest is { } latest ? ChatFloorQualityText(latest.Quality) : "未観測");
         DrawValue("診断理由", status.Latest?.ReasonCode ?? status.LatestError ?? "なし");
+        if (status.State == ChatFloorRecordingState.Recording && status.EntryCount == 0)
+        {
+            ImGui.TextWrapped("候補イベントはまだ未受信です。0件だけでは、通知なし・ID変更・受信不可を区別できません。");
+        }
 
         ImGui.Spacing();
         using (ImRaii.Disabled(status.State == ChatFloorRecordingState.Recording))

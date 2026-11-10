@@ -40,54 +40,70 @@ internal sealed class DalamudChatFloorDiagnosticSource : IDisposable
 
     private void OnLogMessage(ILogMessage message)
     {
-        if (recorder.Status.State != ChatFloorRecordingState.Recording
-            || !ChatFloorEventAnalyzer.IsCandidateLogMessage(message.LogMessageId))
+        try
         {
-            return;
-        }
-
-        var parameters = ImmutableArray.CreateBuilder<int>();
-        var count = Math.Min(message.ParameterCount, ChatFloorEventAnalyzer.MaximumIntegerParameters);
-        for (var index = 0; index < count; index++)
-        {
-            if (message.TryGetIntParameter(index, out var value))
+            if (recorder.Status.State != ChatFloorRecordingState.Recording
+                || !ChatFloorEventAnalyzer.IsCandidateLogMessage(message.LogMessageId))
             {
-                parameters.Add(value);
+                return;
             }
-        }
 
-        Record(new ChatFloorRawEvent(
-            DateTimeOffset.UtcNow,
-            Interlocked.Increment(ref sequence),
-            ChatFloorEventSurface.LogMessage,
-            message.LogMessageId,
-            null,
-            parameters.MoveToImmutable(),
-            null));
+            var parameters = ImmutableArray.CreateBuilder<ChatFloorIntegerParameter>();
+            var count = Math.Clamp(message.ParameterCount, 0, ChatFloorEventAnalyzer.MaximumIntegerParameters);
+            for (var index = 0; index < count; index++)
+            {
+                if (message.TryGetIntParameter(index, out var value))
+                {
+                    parameters.Add(new ChatFloorIntegerParameter(index, value));
+                }
+            }
+
+            Record(new ChatFloorRawEvent(
+                DateTimeOffset.UtcNow,
+                Interlocked.Increment(ref sequence),
+                ChatFloorEventSurface.LogMessage,
+                message.LogMessageId,
+                null,
+                Math.Max(message.ParameterCount, 0),
+                parameters.MoveToImmutable(),
+                null));
+        }
+        catch (Exception exception)
+        {
+            recorder.ReportSourceFailure("chat-floor.log-callback-failed", exception);
+        }
     }
 
     private void OnChatMessage(IHandleableChatMessage message)
     {
-        if (recorder.Status.State != ChatFloorRecordingState.Recording
-            || message.LogKind != XivChatType.SystemMessage)
+        try
         {
-            return;
-        }
+            if (recorder.Status.State != ChatFloorRecordingState.Recording
+                || message.LogKind != XivChatType.SystemMessage)
+            {
+                return;
+            }
 
-        var floor = ChatFloorEventAnalyzer.ParseJapaneseFloor(message.OriginalMessage.ExtractText());
-        if (floor is null)
+            var floor = ChatFloorEventAnalyzer.ParseJapaneseFloor(message.OriginalMessage.ExtractText());
+            if (floor is null)
+            {
+                return;
+            }
+
+            Record(new ChatFloorRawEvent(
+                DateTimeOffset.UtcNow,
+                Interlocked.Increment(ref sequence),
+                ChatFloorEventSurface.ChatMessage,
+                null,
+                (ushort)message.LogKind,
+                null,
+                ImmutableArray<ChatFloorIntegerParameter>.Empty,
+                floor));
+        }
+        catch (Exception exception)
         {
-            return;
+            recorder.ReportSourceFailure("chat-floor.chat-callback-failed", exception);
         }
-
-        Record(new ChatFloorRawEvent(
-            DateTimeOffset.UtcNow,
-            Interlocked.Increment(ref sequence),
-            ChatFloorEventSurface.ChatMessage,
-            null,
-            (ushort)message.LogKind,
-            ImmutableArray<int>.Empty,
-            floor));
     }
 
     private void Record(ChatFloorRawEvent observed)

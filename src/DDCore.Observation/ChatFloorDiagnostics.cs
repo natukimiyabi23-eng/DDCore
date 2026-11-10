@@ -29,13 +29,16 @@ public enum ChatFloorRecordingState
     Faulted,
 }
 
+public sealed record ChatFloorIntegerParameter(int Index, int Value);
+
 public sealed record ChatFloorRawEvent(
     DateTimeOffset ObservedAtUtc,
     long Sequence,
     ChatFloorEventSurface Surface,
     uint? LogMessageId,
     ushort? LogKind,
-    ImmutableArray<int> IntegerParameters,
+    int? ParameterCount,
+    ImmutableArray<ChatFloorIntegerParameter> IntegerParameters,
     int? ParsedJapaneseFloor);
 
 public sealed record ChatFloorContext(
@@ -49,7 +52,8 @@ public sealed record ChatFloorDiagnosticEntry(
     ChatFloorEventSurface Surface,
     uint? LogMessageId,
     ushort? LogKind,
-    ImmutableArray<int> IntegerParameters,
+    int? ParameterCount,
+    ImmutableArray<ChatFloorIntegerParameter> IntegerParameters,
     int? CandidateFloor,
     ChatFloorCandidateQuality Quality,
     string ReasonCode,
@@ -120,7 +124,12 @@ public static partial class ChatFloorEventAnalyzer
 
     public static ChatFloorDiagnosticEntry Analyze(ChatFloorRawEvent observed, ChatFloorContext context)
     {
-        var candidate = observed.ParsedJapaneseFloor;
+        var parameters = observed.IntegerParameters
+            .Where(parameter => parameter.Index is >= 0 and < MaximumIntegerParameters
+                && (observed.ParameterCount is null || parameter.Index < observed.ParameterCount))
+            .Take(MaximumIntegerParameters)
+            .ToImmutableArray();
+        int? candidate = null;
         var reason = "chat-floor.candidate-unresolved";
         if (observed.Surface == ChatFloorEventSurface.LogMessage)
         {
@@ -130,7 +139,11 @@ public static partial class ChatFloorEventAnalyzer
             }
             else if (observed.LogMessageId is DeepDungeonFloorLogMessageId or LayerLogMessageId)
             {
-                var plausible = observed.IntegerParameters.Where(static value => value is >= 1 and <= 200).Distinct().ToArray();
+                var plausible = parameters
+                    .Select(static parameter => parameter.Value)
+                    .Where(static value => value is >= 1 and <= 200)
+                    .Distinct()
+                    .ToArray();
                 if (plausible.Length == 1)
                 {
                     candidate = plausible[0];
@@ -143,6 +156,22 @@ public static partial class ChatFloorEventAnalyzer
                         : "chat-floor.log-parameter-ambiguous";
                 }
             }
+            else
+            {
+                reason = "chat-floor.log-id-unsupported";
+            }
+        }
+        else if (observed.LogKind != SystemMessageLogKind)
+        {
+            reason = "chat-floor.chat-kind-unsupported";
+        }
+        else if (observed.ParsedJapaneseFloor is < 1 or > 200)
+        {
+            reason = "chat-floor.chat-floor-invalid";
+        }
+        else
+        {
+            candidate = observed.ParsedJapaneseFloor;
         }
 
         var quality = candidate is null ? ChatFloorCandidateQuality.Missing : ChatFloorCandidateQuality.Unverified;
@@ -171,7 +200,8 @@ public static partial class ChatFloorEventAnalyzer
             observed.Surface,
             observed.LogMessageId,
             observed.LogKind,
-            observed.IntegerParameters.Take(MaximumIntegerParameters).ToImmutableArray(),
+            observed.ParameterCount,
+            parameters,
             candidate,
             quality,
             reason,
@@ -251,25 +281,49 @@ public sealed class ChatFloorDiagnosticRecorder : IDisposable
                 return false;
             }
 
-            var entry = ChatFloorEventAnalyzer.Analyze(observed, context);
-            entries.Add(entry);
-            if (entries.Count > limits.MaximumEntries)
+            try
             {
-                entries.RemoveAt(entries.Count - 1);
-                StopInternal(ChatFloorRecordingState.LimitReached, "chat-floor.entry-limit");
+                var entry = ChatFloorEventAnalyzer.Analyze(observed, context);
+                entries.Add(entry);
+                if (entries.Count > limits.MaximumEntries)
+                {
+                    entries.RemoveAt(entries.Count - 1);
+                    StopInternal(ChatFloorRecordingState.LimitReached, "chat-floor.entry-limit");
+                    return false;
+                }
+
+                var bytes = Serialize();
+                if (bytes.Length > limits.MaximumBytes)
+                {
+                    entries.RemoveAt(entries.Count - 1);
+                    StopInternal(ChatFloorRecordingState.LimitReached, "chat-floor.byte-limit");
+                    return false;
+                }
+
+                status = status with { EntryCount = entries.Count, StoredBytes = bytes.Length, LastObservedAtUtc = entry.ObservedAtUtc, Latest = entry };
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Fault("chat-floor.record-failed", exception);
                 return false;
             }
+        }
+    }
 
-            var bytes = Serialize();
-            if (bytes.Length > limits.MaximumBytes)
+    public void ReportSourceFailure(string reason, Exception exception)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        ArgumentNullException.ThrowIfNull(exception);
+
+        lock (gate)
+        {
+            if (disposed || status.State != ChatFloorRecordingState.Recording)
             {
-                entries.RemoveAt(entries.Count - 1);
-                StopInternal(ChatFloorRecordingState.LimitReached, "chat-floor.byte-limit");
-                return false;
+                return;
             }
 
-            status = status with { EntryCount = entries.Count, StoredBytes = bytes.Length, LastObservedAtUtc = entry.ObservedAtUtc, Latest = entry };
-            return true;
+            Fault(reason, exception);
         }
     }
 
@@ -364,7 +418,7 @@ public sealed class ChatFloorDiagnosticRecorder : IDisposable
     }
 
     private byte[] Serialize() => JsonSerializer.SerializeToUtf8Bytes(
-        new ChatFloorDiagnosticDocument(1, producerVersion, status.StartedAtUtc ?? utcNow(), entries.ToImmutableArray()),
+        new ChatFloorDiagnosticDocument(2, producerVersion, status.StartedAtUtc ?? utcNow(), entries.ToImmutableArray()),
         JsonOptions);
 
     private void Fault(string reason, Exception exception) => status = status with
