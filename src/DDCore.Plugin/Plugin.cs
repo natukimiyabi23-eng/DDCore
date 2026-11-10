@@ -41,6 +41,8 @@ public sealed class Plugin : IDalamudPlugin
     private ObservationRecordingService? observationRecorder;
     private ChatFloorDiagnosticRecorder? chatFloorRecorder;
     private DalamudChatFloorDiagnosticSource? chatFloorSource;
+    private EnvironmentObjectDiagnosticRecorder? environmentObjectRecorder;
+    private DalamudEnvironmentObjectDiagnosticSource? environmentObjectSource;
     private readonly ObservationDiagnosticLog observationDiagnosticLog = new();
     private BossModIntegrationDiagnostics bossModIntegration = BossModIntegrationDiagnostics.NotChecked;
     private bool resourcesReleased;
@@ -85,6 +87,18 @@ public sealed class Plugin : IDalamudPlugin
                 chatFloorRecorder,
                 () => ObservationDiagnostics);
             cleanupActions.Push(chatFloorSource.Dispose);
+            var environmentObjectDirectory = Path.Combine(recordingDirectory, "environment-object-diagnostics");
+            environmentObjectRecorder = new EnvironmentObjectDiagnosticRecorder(
+                environmentObjectDirectory,
+                typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "unknown");
+            cleanupActions.Push(environmentObjectRecorder.Dispose);
+            environmentObjectSource = new DalamudEnvironmentObjectDiagnosticSource(
+                Framework,
+                ClientState,
+                ObjectTable,
+                environmentObjectRecorder,
+                () => ObservationDiagnostics);
+            cleanupActions.Push(environmentObjectSource.Dispose);
 
             windowSystem = new WindowSystem("DDCore");
             mainWindow = new MainWindow(this);
@@ -123,7 +137,7 @@ public sealed class Plugin : IDalamudPlugin
                     ?? "設定の永続化に失敗しました。安全状態は現在のセッションで維持されます。";
             }
 
-            logger.Information("DDCore Phase 5.5DをObserverモードで起動しました。チャット階層診断は初期OFF・読み取り専用で、ゲーム操作機能は含まれていません。");
+            logger.Information("DDCore Stage 5.6AをObserverモードで起動しました。環境オブジェクト診断は初期OFF・読み取り専用で、ゲーム操作機能は含まれていません。");
         }
         catch (Exception exception)
         {
@@ -145,6 +159,8 @@ public sealed class Plugin : IDalamudPlugin
         ?? ObservationRecordingStatus.Off;
     public ChatFloorRecordingStatus ChatFloorStatus => chatFloorRecorder?.Status
         ?? ChatFloorRecordingStatus.Off;
+    public EnvironmentObjectRecordingStatus EnvironmentObjectStatus => environmentObjectRecorder?.Status
+        ?? EnvironmentObjectRecordingStatus.Off;
     public ObservationDiagnosticEntry? LatestObservationError => observationDiagnosticLog.LatestError;
     public BossModIntegrationDiagnostics BossModIntegration => bossModIntegration;
 
@@ -324,6 +340,58 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         LastStatusMessage = chatFloorRecorder?.Status.LatestError ?? "削除確認がないか、診断中のため削除できません。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void StartEnvironmentObjectDiagnostics()
+    {
+        if (environmentObjectRecorder?.Start() == true)
+        {
+            LastStatusMessage = "環境オブジェクト診断を開始しました。匿名化した公開API観測だけをローカル保存します。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = environmentObjectRecorder?.Status.LatestError ?? "環境オブジェクト診断を開始できませんでした。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void StopEnvironmentObjectDiagnostics()
+    {
+        if (environmentObjectRecorder?.Stop() == true)
+        {
+            LastStatusMessage = "環境オブジェクト診断を停止し、匿名化データをローカル保存しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = environmentObjectRecorder?.Status.LatestError ?? "停止できる環境オブジェクト診断がありません。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void ExportEnvironmentObjectDiagnostics(bool previewConfirmed)
+    {
+        if (environmentObjectRecorder?.Export(previewConfirmed) == true)
+        {
+            LastStatusMessage = "確認済みの環境オブジェクト診断をローカルへ出力しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = environmentObjectRecorder?.Status.LatestError ?? "内容確認後、停止済み診断をエクスポートしてください。";
+        logger.Warning(LastStatusMessage);
+    }
+
+    public void DeleteEnvironmentObjectDiagnostics(bool deletionConfirmed)
+    {
+        if (environmentObjectRecorder?.Delete(deletionConfirmed) == true)
+        {
+            LastStatusMessage = "環境オブジェクト診断データを削除しました。";
+            logger.Information(LastStatusMessage);
+            return;
+        }
+
+        LastStatusMessage = environmentObjectRecorder?.Status.LatestError ?? "削除確認がないか、診断中のため削除できません。";
         logger.Warning(LastStatusMessage);
     }
 
