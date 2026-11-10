@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-11 03:03 JST (Phase 5.6 environment-recognition research and design)
+Status: complete
+Updated: 2026-11-11 03:42 JST (Phase 5.6 environment-recognition research and design complete)
 
 ## Current Phase 5.6 objective
 
@@ -16,7 +16,12 @@ Research and design a read-only Deep Dungeon environment-recognition foundation 
 - BossMod milestone: fixed commit evidence confirms native `InstanceContentDeepDungeon.MapData`/progress/party-room/chests, static Lumina `planmap.lgb` room geometry and optional Palantir hidden-trap IPC. These are documented as non-public or separately sourced inputs, not DDCore public observations.
 - Replay milestone: read all six schema-5 originals without modification: 869 snapshots, 10,225 Enemy observations, 8,214 usable and 2,011 quarantined coordinates, 869 anonymous player poses, and no EventObject/Treasure/room/passage/wall/exit fields.
 - Documentation milestone: created the three required Phase 5.6 documents and updated README/progress. Local relative links resolve, all 16 external source links returned HTTP 200, `git diff --check` passed, and no replay is tracked.
-- Exact unfinished step: review/stage documentation, commit and push `phase5.6/environment-research`, open a Draft PR against `phase5.5d/chat-floor-diagnostics`, wait for CI, record final commit/PR/check state, then mark this objective complete and stop for user review.
+- Git milestone: documentation commit `e6fbe43` and CI-target commit `8ad8d59` were pushed on `phase5.6/environment-research`. The CI allowlist change adds only this documentation branch to push validation; job steps, permissions and runtime behavior did not change.
+- Draft PR #14 targets `phase5.5d/chat-floor-diagnostics`, remains open/Draft/mergeable, and PR #13/main were not modified or merged.
+- CI milestone: push run `42867187194` passed restore, Release build, all tests and package upload at head `8ad8d59`. The upstream `actions/upload-artifact@v4` Node.js 20 deprecation annotation is non-failing.
+- No local build/test rerun was required for the documentation-only content diff; GitHub CI performed the full build/test path. No plugin package was deployed or activated.
+- User verification still required: review the Confirmed/Candidate/Unavailable classifications and decide whether to approve Stage 5.6A, the initial-OFF read-only generic environment-object diagnostic. No live environment-object capture has been performed.
+- Safe next step: wait for user review. Do not merge, operate FF14/Dalamud, start Stage 5.6A, use native/private access, or connect topology/BFS to strategy without a new explicit instruction.
 
 ## Current live-verification record objective
 
