@@ -40,37 +40,45 @@ internal sealed class DalamudChatFloorDiagnosticSource : IDisposable
 
     private void OnLogMessage(ILogMessage message)
     {
+        var failureReason = "chat-floor.log-callback-status-failed";
         try
         {
-            if (recorder.Status.State != ChatFloorRecordingState.Recording
-                || !ChatFloorEventAnalyzer.IsCandidateLogMessage(message.LogMessageId))
+            if (recorder.Status.State != ChatFloorRecordingState.Recording)
             {
                 return;
             }
 
-            var parameters = ImmutableArray.CreateBuilder<ChatFloorIntegerParameter>();
-            var count = Math.Clamp(message.ParameterCount, 0, ChatFloorEventAnalyzer.MaximumIntegerParameters);
-            for (var index = 0; index < count; index++)
+            failureReason = "chat-floor.log-callback-id-failed";
+            var logMessageId = message.LogMessageId;
+            if (!ChatFloorEventAnalyzer.IsCandidateLogMessage(logMessageId))
             {
-                if (message.TryGetIntParameter(index, out var value))
-                {
-                    parameters.Add(new ChatFloorIntegerParameter(index, value));
-                }
+                return;
             }
 
-            Record(new ChatFloorRawEvent(
+            failureReason = "chat-floor.log-callback-parameter-count-failed";
+            var parameterCount = message.ParameterCount;
+            failureReason = "chat-floor.log-callback-parameter-read-failed";
+            var parameters = ChatFloorEventAnalyzer.CaptureIntegerParameters(
+                parameterCount,
+                index => message.TryGetIntParameter(index, out var value) ? value : null);
+            var observed = new ChatFloorRawEvent(
                 DateTimeOffset.UtcNow,
                 Interlocked.Increment(ref sequence),
                 ChatFloorEventSurface.LogMessage,
-                message.LogMessageId,
+                logMessageId,
                 null,
-                Math.Max(message.ParameterCount, 0),
-                parameters.MoveToImmutable(),
-                null));
+                Math.Max(parameterCount, 0),
+                parameters,
+                null);
+
+            failureReason = "chat-floor.log-callback-context-failed";
+            var context = GetContext();
+            failureReason = "chat-floor.log-callback-record-failed";
+            recorder.Record(observed, context);
         }
         catch (Exception exception)
         {
-            recorder.ReportSourceFailure("chat-floor.log-callback-failed", exception);
+            recorder.ReportSourceFailure(failureReason, exception);
         }
     }
 
@@ -108,10 +116,15 @@ internal sealed class DalamudChatFloorDiagnosticSource : IDisposable
 
     private void Record(ChatFloorRawEvent observed)
     {
+        recorder.Record(observed, GetContext());
+    }
+
+    private ChatFloorContext GetContext()
+    {
         var current = getContext();
-        recorder.Record(observed, new ChatFloorContext(
+        return new ChatFloorContext(
             current.DungeonKind is not DDCore.Core.World.DeepDungeonKind.None and not DDCore.Core.World.DeepDungeonKind.Unsupported,
             current.DungeonKind,
-            current.FloorRange));
+            current.FloorRange);
     }
 }

@@ -109,6 +109,25 @@ public static partial class ChatFloorEventAnalyzer
     public static bool IsCandidateLogMessage(uint id) =>
         id is TransferExecutedLogMessageId or DeepDungeonFloorLogMessageId or LayerLogMessageId;
 
+    public static ImmutableArray<ChatFloorIntegerParameter> CaptureIntegerParameters(
+        int parameterCount,
+        Func<int, int?> readParameter)
+    {
+        ArgumentNullException.ThrowIfNull(readParameter);
+
+        var count = Math.Clamp(parameterCount, 0, MaximumIntegerParameters);
+        var parameters = ImmutableArray.CreateBuilder<ChatFloorIntegerParameter>();
+        for (var index = 0; index < count; index++)
+        {
+            if (readParameter(index) is { } value)
+            {
+                parameters.Add(new ChatFloorIntegerParameter(index, value));
+            }
+        }
+
+        return parameters.ToImmutable();
+    }
+
     public static int? ParseJapaneseFloor(string text)
     {
         if (text is null)

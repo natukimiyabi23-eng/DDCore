@@ -1,7 +1,23 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-10 12:14 JST (Phase 5.5D offline hardening complete; awaiting live verification)
+Status: in_progress
+Updated: 2026-11-11 01:49 JST (0.5.4.1 live callback failure investigation)
+
+## Current live-failure objective
+
+Investigate and minimally fix the user-reproduced Phase 5.5D failure where an EO floor transition stops diagnostics with `chat-floor.log-callback-failed:InvalidOperationException` before any event is recorded. Determine the failing stage in `DalamudChatFloorDiagnosticSource.OnLogMessage` and its callees against the public Dalamud API 15 contract, add privacy-safe fixed stage reason codes if needed, preserve fail-closed behavior, run all tests/build/audits, update Draft PR #13, and produce a new package. Do not infer live event IDs/parameters, store chat text/identity, connect exact floor to strategy, merge, operate FF14/Dalamud, or advance phases.
+
+- Start: `2026-11-11T01:49:23+09:00`.
+- Authoritative preflight: five-hour remaining 99%; weekly remaining 49%. Estimated requirement including contingency: 30%; projected five-hour balance `99% - 30% = 69%`.
+- One-time continuation automation: `ddcore-chat-floor-callback-fix-followup`, verified `ACTIVE`, scheduled for `2026-11-11 06:49:23 JST`.
+- Starting branch/head: `phase5.5d/chat-floor-diagnostics` at `e366549`; worktree clean.
+- User live evidence: EO floor 1 to 2, diagnostics enabled, zero events/zero bytes/no candidate, reason `chat-floor.log-callback-failed:InvalidOperationException`, stop reason `chat-floor.log-callback-failed`.
+- Exact unfinished step: inspect `OnLogMessage`, public API 15 `ILogMessage`, integer parameter extraction, DD context capture and recorder registration; identify reproducible exception paths before editing production code.
+- Root cause identified: the callback used `ImmutableArray.Builder.MoveToImmutable()` after collecting only typed integer parameters. The .NET contract throws `InvalidOperationException` whenever builder Count differs from Capacity; the live zero-entry failure matches this pre-record code path. Dalamud's current API 15 implementation returns `false` for non-integer `TryGetIntParameter` values and exposes the callback object only during the callback.
+- Minimal fix milestone: replaced the move with tested immutable copying through a pure bounded capture helper, added sparse/empty parameter regression tests, and split LogMessage callback failures into fixed status/id/parameter-count/parameter-read/context/record reason codes. Version is now `0.5.4.2`; exact-floor promotion and strategy remain unchanged.
+- Local verification milestone: targeted callback tests passed; locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 and Observation 141/141 tests passed (338 total); format and NuGet vulnerability audits passed.
+- Package milestone: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `6449DDBCFA7749EF3872A7DB164D021724870D7298BB726C6D89A769DC143B79`. Nothing was deployed or activated.
+- Exact unfinished step: run the final dependency/prohibited-operation diff audit, commit/push, update Draft PR #13, wait for CI, record the final state and remove the one-time continuation automation.
 
 ## Objective
 

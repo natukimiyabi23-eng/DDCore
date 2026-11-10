@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-11-11 — Phase 5.5D live callback failure correction
+
+- Recorded the user-reproduced EO floor-transition failure separately from unverified row/parameter semantics: zero events/bytes and `chat-floor.log-callback-failed:InvalidOperationException` on 0.5.4.1.
+- Identified the deterministic pre-record cause as `ImmutableArray.Builder.MoveToImmutable()` with unequal Count/Capacity, not a confirmed Dalamud event-ID or parameter change.
+- Replaced it with bounded immutable copying, added sparse/empty parameter regression coverage, and split callback failures into fixed privacy-safe stage reason codes.
+- Kept diagnostics initial-OFF and read-only; no chat text/identity, exact-floor strategy integration, native access, gameplay operation, merge, or next-phase work was added.
+- Release 0.5.4.2 builds with zero warnings/errors; Core 197/197 and Observation 141/141 tests pass (338 total), with format and vulnerability checks passing. Live retest remains required.
+
 ## 2026-11-10 — Phase 5.5D offline hardening
 
 - Rechecked the installed/public Dalamud API 15 `LogMessage` and `ChatMessage` contracts and dispatch implementation at pinned commit `3e47d4f`; no event ID, parameter mapping, cross-surface order or DD coverage was promoted to verified.

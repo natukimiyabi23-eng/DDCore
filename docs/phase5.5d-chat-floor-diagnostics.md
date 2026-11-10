@@ -4,7 +4,24 @@
 
 Phase 5.5D adds an explicit opt-in, read-only diagnostic probe for candidate Deep Dungeon floor notifications. It does not establish the exact current floor and does not feed any candidate into `WorldSnapshot`, `DeepDungeonStrategyState`, or the strategy engine. `DisabledExecutionGateway` is unchanged.
 
-The offline-hardened plugin package is version `0.5.4.1`. Recording is OFF on startup. The user must start and stop it in the Japanese UI. No chat is sent, modified, suppressed, or retained in full.
+The callback-fix plugin package is version `0.5.4.2`. Recording is OFF on startup. The user must start and stop it in the Japanese UI. No chat is sent, modified, suppressed, or retained in full.
+
+### 0.5.4.1 live failure and 0.5.4.2 correction
+
+The user reproduced a failure in Eureka Orthos while moving from floor 1 to floor 2 with diagnostics enabled. The recorder remained at zero entries and zero bytes, then faulted with `chat-floor.log-callback-failed:InvalidOperationException`. This is user-supplied live evidence; it does not establish the row ID or parameter mapping.
+
+Source review identified a deterministic pre-record defect in `DalamudChatFloorDiagnosticSource.OnLogMessage`: typed integer parameters were accumulated into an `ImmutableArray<T>.Builder` and finalized with `MoveToImmutable()`. The .NET contract throws `InvalidOperationException` when builder `Count` differs from `Capacity`. A log message with fewer retained integer parameters than the builder capacity therefore faults before `recorder.Record`, which explains the observed zero-entry state without requiring any assumption about the floor-event mapping.
+
+Version `0.5.4.2` uses a bounded, testable capture helper and `ToImmutable()` instead. Sparse typed parameters and empty/negative counts have regression coverage. If another callback exception occurs, the recorder now reports one of these fixed, privacy-safe stages rather than the former undifferentiated reason:
+
+- `chat-floor.log-callback-status-failed`
+- `chat-floor.log-callback-id-failed`
+- `chat-floor.log-callback-parameter-count-failed`
+- `chat-floor.log-callback-parameter-read-failed`
+- `chat-floor.log-callback-context-failed`
+- `chat-floor.log-callback-record-failed`
+
+The exception message, chat body, sender, payload, and player identifiers remain excluded. Exact-floor candidates remain diagnostic-only and are not connected to replay, world state, strategy, or execution.
 
 ## Verified API contract
 
@@ -16,7 +33,7 @@ The adapter uses only installed Dalamud API 15 public contracts:
 - `OriginalMessage.ExtractText()` is inspected only inside the callback and discarded immediately. An exact Japanese match of `^地下([1-9][0-9]{0,2})階$` contributes only the parsed integer.
 - Both events are unsubscribed during plugin disposal.
 
-Sources are pinned in the Phase 5.5C investigation: installed Dalamud `15.0.3.9`, product commit `3e47d4fa819d794a3213d81ad7a341114b3ba363`, and game-data commit `44948e4cda5846eab0baa9872122a888fcc4f1b1`.
+The original Phase 5.5C sources are pinned to installed Dalamud `15.0.3.9`, product commit `3e47d4fa819d794a3213d81ad7a341114b3ba363`, and game-data commit `44948e4cda5846eab0baa9872122a888fcc4f1b1`. The 0.5.4.2 correction was rechecked against the currently installed API 15 product commit `17cd86dfacbc1016c6e5aac0d49833b774ce037c`: `ILogMessage.ParameterCount` reads the callback-scoped native count, and `TryGetIntParameter` returns `false` for a non-integer parameter. The public API does not promise any particular floor row or integer position.
 
 ### Offline contract review (2026-11-10)
 
@@ -91,7 +108,7 @@ The added tests cover exact range boundaries 1/10/11, missing/ambiguous/repeated
 
 ## Live verification procedure
 
-1. Install/reload `0.5.4.1` manually; Codex does not operate the game or plugin UI.
+1. Install/reload `0.5.4.2` manually; Codex does not operate the game or plugin UI.
 2. Enter a supported DD band and confirm B1 identifies the DD and ten-floor band.
 3. Open DDCore and press **階層診断開始** immediately before a floor transition.
 4. Transition one floor, then press **階層診断停止**.
@@ -123,9 +140,9 @@ Automated tests verify parsing, B1 reconciliation, ambiguity/conflict behavior, 
 ## Offline verification result
 
 - Locked restore and Release build: passed, 0 warnings and 0 errors.
-- Tests: Core 197/197 and Observation 138/138, 335 total; 16 net-new hardening cases over the 319-test baseline.
+- Tests: Core 197/197 and Observation 141/141, 338 total; three callback-capture regression cases over the 0.5.4.1 suite.
 - Format verification: passed.
 - Direct/transitive NuGet vulnerability audit: no known vulnerable package reported.
 - Dependency/prohibited-operation audit: no new package, BossMod runtime reference, private/native access, movement, combat, targeting, item, navigation or input operation; `DisabledExecutionGateway` remains wired.
-- Package: `0.5.4.1`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `8D0B19B7E700DCCDA91B500C7A7E3A2711C00071D4113EABDBA85A9CD0DEFC71`.
+- Package: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `6449DDBCFA7749EF3872A7DB164D021724870D7298BB726C6D89A769DC143B79`.
 - Live callback receipt and all candidate mappings remain unverified.

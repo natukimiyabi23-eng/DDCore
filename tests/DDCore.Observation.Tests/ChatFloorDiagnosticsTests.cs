@@ -161,6 +161,35 @@ public sealed class ChatFloorDiagnosticsTests : IDisposable
     }
 
     [Fact]
+    public void IntegerParameterCaptureSupportsSparseTypedParameters()
+    {
+        var values = new Dictionary<int, int>
+        {
+            [1] = 9,
+            [4] = 10,
+        };
+
+        var captured = ChatFloorEventAnalyzer.CaptureIntegerParameters(
+            6,
+            index => values.TryGetValue(index, out var value) ? value : null);
+
+        Assert.Collection(
+            captured,
+            parameter => Assert.Equal(new ChatFloorIntegerParameter(1, 9), parameter),
+            parameter => Assert.Equal(new ChatFloorIntegerParameter(4, 10), parameter));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    public void IntegerParameterCaptureHandlesEmptyCountsWithoutFailure(int parameterCount)
+    {
+        var captured = ChatFloorEventAnalyzer.CaptureIntegerParameters(parameterCount, _ => null);
+
+        Assert.Empty(captured);
+    }
+
+    [Fact]
     public void RecorderStartsOffAndRequiresExplicitStart()
     {
         using var recorder = CreateRecorder();
@@ -287,11 +316,11 @@ public sealed class ChatFloorDiagnosticsTests : IDisposable
         using var recorder = CreateRecorder();
         recorder.Start();
 
-        recorder.ReportSourceFailure("chat-floor.log-callback-failed", new InvalidOperationException("private chat text"));
+        recorder.ReportSourceFailure("chat-floor.log-callback-parameter-read-failed", new InvalidOperationException("private chat text"));
 
         Assert.Equal(ChatFloorRecordingState.Faulted, recorder.Status.State);
-        Assert.Equal("chat-floor.log-callback-failed", recorder.Status.StopReason);
-        Assert.Equal("chat-floor.log-callback-failed:InvalidOperationException", recorder.Status.LatestError);
+        Assert.Equal("chat-floor.log-callback-parameter-read-failed", recorder.Status.StopReason);
+        Assert.Equal("chat-floor.log-callback-parameter-read-failed:InvalidOperationException", recorder.Status.LatestError);
         Assert.DoesNotContain("private chat text", recorder.Status.LatestError, StringComparison.Ordinal);
     }
 
