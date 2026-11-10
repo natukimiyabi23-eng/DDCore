@@ -8,6 +8,7 @@
 - Read all six schema-5 originals without modification: 869 snapshots, 10,225 Enemy observations, 8,214 usable coordinates, 2,011 quarantined coordinates and 869 anonymous player poses. They contain no EventObject/Treasure, room, passage, wall or exit fields.
 - Designed a source/quality/epoch-aware environment model, strict floor-transition invalidation, and a topology gate that refuses BFS unless a fresh complete reciprocal 25-room graph and endpoints are Confirmed.
 - Proposed a public-object diagnostics slice first, followed by separately approved semantic mapping, static-geometry feasibility, topology-source decision and read-only BFS integration stages.
+- Added the documentation branch to the existing CI push allowlist because the workflow did not report checks for the stacked Phase 5.6 PR; no job steps, permissions or implementation behavior changed.
 - Documentation only. No implementation code, replay original, private/native access, gameplay operation, execution gateway, existing PR or merge changed.
 
 ## 2026-11-11 — Phase 5.5D EO floor 1-to-2 live verification

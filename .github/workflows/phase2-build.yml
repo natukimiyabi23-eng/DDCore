@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5.5b/implementation-plan, phase5.5b/b1-public-classification, phase5.5c/chat-floor-design]
   push:
-    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5/strategy-engine, phase5.5b/b1-public-classification, phase5.5b/b2-actor-spatial-schema5, phase5.5d/chat-floor-diagnostics]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5/strategy-engine, phase5.5b/b1-public-classification, phase5.5b/b2-actor-spatial-schema5, phase5.5d/chat-floor-diagnostics, phase5.6/environment-research]
 
 jobs:
   build-and-test:
