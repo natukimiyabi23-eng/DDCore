@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-11 01:49 JST (0.5.4.1 live callback failure investigation)
+Status: complete
+Updated: 2026-11-11 02:00 JST (0.5.4.2 live callback correction complete; awaiting user retest)
 
 ## Current live-failure objective
 
@@ -17,7 +17,11 @@ Investigate and minimally fix the user-reproduced Phase 5.5D failure where an EO
 - Minimal fix milestone: replaced the move with tested immutable copying through a pure bounded capture helper, added sparse/empty parameter regression tests, and split LogMessage callback failures into fixed status/id/parameter-count/parameter-read/context/record reason codes. Version is now `0.5.4.2`; exact-floor promotion and strategy remain unchanged.
 - Local verification milestone: targeted callback tests passed; locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 and Observation 141/141 tests passed (338 total); format and NuGet vulnerability audits passed.
 - Package milestone: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `6449DDBCFA7749EF3872A7DB164D021724870D7298BB726C6D89A769DC143B79`. Nothing was deployed or activated.
-- Exact unfinished step: run the final dependency/prohibited-operation diff audit, commit/push, update Draft PR #13, wait for CI, record the final state and remove the one-time continuation automation.
+- Final audit passed: no new BossMod runtime reference, private/native access or game-operation API; `DisabledExecutionGateway` remains active.
+- Implementation commit `20e6ae5` was pushed and Draft PR #13 was updated. Push run `42860101055` and pull-request run `42860115156` both passed.
+- User verification still required: manually install/reload package `0.5.4.2`, opt in to floor diagnostics before a DD floor transition, then stop/export and verify that recording no longer faults. Candidate IDs, parameter mapping and live delivery remain unverified.
+- Safe next step: wait for the user's 0.5.4.2 live retest. Do not merge, operate FF14/Dalamud, connect exact floor to strategy, or advance phases.
+- The one-time `ddcore-chat-floor-callback-fix-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes.
 
 ## Objective
 
