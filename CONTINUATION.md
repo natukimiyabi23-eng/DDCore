@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-10 11:56 JST (Phase 5.5D offline hardening in progress)
+Status: complete
+Updated: 2026-11-10 12:14 JST (Phase 5.5D offline hardening complete; awaiting live verification)
 
 ## Objective
 
@@ -16,7 +16,10 @@ Current objective: harden the existing Phase 5.5D implementation on Draft PR #13
 - Replay milestone: all six schema-5 originals in the fixed export folder decoded through production `ReplayCodec` without modification. Each has one session, EO kind, 1-10 band, usable player pose and no exact floor; actor quality aggregates were recorded in `docs/phase5.5d-chat-floor-diagnostics.md`. The user-supplied 1-4/9-10 labels remain separate from JSON facts.
 - Documentation milestone: added API dispatch evidence, duplicate/reorder semantics, empty-diagnostic risk, bounded metadata-only fallback proposal and complete live checklist. Live event receipt remains unverified.
 - Final local verification passed: locked restore; Release build 0 warnings/errors; Core 197/197 and Observation 138/138 tests (335 total); format; NuGet vulnerability; dependency/prohibited-operation and diff checks. Package 0.5.4.1 / API 15 is `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `8D0B19B7E700DCCDA91B500C7A7E3A2711C00071D4113EABDBA85A9CD0DEFC71`.
-- Exact unfinished step: review/stage the final diff, commit/push, update Draft PR #13, wait for CI, record completion, delete the one-time follow-up automation, and stop for live verification.
+- Hardening implementation commit `f3aaa46` was pushed and Draft PR #13 was updated. Push run `42747787368` and pull-request run `42747792173` both passed; the non-failing `actions/upload-artifact@v4` Node.js 20 deprecation annotation remains upstream workflow maintenance only.
+- No deployment, activation, FF14/Dalamud/UI operation, exact-floor promotion, PR merge or next-phase work was performed. Candidate IDs, parameter mapping, event order/duplicates and per-DD delivery remain live-unverified.
+- Safe next step: user reviews Draft PR #13 and performs the documented 0.5.4.1 live diagnostic after maintenance. If the result is zero events, treat it as ambiguous and request separate approval before implementing the bounded metadata-only discovery proposal.
+- The one-time `ddcore-phase55d-hardening-followup` automation is to be deleted after this completion record reaches GitHub and final CI passes, so completed work cannot restart.
 
 Current objective: implement only Phase 5.5D on `phase5.5d/chat-floor-diagnostics`: an explicit opt-in, read-only public `IChatGui.LogMessage`/`ChatMessage` diagnostic probe for candidate rows 7248/7270/9218 and LogKind 57; record only bounded anonymous metadata, reconcile candidates with B1 kind/range without feeding exact floor into strategy, expose Japanese diagnostics/export, preserve schema 3/4/5 compatibility, B2 spatial gates and `DisabledExecutionGateway`, add tests/docs/package and a stacked Draft PR. Do not operate FF14/Dalamud, send/suppress chat, access private memory, merge any PR/main, or proceed beyond Phase 5.5D.
 
