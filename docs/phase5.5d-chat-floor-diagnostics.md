@@ -144,5 +144,5 @@ Automated tests verify parsing, B1 reconciliation, ambiguity/conflict behavior, 
 - Format verification: passed.
 - Direct/transitive NuGet vulnerability audit: no known vulnerable package reported.
 - Dependency/prohibited-operation audit: no new package, BossMod runtime reference, private/native access, movement, combat, targeting, item, navigation or input operation; `DisabledExecutionGateway` remains wired.
-- Package: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `6449DDBCFA7749EF3872A7DB164D021724870D7298BB726C6D89A769DC143B79`.
+- Package: `0.5.4.2`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, final SHA-256 `A50CB1ACF59A3616840AB5B163FF7F5633CE9734530E019CBA117C788446F7E5`.
 - Live callback receipt and all candidate mappings remain unverified.
