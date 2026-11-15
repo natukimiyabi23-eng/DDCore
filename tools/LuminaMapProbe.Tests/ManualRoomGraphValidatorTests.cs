@@ -229,6 +229,26 @@ public sealed class ManualRoomGraphValidatorTests
     }
 
     [Fact]
+    public void ScreenshotEvidenceSnapshotRequiresCompatibleFloorAndTrustedDirectPose()
+    {
+        var labels = Labels();
+        labels.Passages[0] = labels.Passages[0] with { EvidenceSnapshotIndex = 1 };
+        using var wrongFloor = ReplayWithEvidenceSnapshot("""
+            {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":11,"end":20}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"direct"}}}
+            """);
+        using var untrustedPose = ReplayWithEvidenceSnapshot("""
+            {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"unknown","quality":"direct"}}}
+            """);
+        using var missingPose = ReplayWithEvidenceSnapshot("""
+            {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":false,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"direct"}}}
+            """);
+
+        Assert.Throws<InvalidDataException>(() => Evaluate(labels, wrongFloor.RootElement));
+        Assert.Throws<InvalidDataException>(() => Evaluate(labels, untrustedPose.RootElement));
+        Assert.Throws<InvalidDataException>(() => Evaluate(labels, missingPose.RootElement));
+    }
+
+    [Fact]
     public void ContextScreenshotHashMustMatchAFileInTheEvidenceCatalog()
     {
         using var replay = Replay();
@@ -285,4 +305,9 @@ public sealed class ManualRoomGraphValidatorTests
     private static JsonDocument Replay() => JsonDocument.Parse("""
         {"schemaVersion":5,"snapshots":[{"dungeon":{"kind":"eurekaOrthos","floor":null,"floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"direct"}}}]}
         """);
+
+    private static JsonDocument ReplayWithEvidenceSnapshot(string evidenceSnapshot) => JsonDocument.Parse(
+        "{\"schemaVersion\":5,\"snapshots\":[{\"dungeon\":{\"kind\":\"eurekaOrthos\",\"floor\":null,\"floorRange\":{\"start\":1,\"end\":10}},\"playerPose\":{\"position\":{\"isFinite\":true,\"x\":1,\"y\":1},\"metadata\":{\"source\":\"publicDalamud\",\"quality\":\"direct\"}}},"
+        + evidenceSnapshot
+        + "]}");
 }
