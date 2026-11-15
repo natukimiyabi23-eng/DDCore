@@ -5,6 +5,7 @@
 - Re-read BossMod at fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`. Its `Walls.json` contains EO keys `3.1`-`3.10`; each has 25 Room A and 25 Room B slots, with 28 nonzero directional depth entries per variant.
 - `Rooms.cs` selects the template using dungeon/floor-set and the current tileset, then suppresses a candidate wall when a dynamic `RoomFlags.Connection*` says the passage is open. The same flags define adjacency; `AutoClear.cs` emits remaining walls as temporary obstacle hints.
 - This confirms static template data exists in the reference implementation, not that DDCore's permitted live sources expose the active template, connection state, collision topology, or walkability. M0 remains UNKNOWN; no code/data was copied, no runtime dependency or BFS link was added, and no gameplay operation occurred.
+- Documentation-only commit `135822b8ca0457798022fb28aca0f108f0dc0c66` passed PR #22 CI run `43744587438`; `git diff --check` passed and the worktree was clean after push.
 - Details and fixed-source line references: `docs/phase5.6c-lumina-extraction-verification.md`.
 
 ## 2026-11-16 — Lumina public index-surface verification
