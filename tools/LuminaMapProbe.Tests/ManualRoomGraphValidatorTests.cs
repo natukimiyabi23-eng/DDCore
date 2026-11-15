@@ -144,6 +144,53 @@ public sealed class ManualRoomGraphValidatorTests
         Assert.Throws<InvalidDataException>(() => Evaluate(badHash, replay.RootElement));
     }
 
+    [Fact]
+    public void UnknownTemplateContainsNoRouteReadyRoomOrPassageLabels()
+    {
+        using var replay = Replay();
+        var template = ManualRoomGraphValidator.CreateUnknownTemplate(ReplayHash, PlanmapHash, replay.RootElement, snapshotIndex: 0);
+
+        Assert.Null(template.ExactFloor);
+        Assert.Null(template.Variant);
+        Assert.Null(template.CurrentRoom);
+        Assert.Null(template.EvidenceSha256);
+        Assert.Equal(25, template.Rooms.Count);
+        Assert.Equal(40, template.Passages.Count);
+        Assert.All(template.Rooms, static row => Assert.Equal("unknown", row.State));
+        Assert.All(template.Passages, static row => Assert.Equal("unknown", row.State));
+
+        var result = Evaluate(template, replay.RootElement);
+        Assert.Equal("incomplete", result.Status);
+        Assert.Empty(result.Route);
+    }
+
+    [Fact]
+    public void FullyLabeledGraphStillRequiresKnownFloorVariantStartAndEvidence()
+    {
+        using var replay = Replay();
+        var labels = Labels() with { ExactFloor = null, Variant = null, CurrentRoom = null, EvidenceSha256 = null };
+
+        var result = Evaluate(labels, replay.RootElement);
+
+        Assert.Equal("incomplete", result.Status);
+        Assert.Equal("graph.context-unknown", result.ReasonCode);
+        Assert.Empty(result.Route);
+    }
+
+    [Fact]
+    public void UnknownTemplateRequiresEOContextAndDirectPose()
+    {
+        using var wrongDungeon = JsonDocument.Parse("""
+            {"schemaVersion":5,"snapshots":[{"dungeon":{"kind":"unsupported","floorRange":null},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"direct"}}}]}
+            """);
+        using var untrustedPose = JsonDocument.Parse("""
+            {"schemaVersion":5,"snapshots":[{"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"unknown","quality":"direct"}}}]}
+            """);
+
+        Assert.Throws<InvalidDataException>(() => ManualRoomGraphValidator.CreateUnknownTemplate(ReplayHash, PlanmapHash, wrongDungeon.RootElement, 0));
+        Assert.Throws<InvalidDataException>(() => ManualRoomGraphValidator.CreateUnknownTemplate(ReplayHash, PlanmapHash, untrustedPose.RootElement, 0));
+    }
+
     private static ManualRoomGraphValidation Evaluate(ManualRoomGraphLabelSet labels, JsonElement replay) =>
         ManualRoomGraphValidator.Evaluate(
             labels, ReplayHash, PlanmapHash, replay,

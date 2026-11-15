@@ -6,11 +6,11 @@ public sealed record ManualRoomGraphLabelSet(
     int SchemaVersion,
     string ReplaySha256,
     string PlanmapSha256,
-    string EvidenceSha256,
+    string? EvidenceSha256,
     int SnapshotIndex,
-    int ExactFloor,
-    string Variant,
-    int CurrentRoom,
+    int? ExactFloor,
+    string? Variant,
+    int? CurrentRoom,
     List<ManualRoomPresenceLabel> Rooms,
     List<ManualPassageLabel> Passages);
 
@@ -49,12 +49,11 @@ public static class ManualRoomGraphValidator
         ArgumentNullException.ThrowIfNull(candidateBoxes);
         ValidateHash(labels.ReplaySha256, nameof(labels.ReplaySha256));
         ValidateHash(labels.PlanmapSha256, nameof(labels.PlanmapSha256));
-        ValidateHash(labels.EvidenceSha256, nameof(labels.EvidenceSha256));
         if (!string.Equals(labels.ReplaySha256, actualReplaySha256, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(labels.PlanmapSha256, actualPlanmapSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Graph labels do not match the exact replay and planmap inputs.");
-        if (labels.SchemaVersion != 1 || labels.ExactFloor is < 1 or > 100 || labels.Variant is not ("A" or "B"))
-            throw new InvalidDataException("Graph labels have an unsupported schema, floor, or variant.");
+        if (labels.SchemaVersion != 1)
+            throw new InvalidDataException("Graph labels have an unsupported schema.");
         if (candidateBoxes.Any(static box => box.Index is < 0 or >= RoomPathfinder.RoomCount
             || box.Layer is not ("LVD_Room_A" or "LVD_Room_B")
             || !double.IsFinite(box.MinX) || !double.IsFinite(box.MaxX)
@@ -64,15 +63,18 @@ public static class ManualRoomGraphValidator
         ValidateReplaySnapshot(replay, labels);
         ValidateRoomLabels(labels.Rooms);
         ValidatePassages(labels.Passages, labels.Rooms);
-        if (labels.CurrentRoom is < 0 or >= RoomPathfinder.RoomCount || destinationRoom is < 0 or >= RoomPathfinder.RoomCount)
-            throw new InvalidDataException("Start and destination rooms must be in the 5x5 grid.");
-
         var roomStates = labels.Rooms.ToDictionary(static room => room.Room, static room => room.State);
         if (labels.Rooms.Any(static room => room.State == "unknown")
             || labels.Passages.Any(static passage => passage.State == "unknown"))
             return Result("incomplete", "graph.contains-unknown", labels, [], false);
 
-        if (roomStates[labels.CurrentRoom] != "present" || roomStates[destinationRoom] != "present")
+        if (labels.ExactFloor is null || labels.Variant is null or not ("A" or "B") || labels.CurrentRoom is null || labels.EvidenceSha256 is null)
+            return Result("incomplete", "graph.context-unknown", labels, [], false);
+        if (labels.ExactFloor is < 1 or > 100 || labels.CurrentRoom is < 0 or >= RoomPathfinder.RoomCount || destinationRoom is < 0 or >= RoomPathfinder.RoomCount)
+            throw new InvalidDataException("The exact floor or route endpoint is outside the supported range.");
+        ValidateHash(labels.EvidenceSha256, nameof(labels.EvidenceSha256));
+
+        if (roomStates[labels.CurrentRoom.Value] != "present" || roomStates[destinationRoom] != "present")
             return Result("unavailable", "route.endpoint-not-present", labels, [], true);
 
         if (!IsCurrentRoomCandidateSupported(labels, candidateBoxes, replay, out var currentRoomReason))
@@ -88,7 +90,7 @@ public static class ManualRoomGraphValidator
             map[passage.RoomB] |= flagB;
         }
 
-        var path = RoomPathfinder.FindPath(map, labels.CurrentRoom, destinationRoom);
+        var path = RoomPathfinder.FindPath(map, labels.CurrentRoom.Value, destinationRoom);
         if (labels.CurrentRoom == destinationRoom)
             return Result("same-room", "route.start-equals-destination", labels, [], true);
         if (path.Count == 0)
@@ -109,7 +111,10 @@ public static class ManualRoomGraphValidator
             throw new InvalidDataException("The replay schema or labeled snapshot index is invalid.");
 
         var snapshot = snapshots[labels.SnapshotIndex];
-        if (!ReplayRoomLabelEvaluator.HasCompatibleContext(snapshot, labels.ExactFloor)
+        var contextCompatible = labels.ExactFloor is { } floor
+            ? ReplayRoomLabelEvaluator.HasCompatibleContext(snapshot, floor)
+            : ReplayRoomLabelEvaluator.TryReadFloorRange(snapshot, out _);
+        if (!contextCompatible
             || !ReplayRoomLabelEvaluator.TryReadPose(snapshot, out _, out _)
             || !ReplayRoomLabelEvaluator.HasTrustedPoseMetadata(snapshot))
             throw new InvalidDataException("The labeled replay snapshot lacks compatible EO floor context or a direct public pose.");
@@ -183,7 +188,7 @@ public static class ManualRoomGraphValidator
             return false;
         }
 
-        return hits[0] == (layer, labels.CurrentRoom);
+        return hits[0] == (layer, labels.CurrentRoom!.Value);
     }
 
     private static (RoomConnectionFlags A, RoomConnectionFlags B) DirectionFlags(int a, int b)
@@ -205,6 +210,41 @@ public static class ManualRoomGraphValidator
     {
         if (value is null || value.Length != 64 || value.Any(static character => !Uri.IsHexDigit(character)))
             throw new InvalidDataException($"{name} must be a 64-character SHA-256 hex value.");
+    }
+
+    public static ManualRoomGraphLabelSet CreateUnknownTemplate(string replaySha256, string planmapSha256, JsonElement replay, int snapshotIndex)
+    {
+        ValidateHash(replaySha256, nameof(replaySha256));
+        ValidateHash(planmapSha256, nameof(planmapSha256));
+        if (replay.ValueKind != JsonValueKind.Object
+            || !replay.TryGetProperty("schemaVersion", out var schema)
+            || !schema.TryGetInt32(out var schemaVersion)
+            || schemaVersion != 5
+            || !replay.TryGetProperty("snapshots", out var snapshots)
+            || snapshots.ValueKind != JsonValueKind.Array
+            || snapshotIndex < 0
+            || snapshotIndex >= snapshots.GetArrayLength())
+            throw new InvalidDataException("A schema-5 replay and valid snapshot index are required.");
+
+        var snapshot = snapshots[snapshotIndex];
+        if (!ReplayRoomLabelEvaluator.TryReadFloorRange(snapshot, out _)
+            || !ReplayRoomLabelEvaluator.TryReadPose(snapshot, out _, out _)
+            || !ReplayRoomLabelEvaluator.HasTrustedPoseMetadata(snapshot))
+            throw new InvalidDataException("The selected snapshot must have an EO floor band and a direct public pose.");
+
+        var rooms = Enumerable.Range(0, RoomPathfinder.RoomCount)
+            .Select(static room => new ManualRoomPresenceLabel(room, "unknown", "notObserved"))
+            .ToList();
+        var passages = new List<ManualPassageLabel>(40);
+        for (var room = 0; room < RoomPathfinder.RoomCount; room++)
+        {
+            if (room % RoomPathfinder.GridWidth < RoomPathfinder.GridWidth - 1)
+                passages.Add(new(room, room + 1, "unknown", "notObserved"));
+            if (room / RoomPathfinder.GridWidth < RoomPathfinder.GridWidth - 1)
+                passages.Add(new(room, room + RoomPathfinder.GridWidth, "unknown", "notObserved"));
+        }
+
+        return new(1, replaySha256, planmapSha256, null, snapshotIndex, null, null, null, rooms, passages);
     }
 
     private static ManualRoomGraphValidation Result(

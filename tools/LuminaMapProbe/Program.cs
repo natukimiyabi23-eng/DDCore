@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--validate-manual-room-graph <graph.json> <replay.json> <destination-room>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--create-manual-room-graph-template <replay.json> <snapshot-index> <new-output.json>|--validate-manual-room-graph <graph.json> <replay.json> <destination-room>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -19,9 +19,10 @@ var deepDungeonRoomLevelsOnly = args.Length > 2 && args[2] == "--deep-dungeon-ro
 var deepDungeonWallCrosswalk = args.Length > 2 && args[2] == "--deep-dungeon-wall-crosswalk";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
+var createManualRoomGraphTemplate = args.Length > 2 && args[2] == "--create-manual-room-graph-template";
 var validateManualRoomGraph = args.Length > 2 && args[2] == "--validate-manual-room-graph";
 var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !deepDungeonWallCrosswalk && !replayRoomCandidates && !validateRoomLabels && !validateManualRoomGraph && !replayRoomBoxTrace ? args[2] : null;
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !deepDungeonWallCrosswalk && !replayRoomCandidates && !validateRoomLabels && !createManualRoomGraphTemplate && !validateManualRoomGraph && !replayRoomBoxTrace ? args[2] : null;
 if (deepDungeonWallCrosswalk && args.Length < 4)
 {
     Console.Error.WriteLine("--deep-dungeon-wall-crosswalk requires a pinned BossMod Walls.json path.");
@@ -35,6 +36,11 @@ if (replayRoomCandidates && args.Length < 4)
 if (validateRoomLabels && args.Length < 5)
 {
     Console.Error.WriteLine("--validate-room-labels requires a replay JSON and a user-authored labels JSON.");
+    return 2;
+}
+if (createManualRoomGraphTemplate && args.Length < 6)
+{
+    Console.Error.WriteLine("--create-manual-room-graph-template requires a schema-5 replay, snapshot index, and new output path.");
     return 2;
 }
 if (validateManualRoomGraph && args.Length < 6)
@@ -453,7 +459,7 @@ foreach (var assetPath in sharedGroupAssetPaths)
     });
 }
 
-if (replayRoomCandidates || validateRoomLabels || validateManualRoomGraph || replayRoomBoxTrace)
+if (replayRoomCandidates || validateRoomLabels || createManualRoomGraphTemplate || validateManualRoomGraph || replayRoomBoxTrace)
 {
     var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
     object report;
@@ -465,6 +471,30 @@ if (replayRoomCandidates || validateRoomLabels || validateManualRoomGraph || rep
             var replayReport = ReadReplayRoomCandidateCollection(args[3], roomCandidates, gridReport.FloorSets);
             report = replayReport.Report;
             resultCount = replayReport.SelectedReplayCount;
+        }
+        else if (createManualRoomGraphTemplate)
+        {
+            var replayBytes = File.ReadAllBytes(args[3]);
+            using var replayDocument = JsonDocument.Parse(replayBytes);
+            if (!int.TryParse(args[4], out var snapshotIndex))
+                throw new InvalidDataException("The snapshot index must be an integer.");
+            var template = ManualRoomGraphValidator.CreateUnknownTemplate(
+                Convert.ToHexString(SHA256.HashData(replayBytes)),
+                planmapSha256,
+                replayDocument.RootElement,
+                snapshotIndex);
+            var templateBytes = JsonSerializer.SerializeToUtf8Bytes(template, new JsonSerializerOptions(ManualRoomGraphValidator.JsonOptions) { WriteIndented = true });
+            using (var output = new FileStream(Path.GetFullPath(args[5]), FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                output.Write(templateBytes);
+            report = new
+            {
+                created = true,
+                schemaVersion = template.SchemaVersion,
+                roomLabelCount = template.Rooms.Count,
+                passageLabelCount = template.Passages.Count,
+                initialState = "unknown; no route can be generated until labels are completed",
+            };
+            resultCount = 1;
         }
         else if (validateManualRoomGraph)
         {
