@@ -129,14 +129,15 @@ var getLgb = getFile.MakeGenericMethod(lgbType);
 var sgbType = luminaAssembly.GetType("Lumina.Data.Files.SgbFile", throwOnError: false);
 var getSgb = sgbType is null ? null : getFile.MakeGenericMethod(sgbType);
 
-var territoryPath = ReadTerritoryBackground(gameData, gameDataType);
+var territory = ReadTerritory(gameData, gameDataType);
+var territoryPath = territory.Background;
 var derivedPath = $"bg/{territoryPath[..territoryPath.LastIndexOf('/')]}/planmap.lgb";
 virtualPath ??= derivedPath;
 
 var present = (bool)fileExists.Invoke(gameData, [virtualPath])!;
 if (!present)
 {
-    Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, territoryId = 1099, territoryBackground = territoryPath, derivedCandidate = derivedPath, requestedVirtualPath = virtualPath, exists = false }));
+    Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, territoryId = 1099, territoryBackground = territoryPath, territoryMapRowId = territory.MapRowId, derivedCandidate = derivedPath, requestedVirtualPath = virtualPath, exists = false }));
     return 1;
 }
 
@@ -371,6 +372,7 @@ var result = new
     luminaAssemblyVersion = version,
     territoryId = 1099,
     territoryBackground = territoryPath,
+    territoryMapRowId = territory.MapRowId,
     derivedCandidate = derivedPath,
     requestedVirtualPath = virtualPath,
     exists = present,
@@ -473,7 +475,7 @@ static float[] ReadVector(object? value) =>
     Convert.ToSingle(GetMember(value, "Z")),
 ];
 
-static string ReadTerritoryBackground(object gameData, Type gameDataType)
+static (string Background, uint MapRowId) ReadTerritory(object gameData, Type gameDataType)
 {
     var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
     var territoryType = excelAssembly.GetType("Lumina.Excel.Sheets.TerritoryType", throwOnError: true)!;
@@ -483,7 +485,10 @@ static string ReadTerritoryBackground(object gameData, Type gameDataType)
     foreach (var row in sheet)
     {
         if (Convert.ToUInt32(GetMember(row, "RowId")) == 1099)
-            return GetMember(row, "Bg")!.ToString()!;
+        {
+            var map = GetMember(row, "Map");
+            return (GetMember(row, "Bg")!.ToString()!, Convert.ToUInt32(GetMember(map, "RowId")));
+        }
     }
 
     throw new InvalidDataException("TerritoryType row 1099 was not found in the installed game data.");

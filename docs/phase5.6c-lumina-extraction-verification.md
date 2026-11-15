@@ -64,6 +64,12 @@ Lumina parsed 13,098 bytes of file data across 19 layers. SHA-256 of the parsed 
 
 The installed `DeepDungeon` sheet row 3 was named `Eureka Orthos`. `DeepDungeonLayer` row 31 maps dungeon row 3 / floor set 0 to RoomA row 37 and RoomB row 38; rows 31-40 cover floor sets 0-9. This supports that the TerritoryType asset and A/B templates are associated with EO's layer data. The static sheet association does not identify the live A/B choice or a particular random floor instance. Territory 1099's association with EO is additionally consistent with the supplied prior live observation; the exact floor number was not inferred from this static asset.
 
+### Follow-up: TerritoryType map reference (2026-11-16)
+
+The offline probe now also reports the generated `TerritoryType.Map` row reference for territory 1099. Against the installed game data marker `2026.11.03.0000.0000`, the value was **row 0** (no direct Map-sheet row reference). Repeated probe runs returned the same canonical summary SHA-256 `3F8BD88B7E901530BE08030429A059EFCA2D951350F2BFF01CFF72D041809151`, with territory background `ex4/07_lak_l5/cnt/l5c1/level/l5c1`, the verified `planmap.lgb` present, 19 layers, and 53 room-box candidates.
+
+This closes only the ordinary `TerritoryType.Map` lookup path for this installed data. It does not establish that no separate map asset or runtime source exists, and it says nothing about dynamic floor state. No map image was extracted, no path was guessed, and no replay, plugin runtime, or game process was read.
+
 ### Extracted structure
 
 | Layer | Objects | EventRange candidates | Distinct priorities | Shape / transform checks |
@@ -78,7 +84,7 @@ Across the 53 records in the two room layers, X/Z centers range from `-426.207` 
 
 ## Offline probe and checks
 
-Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
+Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
 
 Commands used:
 
