@@ -388,6 +388,8 @@ internal sealed class MainWindow : Window, IDisposable
         DrawValue("記録容量", FormatBytes(preview.StoredBytes));
         DrawValue("ObjectKind", $"EventObj {preview.EventObjectCount} / Treasure {preview.TreasureCount} / Aetheryte {preview.AetheryteCount}");
         DrawValue("座標品質", $"使用可 {preview.UsableCount} / 隔離 {preview.QuarantinedCount} / 欠損 {preview.MissingCount}");
+        DrawValue("選択対象の照合", preview.LatestSelection ?? "未観測");
+        DrawValue("最新フレームの状態変化", $"{preview.LatestTransitionCount}件");
         DrawValue("最新の診断理由", preview.LatestReason ?? status.LatestError ?? "なし");
         DrawValue("保存先", status.RecordingPath ?? "未作成");
 
@@ -412,6 +414,7 @@ internal sealed class MainWindow : Window, IDisposable
         {
             DrawValue("最終観測", preview.LastObservedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "未観測");
             ImGui.BulletText("BaseIdとObjectKindは意味を確定せず、公開APIの観測値として保存します。");
+            ImGui.BulletText("選択対象は同一フレームのObjectKind/BaseId/ランタイムキー完全一致だけで照合し、消失後の再出現は連続性不明として記録します。");
             ImGui.BulletText("生のEntityId/GameObjectId、名前、チャット、プレイヤー識別情報は保存しません。");
             ImGui.BulletText("正確な階層が不明な間は、同一フロア継続を保証しません。");
             ImGui.Checkbox("環境診断の保存内容を確認しました", ref environmentObjectExportConfirmed);

@@ -26,6 +26,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static IPluginLog PluginLog { get; set; } = null!;
     [PluginService] private static IClientState ClientState { get; set; } = null!;
     [PluginService] private static IObjectTable ObjectTable { get; set; } = null!;
+    [PluginService] private static ITargetManager TargetManager { get; set; } = null!;
     [PluginService] private static IDutyState DutyState { get; set; } = null!;
     [PluginService] private static ICondition Condition { get; set; } = null!;
     [PluginService] private static IFramework Framework { get; set; } = null!;
@@ -96,6 +97,7 @@ public sealed class Plugin : IDalamudPlugin
                 Framework,
                 ClientState,
                 ObjectTable,
+                TargetManager,
                 environmentObjectRecorder,
                 () => ObservationDiagnostics);
             cleanupActions.Push(environmentObjectSource.Dispose);

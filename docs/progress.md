@@ -258,3 +258,13 @@
 - Added Japanese start/stop, summary, privacy preview, confirmed export and confirmed deletion controls. Recording remains OFF by default.
 - Kept environment observations outside `WorldSnapshot`, BFS and strategy decisions; no semantic object classification or game operation was added.
 - Live Dalamud and FFXIV behavior remains unverified and requires the documented user-run procedure.
+
+## 2026-11-15 — Stage 5.6B selected-object correlation
+
+- Started `phase5.6b/selected-object-correlation` from the unmerged Stage 5.6A head `3e1bf44`; no existing PR or `main` was merged.
+- Added a read-only copy of the current public `ITargetManager.Target` values and same-sample exact matching against the existing filtered `IObjectTable` observations. Runtime IDs are transient and never exported.
+- Added schema-2 selection correlation metadata, conservative mismatch/ambiguity handling, independent coordinate quality, targetability transitions, disappearance, and runtime-key return events labelled continuity-unknown with a fresh anonymous ID.
+- Added actual schema-1/2 JSON deserialization validation and a schema-1 sample compatibility test. Replay schema 3/4/5 and chat-floor schema 2 are unchanged.
+- Added Japanese UI display of latest match quality, BaseId/anonymous ID, coordinate quality, and transition count; added the live verification procedure and explicit privacy checks.
+- Re-read the original local recordings read-only and rehashed before/after: 12 replay JSONs (2,167 snapshots total) did not contain those BaseIds, but 11 separate schema-1 diagnostic files had four unique payloads. The 200-sample 22:05:31 recording shows BaseId 2007357 targetability true-to-false at sample 25 (22:05:37.690), last visible false at sample 43 (22:05:42.309), then absent; the 160-sample 22:09:55 recording shows BaseId 2007358 true-to-false at sample 79 (22:10:15.563), last visible false at sample 99 (22:10:20.664), then absent. These are object-observation facts only; neither file records selected target, screen identity, nor an opened event. The prior draft statement about absence was too broad and has been corrected in the design doc.
+- Local verification: locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 + Observation 163/163 = 360 tests passed; format verification passed; NuGet vulnerability audit found no vulnerable packages; Core has no project references and Observation/Plugin reference only the intended DDCore layers. Live game behavior remains unverified.
