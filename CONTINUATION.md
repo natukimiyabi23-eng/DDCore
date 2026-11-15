@@ -7,7 +7,7 @@ Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 
 - Branch: `feature/eo-b1-readonly-integration-prep`, created from verified PR #22 head `ec9d65842586ebd7eb4f4b224ca25b78d8cc4b35`; PR #22 stays unchanged and Open/Draft/unmerged.
 - Added an accurate read-only integration status note and manual replay-label collection guide, and linked them in README. The guide documents `--validate-room-labels` schema fields and warns that room-box classification does not validate edges or enable BFS.
-- No plugin/runtime or game data change. Documentation references were checked against the current tree and `git diff --check` passed. Next: commit and push the docs-only slice, open a small stacked Draft PR based on PR #22, and verify CI. Preserve Unknown for live room, active layout and connections; do not enable live BFS.
+- No plugin/runtime or game data change. Documentation references were checked against the current tree and `git diff --check` passed. PR #23 was opened as Draft, stacked on PR #22. Initial inspection found CI branch filters excluded both this head and its base; the workflow now includes the specific head for push and base for pull_request. Next: commit/push this CI trigger correction and verify the resulting checks. Preserve Unknown for live room, active layout and connections; do not enable live BFS.
 
 ## Latest bounded milestone (2026-11-16)
 

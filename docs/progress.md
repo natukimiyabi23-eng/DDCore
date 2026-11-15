@@ -4,6 +4,7 @@
 
 - Added `docs/eo-b1-readonly-integration.md` to distinguish plugin runtime observation, offline static map parsing, synthetic BFS, and the still-missing live graph. Added `docs/eo-b1-live-test-guide.md` describing privacy-preserving user labels for exact floor, layout family, room index, and visible passage state; it explicitly notes that current label validation does not validate edges.
 - Linked both documents from README. No plugin runtime code or game data was changed in this documentation slice; real-time map recognition and route preview remain unavailable.
+- Opened stacked Draft PR #23 on PR #22. CI initially had no matching push-head or pull-request-base branch filter for this stack, so only the corresponding exact branch entries were added to `.github/workflows/phase2-build.yml`; verify CI after push.
 
 ## 2026-11-16 — EO static wall-template crosswalk across floor sets
 
