@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--create-manual-room-graph-template <replay.json> <snapshot-index> <new-output.json>|--validate-manual-room-graph <graph.json> <replay.json> <destination-room>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--create-manual-room-graph-template <replay.json> <snapshot-index> <new-output.json>|--validate-manual-room-graph <graph.json> <replay.json> <destination-room> <evidence-directory>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -43,9 +43,9 @@ if (createManualRoomGraphTemplate && args.Length < 6)
     Console.Error.WriteLine("--create-manual-room-graph-template requires a schema-5 replay, snapshot index, and new output path.");
     return 2;
 }
-if (validateManualRoomGraph && args.Length < 6)
+if (validateManualRoomGraph && args.Length < 7)
 {
-    Console.Error.WriteLine("--validate-manual-room-graph requires a graph JSON, a schema-5 replay JSON, and a destination room index.");
+    Console.Error.WriteLine("--validate-manual-room-graph requires a graph JSON, schema-5 replay, destination room index, and local evidence-image directory.");
     return 2;
 }
 if (replayRoomBoxTrace && args.Length < 4)
@@ -506,6 +506,7 @@ if (replayRoomCandidates || validateRoomLabels || createManualRoomGraphTemplate 
             using var replayDocument = JsonDocument.Parse(replayBytes);
             if (!int.TryParse(args[5], out var destinationRoom))
                 throw new InvalidDataException("The destination room must be an integer grid index.");
+            var evidenceHashes = ManualEvidenceCatalog.ReadSha256(args[6]);
             var boxes = roomCandidates.Select(candidate =>
             {
                 var bounds = GetAnonymousProperty<object>(candidate, "boundsUsingBossModConvention");
@@ -523,11 +524,14 @@ if (replayRoomCandidates || validateRoomLabels || createManualRoomGraphTemplate 
                 planmapSha256,
                 replayDocument.RootElement,
                 boxes,
+                evidenceHashes,
                 destinationRoom);
             report = new
             {
-                schemaVersion = 1,
-                evidenceMode = "complete manual user labels; graph and route are offline-only; evidence bytes are not inspected; never a live route",
+                outputSchemaVersion = 1,
+                graphSchemaVersion = graphLabels.SchemaVersion,
+                evidenceMode = "local image files are signature-checked and SHA-256 matched per label; semantic correspondence remains a user assertion; graph and route are offline-only; never a live route",
+                evidenceImageCount = evidenceHashes.Count,
                 validation,
             };
             resultCount = 1;
