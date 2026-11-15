@@ -3,10 +3,10 @@
 ## Offline evidence-context hardening (2026-11-16)
 
 - Objective: require every screenshot-backed graph row to point at a schema-5 replay snapshot whose trusted direct pose and compatible floor context support the selected static A/B family. This checks provenance/context only; it does not verify screenshot pixels or user labels and remains offline-only.
-- Branch/PR: `feature/offline-eo-graph-validation`, stacked Draft PR #24 over #23; no merge. Changes are locally verified; commit/push and PR CI confirmation are the remaining steps.
+- Branch/PR: `feature/offline-eo-graph-validation`, stacked Draft PR #24 over #23; no merge. Implementation commit `065af9040f2d4dea472f597a64dec15218c74dfd` is pushed. Both CI runs at that head passed (`43775049717`, `43775053678`).
 - Changed: `ManualRoomGraphValidator` schema 3 adds `evidenceSnapshotIndex`; screenshot rows are rejected for missing/out-of-range indices, incompatible floor/direct-pose context, ambiguous pose, or a conflicting A/B family. Tests cover these rejections. Updated `docs/eo-b1-live-test-guide.md` and `docs/eo-b1-readonly-integration.md`.
-- Verification: locked restore and Release solution build passed (0 warnings/errors); 398 tests passed (197 Core, 163 Observation, 38 probe); explicit probe Release build and format verification passed; NuGet audit found no vulnerable packages in six projects. `git diff --check` and forbidden-operation scan remain to be recorded after the final diff review.
-- Exact next step: finish diff/safety scan, commit and push only this branch, update PR #24, then verify CI on its new head. M0 remains UNKNOWN.
+- Verification: locked restore and Release solution build passed (0 warnings/errors); 398 tests passed (197 Core, 163 Observation, 38 probe); explicit probe Release build, format verification, NuGet audit (no vulnerable packages in six projects), `git diff --check`, and changed-source forbidden-operation scan passed. CI passed on the implementation commit above.
+- Exact next step: confirm PR #24 checks after this continuation/progress update. Then await independently labeled real room/passage evidence. M0 remains UNKNOWN.
 - Keep M0 UNKNOWN. Do not edit replay originals, infer image semantics, wire output into plugin/BFS strategy, operate the game, implement movement/combat, or merge.
 
 ## Current offline graph-validation slice (2026-11-16)
