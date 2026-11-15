@@ -13,7 +13,8 @@ The long-term goal is a user-started system that can observe, plan, traverse, fi
 | Player pose | Implemented, quality-gated | Public API adapter and nullable anonymous pose; missing/stale values fail closed. |
 | Enemy/cast/mechanics | Partial | Public observation and EO Gancanagh AoE analyzer; not complete enemy threat/combat policy. |
 | Generic environment objects | Diagnostic only | Stage 5.6A/B records generic object and selected-object correlation. It does not infer chest/passage state or topology. |
-| Room graph and current room | Not available from verified public contract | No authoritative randomized floor graph/current-room value identified. Keep Unknown. |
+| Static room candidates | Extracted offline from the EO-associated `planmap.lgb` | 26 Room A + 27 Room B boxes, 21 distinct priorities in each; this does not identify the active template or live room. See `docs/phase5.6c-lumina-extraction-verification.md`. |
+| Room graph and current room | Not available from verified public contract | No authoritative randomized floor graph/current-room value identified. One replay-to-box containment experiment was exploratory only (50 unique, 3 ambiguous, 13 unmatched; no room labels). Keep Unknown. |
 | BFS | Implemented as pure 5x5 room-graph search | `RoomPathfinder` requires a trustworthy complete graph; live observations do not currently provide it. |
 | Strategy | Implemented for synthetic complete state | `DeepDungeonStrategyEngine` returns advice; it is not connected to reliable live topology and does not execute. |
 | Movement/combat/interactions | Not implemented | `DisabledExecutionGateway` is the only gateway. No movement, attack, target, item, or interaction operation exists. |
@@ -27,13 +28,13 @@ Question: can DDCore construct a verifiable representation of the *current rando
 
 | Required fact | Current finding | Gate treatment |
 |---|---|---|
-| Current room | No verified public room index or authoritative room geometry-to-player mapping | Unknown; cannot claim room identity. |
+| Current room | Static boxes exist; one unlabelled replay was compared to box bounds but did not have active-template or room ground truth | Unknown; geometric containment is a candidate, not verified room identity. |
 | Room-to-room connections | Public API research found no structured DD room graph; BossMod reads native `InstanceContentDeepDungeon` state | Unavailable through the investigated public contract; no inferred edges. |
 | Walls/obstacles/traversable area | No public collision/navmesh enumeration found. `ScreenToWorld` is a raycast for a supplied screen ray, not a map query. | Unknown; do not route through guessed geometry. |
 | Current randomized map identity/layout | Static `planmap.lgb` candidates may describe room geometry, but do not alone identify randomized current room layout/connection state | Candidate offline investigation only; current layout remains unidentified. |
 | Complete input for BFS | BFS needs a validated 25-room connectivity map and current room | Not available; keep BFS disconnected from live observations. |
 
-**Conclusion (evidence-based):** using only the investigated Dalamud API 15 public contracts and present live diagnostics, the five required facts are not all available; therefore an authoritative current map cannot presently be built and the EO B1 live BFS gate fails closed. This does not prove no alternative lawful/public data source exists. BossMod's native reads are evidence of its own input source, not proof of a public API. Static data parsing, visible UI interpretation, or user-supplied mapping are research candidates requiring independent accuracy and patch validation before use.
+**Conclusion (evidence-based):** a real local static asset and candidate room boxes are now confirmed, and one replay can be compared geometrically against them. But active template, randomized layout, authoritative current room, dynamic edges, obstacle/walkable geometry, and a complete graph are not established; therefore the EO B1 live BFS gate remains closed. This does not prove no alternative lawful/public source exists. BossMod's native reads are evidence of its own input source, not proof of a public API. Visible UI interpretation or user-labelled mappings remain candidates requiring independent accuracy and patch validation before use.
 
 ### Gate pass criteria
 
@@ -139,4 +140,4 @@ Calendar estimates are intentionally omitted: M0 may fail or reveal a new permit
 
 ## Immediate next work
 
-Create an approved, offline-only EO B1 feasibility study: inventory candidate public static map assets and documented APIs, define coordinate/provenance fixtures, and compare them against user-labeled layouts if available. Do not parse private process memory, operate the game, connect observations to BFS, or implement movement. If no authoritative current-layout source emerges, report the B1 autonomous path blocked and present alternatives with their evidence and policy risks.
+Next, obtain a user-labelled EO B1 capture that pairs floor, active A/B template, room identity, player pose, and visible/open connections; then validate the box convention on held-out captures. Separately establish an allowed source for dynamic edges and traversability. Until those inputs pass the map gate, keep live BFS disconnected. Do not parse private process memory, operate the game, or implement movement. The current replay containment counts are exploratory only and are documented in `docs/phase5.6c-lumina-extraction-verification.md`.

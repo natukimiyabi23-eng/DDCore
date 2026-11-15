@@ -1,9 +1,21 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-15 JST (Stage 5.6B live-verification documents and CI complete)
+Status: in_progress
+Updated: 2026-11-16 JST (post-Lumina replay-to-box exploratory check)
 
-## Current continuation: Stage 5.6B live evidence update
+## Current autonomous objective
+
+- Objective: progress toward full DD autonomous-play capability only through approved read-only/offline evidence gates; do not infer current topology, connect unverified maps to BFS, operate the game, add movement/combat/inputs/private memory, or merge PRs.
+- Current evidence branch/base: `research/phase56c-lumina-extraction` at `5f169b373d28a4aaa0d1c1f7e19d5c4b63bb825c`; this turn's documentation branch is `docs/roadmap-update-lumina-evidence`.
+- Completed evidence: local Lumina parsed the actual EO-associated `planmap.lgb` into 26 Room A / 27 Room B candidates. A read-only comparison against the latest export (schema 5, producer 0.5.3.0, 66 snapshots, exact floor unknown, 1-10 band) found 50 unique geometric box containments, 3 ambiguous, 13 outside all boxes. This is not room ground truth; replay SHA-256 before/after was `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
+- Exact next step: continue offline analysis of `planmap.lgb`'s non-room records and referenced static assets for wall/corridor candidates, without assigning dynamic connectivity. If those do not expose verifiable topology, keep the map gate Unknown and specify the exact user-labelled evidence needed. No production code or tests were changed in this checkpoint.
+- Worktree at start of this checkpoint was clean; no game UI/process interaction occurred.
+- Preflight limitation: available usage display showed 89% remaining in the five-hour window and 98% weekly, but did not expose token counts. No token arithmetic is claimed. The host policy forbids creating task-tracking automations, so the repository-mandated five-hour follow-up could not be created here; do not claim it is scheduled or ACTIVE.
+- Verification/deployment: documentation-only changes; `git diff --check` passed. Commit `9e3457afa5649ea4fe90d3d3089a175c12d37c09` is pushed on `docs/roadmap-update-lumina-evidence`; Draft PR #21 (`https://github.com/natukimiyabi23-eng/DDCore/pull/21`) stacks on `research/phase56c-lumina-extraction`, remains unmerged, and its `build-and-test` check passed (run `43737354682`; one non-failing Node.js 20 deprecation annotation). No build/package/deployment/game test was run locally; no plugin or game operation occurred.
+
+## Historical Stage 5.6B live evidence update
+
+## Historical continuation: Stage 5.6B live evidence update
 
 - Objective: record the user's DDCore 0.5.7.0/schema-2 EO B1 live verification on the existing Draft PR #16 branch; documentation and consistency checks only. No feature work, phase transition, or merge.
 - Branch/base PR: `phase5.6b/selected-object-correlation`, Draft PR #16 to `phase5.6a/environment-object-diagnostics`; implementation head before this documentation update was `c693ae9778ee6e4c59bc43ecd0664e9afe0fe599`.
@@ -14,7 +26,7 @@ Updated: 2026-11-15 JST (Stage 5.6B live-verification documents and CI complete)
 - Next step: wait for user review; do not implement another stage or merge.
 - User verification still required: broader floors/DDs, floor transitions/re-entry, cross-session object identity, automatic reproducer activation-state, and causal proof that chest opening caused disappearance. Do not infer opening from targetability/disappearance. `exactFloor` remains null in JSON.
 
-## Active Stage 5.6B objective
+## Historical Stage 5.6B objective (completed)
 
 Finish the approved read-only selected-object correlation and environment-object transition diagnostics on `phase5.6b/selected-object-correlation`, with schema 1 read compatibility and schema 2 output. Do not operate FF14/Dalamud/UI, infer treasure meaning/open state, connect data to BFS/strategy, or merge any PR/main.
 
