@@ -1,5 +1,14 @@
 # DDCore continuation
 
+## Current offline graph-validation slice (2026-11-16)
+
+- Objective: advance the offline-only path from manually labeled EO room/passage evidence to the existing `RoomPathfinder`; never feed this result to the plugin or gameplay.
+- Branch: `feature/offline-eo-graph-validation`, based on PR #23 head `ae7b1da8945b4082a3877653be11683c67a8b0f2`. PR #23 remains separate and unmodified; no PR for this slice has been opened yet.
+- Implemented: strict schema-1 graph labels bound to replay and parsed planmap SHA-256; EO snapshot/floor/direct-pose checks; complete 25-room and 40-adjacent-edge coverage; unknown/invalid/absent-open-edge refusal; current-pose unique static candidate gate; offline BFS through existing `RoomPathfinder`; synthetic tests and updated manual evidence guide.
+- Verification so far: locked restore and full Release solution build passed (0 warnings/errors); 389 tests passed (197 Core, 163 Observation, 29 probe); dedicated Release probe build passed; `dotnet format ... --verify-no-changes --no-restore` passed; NuGet vulnerability scan reported none in six projects; `git diff --check` passed. No real edge-labeled graph exists; synthetic route tests are not real EO routes. E2E CLI fixture attempt was not run because the shell execution was rejected; don't claim it.
+- Files changed: `.github/workflows/phase2-build.yml`, `CONTINUATION.md`, `docs/eo-b1-live-test-guide.md`, `docs/eo-b1-readonly-integration.md`, `docs/progress.md`, `tools/LuminaMapProbe/LuminaMapProbe.csproj`, `tools/LuminaMapProbe/Program.cs`, `tools/LuminaMapProbe/ReplayRoomLabelEvaluator.cs`, new `tools/LuminaMapProbe/ManualRoomGraphValidator.cs`, and new `tools/LuminaMapProbe.Tests/ManualRoomGraphValidatorTests.cs`.
+- Next: review the diff and run the static prohibited-operation scan; if clean, commit/push, open a new Draft PR, and verify CI. Keep M0 UNKNOWN; no plugin/runtime changes, live route, game operation, automation, or merge.
+
 Status: in_progress
 Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 
