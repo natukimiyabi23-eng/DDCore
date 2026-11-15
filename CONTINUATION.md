@@ -1,7 +1,16 @@
 # DDCore continuation
 
-Status: complete
-Updated: 2026-11-15 22:45 JST (Stage 5.6B implementation and CI complete)
+Status: in_progress
+Updated: 2026-11-15 JST (Stage 5.6B live-verification documents being finalized)
+
+## Current continuation: Stage 5.6B live evidence update
+
+- Objective: record the user's DDCore 0.5.7.0/schema-2 EO B1 live verification on the existing Draft PR #16 branch; documentation and consistency checks only. No feature work, phase transition, or merge.
+- Branch/base PR: `phase5.6b/selected-object-correlation`, Draft PR #16 to `phase5.6a/environment-object-diagnostics`; implementation head before this documentation update was `c693ae9778ee6e4c59bc43ecd0664e9afe0fe599`.
+- Read-only source evidence re-read: local schema-2 environment diagnostic originals. 2007358 run `...135052...` has 69 exact matches (`obj-000005`, sequences 74-142); reproducer 2013286 run `...135332...` has 80 (`obj-000002`, seq 23-102); 2007357 run `...135426...` has 37 exact matches; separate transition run `...135441...` has 42 snapshots, targetability transition at seq 20 and disappearance at seq 40 for `obj-000001`, while same-BaseId `obj-000003` persists through seq 42. Cross-recording anonymous IDs are not continuity evidence. JSON remains unmodified and untracked.
+- Changed docs: `docs/phase5.6b-live-verification.md`, `docs/phase5.6b-object-correlation.md`, `docs/progress.md`. No source or test files changed.
+- Exact next step: run `git diff --check`, relevant existing Release tests without rebuilding, recheck original JSON hashes and PR #16 status, then commit/push these docs to the same branch and confirm PR remains Draft/open. Do not create a new PR or merge anything.
+- User verification still required: broader floors/DDs, floor transitions/re-entry, cross-session object identity, automatic reproducer activation-state, and causal proof that chest opening caused disappearance. Do not infer opening from targetability/disappearance. `exactFloor` remains null in JSON.
 
 ## Active Stage 5.6B objective
 

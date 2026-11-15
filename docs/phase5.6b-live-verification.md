@@ -1,6 +1,20 @@
 # Stage 5.6B Live Verification
 
-Live verification is a user-performed check; this document does not authorize Codex to operate FF14, Dalamud, or the plugin UI.
+## Recorded run
+
+User-reported and locally re-read data: FFXIV, Eureka Orthos B1, Dalamud API 15, DDCore 0.5.7.0, diagnostic schema 2. The local recording folder contains duplicate copies of some exports; counts below are per supplied observation/run, not a sum across duplicate files.
+
+| Check | Recorded result | Evidence boundary |
+|---|---|---|
+| Treasure BaseId 2007358 | `ddcore-environment-objects-20261115-135052.diagnostic.json` (142 samples) contains 69 consecutive `exactRuntimeMatch` samples for `obj-000005` (sequences 74-142), coordinate quality `usable`. A separate 44-sample run records a `disappeared` transition for a BaseId 2007358 object at different coordinates. | A separate recording's anonymous ID and different coordinates do not establish cross-session identity. User reports manual opening of the selected chest; JSON does not prove that action caused a disappearance. |
+| Reproducer | Screenshot shows the selected UI label “再生装置”; the accompanying user report identifies exact match to BaseId `2013286`, anonymous ID `obj-000002`. | Screenshot establishes visible label only. Its association to JSON relies on user-supplied time/action correlation; automated activation-state detection is unverified. |
+| Treasure BaseId 2007357 | Screenshot/report label this as the unopened treasure. JSON reports `obj-000001` exact match; targetable is true at sample 1, false at sample 20, and the object is `disappeared` at sample 40. `obj-000003` with the same BaseId remains observed. | Object-level distinction is visible in the diagnostic; screen-to-JSON association relies on user-supplied timing. Targetability/disappearance does not prove opening. |
+
+The local schema-2 exports were re-read from the configured recordings directory. Across the relevant B1 runs, object samples contained BaseIds `2007357`, `2007358`, and `2013286`; selected-object samples included exact-match results. The 42-sample run `ddcore-environment-objects-20261115-135441.diagnostic.json` (created `2026-11-15 22:54:41 JST`) records `obj-000001` targetability changing at sample 20 and a `disappeared` transition at sample 40; same-BaseId `obj-000003` remains through sample 42. No raw JSON or screenshot is added to the repository. Exact-floor values in these records remain null; the displayed B1 is a separate screen/user observation.
+
+## Remaining live checks
+
+Live verification is user-performed; this document does not authorize Codex to operate FF14, Dalamud, or the plugin UI.
 
 1. Load DDCore `0.5.7.0` as a development plugin and open `/ddcore`.
 2. Open the environment-object diagnostic section. Confirm it starts `OFF` and reports no selected target before recording.
