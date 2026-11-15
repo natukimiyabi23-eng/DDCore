@@ -170,6 +170,19 @@ The consuming implementation explains the missing dynamic dependency. [`DeepDung
 
 This narrows the static-data question: a pinned reference contains per-floor-set A/B wall templates, but the live layout and edge-state inputs are separate. The template alone cannot prove a passage is open, a wall is currently present, or a location is traversable. No BossMod code/data was copied into DDCore, no runtime dependency was added, and no result was connected to BFS or strategy. **M0 remains UNKNOWN.** BossMod is BSD-3-Clause; this was source inspection and aggregate counting only, so no copied implementation or attribution change is needed.
 
+### Exploratory floor-set 1 geometry comparison
+
+For an offline consistency check only, the 28 nonzero directional wall positions in BossMod key `3.1` were compared with the same-index `planmap.lgb` room candidate (`priority = 100 + room index`). Candidate bounds use the probe's existing `Translation +/- abs(Scale)` convention, which has not been independently calibrated. For each point, distance was measured to the nearest edge of the matching orientation (horizontal for North/South, vertical for East/West), without treating the edge as a confirmed wall or passage.
+
+| Wall template → box layer | Samples | Median edge distance | Samples ≤ 5 units | Samples ≤ 10 units |
+|---|---:|---:|---:|---:|
+| A → A, same index | 28 | 12.39 | 3 | 3 |
+| B → B, same index | 28 | 12.57 | 3 | 4 |
+| A → B, same index | 28 | 807.52 | 0 | 0 |
+| B → A, same index | 28 | 809.84 | 0 | 0 |
+
+This shows that the A and B candidate families in this static file occupy widely separated coordinate regions, while the same-letter wall/room pairing is only a weak geometric fit under the uncalibrated bounds metric. The close cross-layer comparison does **not** establish which layout is active, prove an individual wall-to-room mapping, verify collision geometry, or identify a live randomized floor. It was one floor-set only, used no ground-truth labels, and is not a route or BFS input.
+
 ## Next prerequisites
 
 1. Obtain multiple user-labelled EO layouts with player positions in the same coordinate frame, plus independent labels of room identity, active A/B template, and open passages. Keep samples anonymized and outside the plugin runtime.

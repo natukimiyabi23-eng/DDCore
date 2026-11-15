@@ -6,6 +6,12 @@
 - No inspected contract identifies a DD map addon or defines array/node fields as room IDs, open passages, or traversability. This is a public event/interop surface, not a typed map-data API. Treat it as a candidate for a bounded opt-in UI-correlated experiment; decoding undocumented game-native layout would need separate approval and was not done here.
 - M0 remains UNKNOWN, BFS stays disconnected, and no runtime code, event subscription, game interaction, or UI-memory read was added. See `docs/phase5.6-environment-research.md`.
 
+## 2026-11-16 — Exploratory EO wall-template / room-box geometry check
+
+- Compared the 28 nonzero directional wall positions for BossMod EO key `3.1` with same-index Room A/B boxes from the locally parsed `planmap.lgb`, using the probe's uncalibrated `Translation +/- abs(Scale)` bounds and orientation-compatible nearest-edge distance.
+- Same-letter medians were A→A 12.39 and B→B 12.57 coordinate units (3/28 and 3/28 samples within 5 units); cross-letter medians were A→B 807.52 and B→A 809.84 (0/28 within 10). This supports only that the static A/B coordinate families are widely separated; it does not validate individual room/wall correspondence, active random layout, or geometry semantics.
+- One floorset, no ground truth, no code/asset committed. M0 remains UNKNOWN; no map or edge data is eligible for BFS.
+
 ## 2026-11-16 — Pinned BossMod EO static wall-template inspection
 
 - Re-read BossMod at fixed commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`. Its `Walls.json` contains EO keys `3.1`-`3.10`; each has 25 Room A and 25 Room B slots, with 28 nonzero directional depth entries per variant.
