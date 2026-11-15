@@ -1,7 +1,7 @@
 # DDCore continuation
 
 Status: in_progress
-Updated: 2026-11-16 JST (Lumina shared-SGB offline inspection)
+Updated: 2026-11-16 JST (shared-SGB inspection and CI completion)
 
 ## Current autonomous objective
 
@@ -9,12 +9,13 @@ Updated: 2026-11-16 JST (Lumina shared-SGB offline inspection)
 - Current evidence base: `docs/roadmap-update-lumina-evidence` commit `7321da2857b162a46c6bf701229d9291ac4c44c3` (Draft PR #21); current follow-up branch: `research/phase56c-sharedgroup-inspection`.
 - Completed evidence: local Lumina parsed the actual EO-associated `planmap.lgb` into 26 Room A / 27 Room B candidates. A read-only comparison against the latest export (schema 5, producer 0.5.3.0, 66 snapshots, exact floor unknown, 1-10 band) found 50 unique geometric box containments, 3 ambiguous, 13 outside all boxes. This is not room ground truth; replay SHA-256 before/after was `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
 - Completed this slice: extended only the standalone Lumina probe to parse the one referenced SGB and list its typed records; 8 CollisionBox records were observed, but no wall/passage/navmesh interpretation or `.pcb` geometry was verified. Full identical output hash on two runs: `C6E8323B8B6D9B0FBA8993BEDB32341FF59BF11AC31CB1076FBBCB2EC6DF774C`.
-- Verification completed: probe Release build and full solution Release build both succeeded with 0 warnings/errors; all 360 existing tests passed (Core 197, Observation 163); solution and probe NuGet vulnerability audits reported no vulnerable packages; format and `git diff --check` passed; a scan of the probe found no process/input/private-memory operation symbols. CI/license check remains pending until push.
-- Exact next step: finish source/docs diff review, commit and push this isolated probe/docs slice, open a new Draft PR stacked on #21, and verify CI. Keep M0 UNKNOWN; do not connect data to BFS or add runtime/gameplay behavior.
+- Verification completed: probe Release build and full solution Release build both succeeded with 0 warnings/errors; all 360 existing tests passed (Core 197, Observation 163); solution and probe NuGet vulnerability audits reported no vulnerable packages; format and `git diff --check` passed; a scan of the probe found no process/input/private-memory operation symbols. PR #22 CI passed in both runs `43739359554` and `43739351966`.
+- Git/CI completed: commits `20cb98044280db32aec642344d862ad31ddaf515` (probe and evidence) and `802acfe40c8812d3e708eca9e531834503fe5ddc` (CI branch allowlist) are pushed on `research/phase56c-sharedgroup-inspection`; Draft PR #22 targets PR #21's head branch `docs/roadmap-update-lumina-evidence`. PR #22 is open, Draft, unmerged; PR #21 remains open, Draft, unmerged. Worktree was clean at recorded head `802acfe40c8812d3e708eca9e531834503fe5ddc`.
+- Next evidence gate: determine whether any additional static collision asset path can be traced through documented Lumina parsing and independently validated geometry. Do not copy/use third-party reverse-engineered binary-offset parsing without separate review and validation. If no validated topology source emerges, retain M0 UNKNOWN and request anonymized user-labelled room/layout/edge evidence before proposing BFS integration.
 - Files changed this slice: `tools/LuminaMapProbe/Program.cs`, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/phase5.6c-static-map-feasibility.md`, `docs/autonomous-development-roadmap.md`, `docs/progress.md`, `CONTINUATION.md`.
 - Worktree was clean at start of this checkpoint; current edits are on the dedicated follow-up branch. No game UI/process interaction occurred.
 - Preflight limitation: available usage display showed 89% remaining in the five-hour window and 98% weekly, but did not expose token counts. No token arithmetic is claimed. The host policy forbids creating task-tracking automations, so the repository-mandated five-hour follow-up could not be created here; do not claim it is scheduled or ACTIVE.
-- Verification/deployment: documentation-only changes; `git diff --check` passed. Commit `9e3457afa5649ea4fe90d3d3089a175c12d37c09` is pushed on `docs/roadmap-update-lumina-evidence`; Draft PR #21 (`https://github.com/natukimiyabi23-eng/DDCore/pull/21`) stacks on `research/phase56c-lumina-extraction`, remains unmerged, and its `build-and-test` check passed (run `43737354682`; one non-failing Node.js 20 deprecation annotation). No build/package/deployment/game test was run locally; no plugin or game operation occurred.
+- Previous documentation checkpoint: commit `9e3457afa5649ea4fe90d3d3089a175c12d37c09` is on `docs/roadmap-update-lumina-evidence`; PR #21 stacks on `research/phase56c-lumina-extraction` and remains open/Draft/unmerged. Its `build-and-test` check passed (run `43737354682`; non-failing Node.js 20 deprecation annotation). No plugin package was deployed or activated; no game operation occurred.
 
 ## Historical Stage 5.6B live evidence update
 
