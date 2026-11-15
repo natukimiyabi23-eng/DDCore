@@ -82,6 +82,23 @@ Observed checks:
 - No full malformed-LGB corpus, coordinate-to-screen/world calibration, player-room ground truth, or route/BFS test was run. These remain untested, rather than passed.
 - The raw LGB asset and extracted full JSON were not committed. Only the small reflection-based probe and this report are included.
 
+### Exploratory player-coordinate containment check (2026-11-16)
+
+The latest local `*.replay.json` was read in place, without modification, before comparing its already-recorded player pose to the extracted A/B candidate bounds:
+
+| Field | Value |
+|---|---|
+| File | `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json` |
+| `createdAtUtc` | `2026-11-08T14:29:45.946997+00:00` |
+| Schema / producer | 5 / 0.5.3.0 |
+| Snapshots / direct finite player poses | 66 / 66 |
+| DD context | `eurekaOrthos` 66/66; floor range 1-10 66/66; exact floor unknown 66/66 |
+| Replay SHA-256 before and after | `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71` |
+
+The offline comparison mapped snapshot `position.x` to LGB X and `position.y` to LGB Z, consistent with `LiveWorldSnapshotProvider.ConvertPlayerPose` using `RawPosition.X` and `.Z`. It then tested inclusive containment in each Room A/B box calculated by the existing probe as `Translation +/- abs(Scale)`. Counts were **50 snapshots in exactly one candidate box, all in `LVD_Room_B`; 3 snapshots in multiple boxes; and 13 snapshots in no candidate box**. No player identity or raw export was emitted by the comparison.
+
+This is only a reproducible geometric candidate lookup over one replay and one static asset. The replay has no exact-floor label, no independently labelled room IDs, no known active A/B choice, and no open-edge labels. The bounds convention also lacks independent in-game calibration. Therefore the 50 unique matches are not verified current-room classifications; the 3 ambiguous and 13 unmatched samples demonstrate that a candidate-only implementation must preserve ambiguity/no-match rather than force a room. No runtime feature or BFS connection was added, and the replay hash is unchanged.
+
 ## Static data versus dynamic floor state
 
 | Question | Result | Evidence status |
@@ -89,7 +106,7 @@ Observed checks:
 | Can the room candidate geometry be loaded? | Yes: 26 A / 27 B EventRange boxes; 21 priorities per variant. | **Verified from installed real game data** |
 | Are centers and stored box scales available? | Yes, as LGB transforms; finite for all 53 candidates. | **Verified as raw fields; boundary semantics not independently calibrated** |
 | Are walls/corridors/walkable cells available in these room layers? | No wall, corridor graph, collision mesh, or walkable polygon was extracted from these EventRange records. Other object types exist in other layers but were not interpreted as topology. | **Not established by this asset probe** |
-| Can the current room be identified? | No labelled player position was paired with the A/B templates and no live room index is available from this static asset. | **Unknown** |
+| Can the current room be identified? | One replay's player poses can be geometrically contained in candidate boxes (50 unique, 3 multiple, 13 none), but no exact-floor, active-template, or room ground-truth labels validate those matches. | **Unknown** |
 | Can the selected randomized layout be identified? | No. The file contains A/B candidate layers; static Excel links both but no live selection marker was established. | **Unknown** |
 | Can room edges be built? | No. The asset records do not provide verified current open-connection/reveal state. | **Unknown** |
 | Is complete BFS input available? | No verified active 25-node graph, reciprocal edges, and current endpoint were produced. | **No; keep BFS disconnected** |

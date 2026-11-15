@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-11-16 — Exploratory EO static-box / replay-pose comparison
+
+- Re-read the latest local replay export in place: `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`, `createdAtUtc` 2026-11-08T14:29:45.946997+00:00, schema 5, producer 0.5.3.0, 66 snapshots. All 66 snapshots had a finite direct player pose, EO context, floor band 1-10, and unknown exact floor. SHA-256 before/after: `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
+- Compared each pose to all 53 candidate boxes from the locally parsed `planmap.lgb`, using the probe's `Translation +/- abs(Scale)` bounds and the source-confirmed X/Z-to-2D mapping. Result: 50 unique containments (all Room B), 3 ambiguous samples, 13 with no matching box.
+- These counts are exploratory only: no active Room A/B label, exact floor, or current-room ground truth exists for this replay; box boundary calibration is unverified. No current room, random layout, edges, or BFS input is established. Live BFS remains disconnected.
+- Updated `docs/phase5.6c-lumina-extraction-verification.md`, corrected the stale historical summary in `docs/phase5.6c-static-map-feasibility.md`, and aligned `docs/autonomous-development-roadmap.md` with the extracted asset and the exploratory matching limits. No code or test files changed; `git diff --check` passed and the documentation diff was reviewed.
+
 ## 2026-11-16 — Stage 5.6C Lumina static map extraction
 
 - Used the installed Lumina 7.7.0 file build (`b92c0cb...`) and local game data marker `2026.11.03.0000.0000` to read TerritoryType 1099 and derive `bg/ex4/07_lak_l5/cnt/l5c1/level/planmap.lgb` using the exact path rule in pinned BossMod `Rooms.cs`.
