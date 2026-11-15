@@ -215,11 +215,14 @@ public sealed class ManualRoomGraphValidatorTests
         using var replay = Replay();
         var missingSnapshot = Labels();
         missingSnapshot.Passages[0] = missingSnapshot.Passages[0] with { EvidenceSnapshotIndex = null };
+        var negativeSnapshot = Labels();
+        negativeSnapshot.Passages[0] = negativeSnapshot.Passages[0] with { EvidenceSnapshotIndex = -1 };
         var outOfRangeSnapshot = Labels();
         outOfRangeSnapshot.Passages[0] = outOfRangeSnapshot.Passages[0] with { EvidenceSnapshotIndex = 1 };
         var wrongLayoutFamily = Labels();
 
         Assert.Throws<InvalidDataException>(() => Evaluate(missingSnapshot, replay.RootElement));
+        Assert.Throws<InvalidDataException>(() => Evaluate(negativeSnapshot, replay.RootElement));
         Assert.Throws<InvalidDataException>(() => Evaluate(outOfRangeSnapshot, replay.RootElement));
         Assert.Throws<InvalidDataException>(() => ManualRoomGraphValidator.Evaluate(
             wrongLayoutFamily, ReplayHash, PlanmapHash, replay.RootElement,
