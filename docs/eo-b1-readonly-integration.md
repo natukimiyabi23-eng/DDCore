@@ -20,7 +20,7 @@ This note describes what can currently be exercised for an EO B1 read-only proto
 ## What the current integration does not do
 
 - It does not identify the currently active Room A/B layout from a confirmed live source.
-- Geometric containment of replay positions is an uncalibrated candidate only. Six local schema-5 EO recordings contain 869 snapshots; all positions are finite, but none records an exact floor. Three recordings have candidate containment and three have none. There are no independent room labels or open-edge labels.
+- Geometric containment of replay positions is an uncalibrated candidate only. Six local schema-5 EO recordings contain 869 snapshots; all positions are finite, but none records an exact floor. Three recordings have candidate containment and three have none. In the latest three, unique candidates were B-only in one recording but mixed A/B in two others; this cannot identify active layout because exact floor and independent layout labels are absent. There are no independent room labels or open-edge labels.
 - The wall crosswalk is a static coordinate consistency check using nearest orientation-matched infinite lines. It is not a wall detector, collision model, connectivity map, or navigation mesh.
 - No live room graph is produced, so the 25-room BFS is not connected to live observations and no live route is emitted.
 - There is no integrated map overlay or live route preview in the plugin UI at this checkpoint.
