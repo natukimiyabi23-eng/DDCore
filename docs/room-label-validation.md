@@ -15,7 +15,7 @@ dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
   --replay-room-box-trace $replay
 ```
 
-The output's `status` values are `contextUnknown`, `invalidPose`, `untrustedPose`, `noBoxContainment`, `uniqueBoxContainment`, or `ambiguousBoxContainment`. `uniqueBoxContainment` is not a room identification: the Room A/B boxes and coordinate convention have not been validated against independently labelled layouts. The output is written to stdout; redirect it only to a private local file and do not commit it.
+The output's `status` values are `contextUnknown`, `invalidPose`, `untrustedPose`, `noBoxContainment`, `uniqueBoxContainment`, or `ambiguousBoxContainment`. Multiple matching shapes for the same variant/cell are collapsed to that one static candidate; distinct variant/cell candidates remain ambiguous. An empty or invalid candidate set is rejected rather than reported as unmatched. `uniqueBoxContainment` is not a room identification: the Room A/B boxes and coordinate convention have not been validated against independently labelled layouts. The output is written to stdout; redirect it only to a private local file and do not commit it.
 
 ## Labels format
 

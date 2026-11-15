@@ -181,6 +181,7 @@ public static class ReplayRoomLabelEvaluator
             var candidates = candidateBoxes
                 .Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ)
                 .Select(static box => new ReplayRoomBoxTraceCandidate(box.Layer[^1].ToString(), box.Index))
+                .Distinct()
                 .OrderBy(static candidate => candidate.Variant, StringComparer.Ordinal)
                 .ThenBy(static candidate => candidate.RoomIndex)
                 .ToArray();
@@ -198,7 +199,8 @@ public static class ReplayRoomLabelEvaluator
 
     private static void ValidateReplayAndCandidates(JsonElement replay, IReadOnlyList<ReplayRoomCandidateBox> candidateBoxes)
     {
-        if (candidateBoxes.Any(static box => box.Index is < 0 or >= 25
+        if (candidateBoxes.Count == 0
+            || candidateBoxes.Any(static box => box.Index is < 0 or >= 25
             || box.Layer is not ("LVD_Room_A" or "LVD_Room_B")
             || !double.IsFinite(box.MinX)
             || !double.IsFinite(box.MaxX)

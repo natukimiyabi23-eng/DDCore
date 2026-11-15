@@ -190,6 +190,7 @@ public sealed class ReplayRoomLabelEvaluatorTests
             replay.RootElement,
             [
                 new ReplayRoomCandidateBox("LVD_Room_A", 3, 0, 3, 0, 3),
+                new ReplayRoomCandidateBox("LVD_Room_A", 3, 0, 3, 0, 3),
                 new ReplayRoomCandidateBox("LVD_Room_B", 7, 5, 8, 5, 8),
                 new ReplayRoomCandidateBox("LVD_Room_A", 8, 5, 8, 5, 8),
             ]);
@@ -249,6 +250,9 @@ public sealed class ReplayRoomLabelEvaluatorTests
 
         using var invalidReplay = JsonDocument.Parse("""{"schemaVersion":4,"snapshots":[]}""");
         Assert.Throws<InvalidDataException>(() => ReplayRoomLabelEvaluator.CreateBoxTrace(invalidReplay.RootElement, []));
+
+        using var validReplay = CreateReplay("eurekaOrthos", 1, 10, null, 1, 1);
+        Assert.Throws<InvalidDataException>(() => ReplayRoomLabelEvaluator.CreateBoxTrace(validReplay.RootElement, []));
     }
 
     private static ReplayRoomLabelSet Labels(params ReplayRoomLabel[] labels) => new(1, ReplaySha256, PlanmapSha256, [.. labels]);
