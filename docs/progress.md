@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-16 — EO typed room-grid / planmap crosswalk
+
+- Extended the standalone offline Lumina probe to enumerate all ten EO `DeepDungeonLayer` floor sets and their Room A/B 5×5 `DeepDungeonRoom` grids, then compare occupied row-major cell indices with `planmap.lgb` Room A/B `EventRange` priority minus 100.
+- Installed game data contains all ten floor sets. All 20 floor-set/variant grids share the same 21-cell pattern and match their planmap index set exactly; each grid also has 32 orthogonal neighboring occupied-cell pairs. These are static cell positions/potential neighbors only, not confirmed open passages, active randomized layout, or traversability.
+- Re-read the latest valid fixed-folder replay (`ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`: schema 5, producer 0.5.3.0, 66 snapshots, `createdAtUtc` 2026-11-08 23:29:45.946997 +09:00, exact floor null, range 1-10). Read-only geometric overlay: 50 unique Room B candidates (cell 12: 22 samples, 17: 13, 18: 15), 3 ambiguous, 13 unmatched. The replay SHA-256 remained `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
+- No active variant, exact current room, connection state, or full trusted live BFS input is established. M0 stays UNKNOWN and live BFS remains disconnected. No plugin runtime, game, raw replay, or game asset was modified or committed.
+- Verification for this slice: solution Release build succeeded with 0 warnings/errors; Core 197/197 and Observation 163/163 tests passed; probe Release build succeeded with 0 warnings/errors; `dotnet format --verify-no-changes`, NuGet audit, and `git diff --check` passed. Two probe executions had identical canonical SHA-256 `160AC3FFA6EC9149ED23F96973796FCEDBEF15C82F4A5C8D522D3E5B7774A8E3`.
+- Follow-up branch: `research/phase56c-sharedgroup-inspection`, stacked on PR #21; update existing Draft PR #22 only. CI for this new evidence commit is pending until pushed.
+
 ## 2026-11-16 — Dalamud public addon lifecycle map-data boundary
 
 - Read the locally installed Dalamud API 15 `15.0.4.0+bd3a49a6c012b6735fd5dc07dbc9221120db1a06` XML contract and official docs for `IGameGui` and `IAddonLifecycle`. `GetAddonByName` returns an `AtkUnitBasePtr`; `ScreenToWorld` raycasts one supplied point. Lifecycle args may expose setup `AtkValue` arrays or requested-update number/string-array data.

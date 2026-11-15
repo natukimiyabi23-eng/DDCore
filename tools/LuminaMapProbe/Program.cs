@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids]");
     return 2;
 }
 
@@ -38,6 +38,25 @@ var options = Activator.CreateInstance(optionsType)!;
 var gameData = Activator.CreateInstance(gameDataType, sqpackDirectory, options)!;
 var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
 var excelModule = GetMember(gameData, "Excel");
+if (args.Length > 2 && args[2] == "--deep-dungeon-grids")
+{
+    var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
+    Console.WriteLine(JsonSerializer.Serialize(new
+    {
+        dungeonRowId = 3,
+        floorSetCount = gridReport.FloorSetCount,
+        floorSetCoverageComplete = gridReport.FloorSetCoverageComplete,
+        invalidGridCount = gridReport.InvalidGridCount,
+        priorityIndexMismatchCount = gridReport.PriorityIndexMismatchCount,
+        planmapVirtualPath = gridReport.PlanmapVirtualPath,
+        planmapExists = gridReport.PlanmapExists,
+        planmapPriorityIndices = gridReport.PlanmapPriorityIndices,
+        summarySha256 = gridReport.SummarySha256,
+        floorSets = gridReport.FloorSets,
+    }, new JsonSerializerOptions { WriteIndented = true }));
+    return gridReport.FloorSetCoverageComplete && gridReport.InvalidGridCount == 0 && gridReport.PlanmapExists && gridReport.PriorityIndexMismatchCount == 0 ? 0 : 1;
+}
+
 if (apiSurfaceOnly)
 {
     var gameDataPropertyTypes = gameDataType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
@@ -493,3 +512,141 @@ static (string Background, uint MapRowId) ReadTerritory(object gameData, Type ga
 
     throw new InvalidDataException("TerritoryType row 1099 was not found in the installed game data.");
 }
+
+static (int FloorSetCount, bool FloorSetCoverageComplete, int InvalidGridCount, int PriorityIndexMismatchCount, string PlanmapVirtualPath, bool PlanmapExists, object PlanmapPriorityIndices, string SummarySha256, object[] FloorSets) ReadEurekaOrthosGrids(object gameData, Type gameDataType, Assembly excelAssembly)
+{
+    var layerType = excelAssembly.GetType("Lumina.Excel.Sheets.DeepDungeonLayer", throwOnError: true)!;
+    var getSheet = gameDataType.GetMethods().Single(method => method.Name == "GetExcelSheet" && method.IsGenericMethod)
+        .MakeGenericMethod(layerType);
+    var sheet = (IEnumerable)getSheet.Invoke(gameData, [null, null])!;
+    var floorSets = new List<object>();
+    var invalidGridCount = 0;
+    var priorityIndexMismatchCount = 0;
+    var territory = ReadTerritory(gameData, gameDataType);
+    var planmapPath = $"bg/{territory.Background[..territory.Background.LastIndexOf('/')]}/planmap.lgb";
+    var fileExists = gameDataType.GetMethod("FileExists", [typeof(string)])!;
+    var planmapExists = (bool)fileExists.Invoke(gameData, [planmapPath])!;
+    var planmapIndices = new Dictionary<string, HashSet<int>>(StringComparer.Ordinal);
+
+    if (planmapExists)
+    {
+        var lgbType = gameDataType.Assembly.GetType("Lumina.Data.Files.LgbFile", throwOnError: true)!;
+        var getLgb = gameDataType.GetMethods().Single(method => method.Name == "GetFile" && method.IsGenericMethod)
+            .MakeGenericMethod(lgbType);
+        var lgb = getLgb.Invoke(gameData, [planmapPath])!;
+        var layers = (IEnumerable)GetMember(lgb, "Layers")!;
+        foreach (var layer in layers)
+        {
+            var layerName = GetMember(layer, "Name")?.ToString();
+            if (layerName is not ("LVD_Room_A" or "LVD_Room_B"))
+                continue;
+
+            var indices = new HashSet<int>();
+            foreach (var instance in (IEnumerable)GetMember(layer, "InstanceObjects")!)
+            {
+                if (GetMember(instance, "AssetType")?.ToString() != "EventRange")
+                    continue;
+                var payload = GetMember(instance, "Object");
+                var parentData = GetMember(payload, "ParentData");
+                var priority = Convert.ToInt32(GetMember(parentData, "Priority"));
+                if (priority is > 100 and < 126)
+                    indices.Add(priority - 100);
+            }
+
+            planmapIndices[layerName[^1].ToString()] = indices;
+        }
+    }
+
+    foreach (var layer in sheet)
+    {
+        var dungeon = GetMember(layer, "DeepDungeon");
+        if (Convert.ToUInt32(GetMember(dungeon, "RowId")) != 3)
+            continue;
+
+        var variants = new List<object>();
+        foreach (var variantName in new[] { "RoomA", "RoomB" })
+        {
+            var mapReference = GetMember(layer, variantName);
+            var mapRowId = Convert.ToUInt32(GetMember(mapReference, "RowId"));
+            var mapRows = (IEnumerable)GetMember(mapReference, "Value")!;
+            var grid = new List<object>();
+            var nonzeroRoomCells = 0;
+            var adjacentOccupiedCellPairs = 0;
+            var rows = new List<uint[]>();
+
+            foreach (var mapRow in mapRows)
+            {
+                var roomReferences = (IEnumerable)GetMember(mapRow, "DeepDungeonRoom")!;
+                var cellIds = roomReferences.Cast<object>()
+                    .Select(reference => Convert.ToUInt32(GetMember(reference, "RowId")))
+                    .ToArray();
+                rows.Add(cellIds);
+                nonzeroRoomCells += cellIds.Count(static rowId => rowId != 0);
+                grid.Add(new { subrowId = Convert.ToUInt16(GetMember(mapRow, "SubrowId")), roomRowIds = cellIds });
+            }
+
+            var rectangular = rows.Count == 5 && rows.All(static row => row.Length == 5);
+            if (!rectangular)
+                invalidGridCount++;
+            else
+            {
+                for (var row = 0; row < 5; row++)
+                for (var column = 0; column < 5; column++)
+                {
+                    if (rows[row][column] == 0)
+                        continue;
+                    if (column < 4 && rows[row][column + 1] != 0)
+                        adjacentOccupiedCellPairs++;
+                    if (row < 4 && rows[row + 1][column] != 0)
+                        adjacentOccupiedCellPairs++;
+                }
+            }
+
+            var occupiedIndices = rows.SelectMany((row, rowIndex) => row
+                .Select((roomRowId, columnIndex) => (roomRowId, index: rowIndex * 5 + columnIndex)))
+                .Where(static cell => cell.roomRowId != 0)
+                .Select(static cell => cell.index)
+                .ToHashSet();
+            var variantKey = variantName[^1].ToString();
+            var priorityIndexMatch = rectangular
+                && planmapIndices.TryGetValue(variantKey, out var layerIndices)
+                && occupiedIndices.SetEquals(layerIndices);
+            if (!priorityIndexMatch)
+                priorityIndexMismatchCount++;
+
+            variants.Add(new
+            {
+                variant = variantName,
+                mapRowId,
+                rowCount = rows.Count,
+                columnCounts = rows.Select(static row => row.Length).ToArray(),
+                rectangular5By5 = rectangular,
+                nonzeroRoomCells,
+                distinctNonzeroRoomRows = rows.SelectMany(static row => row).Where(static rowId => rowId != 0).Distinct().Count(),
+                orthogonallyAdjacentOccupiedCellPairs = adjacentOccupiedCellPairs,
+                roomGridIndices = occupiedIndices.Order().ToArray(),
+                planmapPriorityIndicesMatchOccupiedCells = priorityIndexMatch,
+                adjacencyMeaning = "spatial candidates only; not confirmed open connections",
+                grid,
+            });
+        }
+
+        floorSets.Add(new
+        {
+            layerRowId = Convert.ToUInt32(GetMember(layer, "RowId")),
+            floorSet = Convert.ToByte(GetMember(layer, "FloorSet")),
+            variants,
+        });
+    }
+
+    var orderedFloorSets = floorSets.OrderBy(static floorSet => GetAnonymousProperty<byte>(floorSet, "floorSet")).ToArray();
+    var observedFloorSets = orderedFloorSets.Select(static floorSet => GetAnonymousProperty<byte>(floorSet, "floorSet")).ToHashSet();
+    var floorSetCoverageComplete = orderedFloorSets.Length == 10 && observedFloorSets.SetEquals(Enumerable.Range(0, 10).Select(static value => (byte)value));
+    var canonical = JsonSerializer.Serialize(orderedFloorSets);
+    var summaryHash = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonical)));
+    var planmapIndexSummary = planmapIndices.OrderBy(static pair => pair.Key, StringComparer.Ordinal)
+        .ToDictionary(static pair => pair.Key, static pair => pair.Value.Order().ToArray(), StringComparer.Ordinal);
+    return (orderedFloorSets.Length, floorSetCoverageComplete, invalidGridCount, priorityIndexMismatchCount, planmapPath, planmapExists, planmapIndexSummary, summaryHash, orderedFloorSets);
+}
+
+static T GetAnonymousProperty<T>(object value, string name) => (T)value.GetType().GetProperty(name)!.GetValue(value)!;

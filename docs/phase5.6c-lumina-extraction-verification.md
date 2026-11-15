@@ -70,6 +70,32 @@ The offline probe now also reports the generated `TerritoryType.Map` row referen
 
 This closes only the ordinary `TerritoryType.Map` lookup path for this installed data. It does not establish that no separate map asset or runtime source exists, and it says nothing about dynamic floor state. No map image was extracted, no path was guessed, and no replay, plugin runtime, or game process was read.
 
+### Follow-up: typed EO 5x5 room grids and planmap index crosswalk (2026-11-16)
+
+The local Lumina Excel model exposes `DeepDungeonLayer`, `DeepDungeonMap5X`, and `DeepDungeonRoom`. Read-only iteration for EO `DeepDungeon.RowId = 3` found 10 `DeepDungeonLayer` rows (floor sets 0-9). Each layer's `RoomA` and `RoomB` references resolve to five subrows, each containing five `DeepDungeonRoom` row references. Six distinct A/B row pairs cover the ten floor sets: 37/38, 39/40, 41/42, 43/44, 45/46, and 47/48; the final four pairs are reused by adjacent floor sets.
+
+All 20 floor-set/variant grids have the same nonzero-cell pattern in Lumina enumeration order:
+
+```text
+. # # # .
+# # # # #
+# # # # #
+# # # # #
+. # # # .
+```
+
+Each grid has 21 nonzero room references and 32 orthogonally neighboring occupied-cell pairs. These are **static room-position and possible-neighbor candidates only**; the sheets do not state that a neighboring passage is currently open or traversable. The row/column order has not been calibrated to a screen compass orientation.
+
+The probe compared each nonzero row-major grid index (`row * 5 + column`) against the parsed `planmap.lgb` room-layer EventRange priority minus 100. The index sets matched exactly for all 20 A/B floor-set variants (zero invalid grids and zero mismatches). This is a cross-asset structural mapping: a player-pose match to a uniquely contained EventRange can yield a **candidate** 5x5 room index, following the same index convention used by pinned BossMod `Rooms.cs`. It does not prove the current variant, current room, door state, physical connectivity, or ground truth. The probe's `--deep-dungeon-grids` mode exits nonzero if the known planmap is absent, a grid is not 5x5, one of the ten floor sets is missing, or any index set differs.
+
+#### Read-only replay overlay
+
+The fixed export folder was searched again. The latest valid file by filesystem modification time and internal creation timestamp was `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`, schema 5, producer 0.5.3.0, 66 snapshots. Its stored `createdAtUtc` is `2026-11-08T23:29:45.946997+09:00` (equivalent instant `2026-11-08T14:29:45.946997Z`); exact floor is null, and the recorded floor range is 1-10.
+
+All 66 player poses were finite. Using the existing candidate bounds convention and matching each unique EventRange priority to the floor-set-0 grid index yielded 50 unique geometric candidates, all from the Room B layer: index 12 appeared 22 times, index 17 13 times, and index 18 15 times. Three snapshots matched multiple distinct candidates; 13 matched none. The replay SHA-256 before and after was unchanged: `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
+
+These are replay-to-static-geometry candidates, not verified room IDs or proof that Room B was the active layout: there is no independent room/template label, exact floor, or open-edge label in this replay. The result demonstrates that the data crosswalk can produce a compact candidate cell index while retaining ambiguous and unmatched observations as such; it does not unlock live BFS.
+
 ### Extracted structure
 
 | Layer | Objects | EventRange candidates | Distinct priorities | Shape / transform checks |
@@ -84,7 +110,7 @@ Across the 53 records in the two room layers, X/Z centers range from `-426.207` 
 
 ## Offline probe and checks
 
-Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
+Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. Its `--deep-dungeon-grids` mode extracts EO's static 5x5 sheet references and fails on grid shape, missing floorset, planmap, or room-index mismatch. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
 
 Commands used:
 
@@ -97,6 +123,10 @@ dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
   'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
   'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack' `
   --public-api-surface
+dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
+  'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
+  'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack' `
+  --deep-dungeon-grids
 ```
 
 Observed checks:
