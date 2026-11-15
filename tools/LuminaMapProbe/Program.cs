@@ -797,6 +797,10 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
     var multipleBoxCount = 0;
     var noCandidateCount = 0;
     var exactFloorKnownCount = 0;
+    var minPlanarX = double.PositiveInfinity;
+    var maxPlanarX = double.NegativeInfinity;
+    var minPlanarZ = double.PositiveInfinity;
+    var maxPlanarZ = double.NegativeInfinity;
     var bandCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
     var layerCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
     var indexCounts = new SortedDictionary<int, int>();
@@ -834,6 +838,10 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
         }
 
         finitePoseCount++;
+        minPlanarX = Math.Min(minPlanarX, x);
+        maxPlanarX = Math.Max(maxPlanarX, x);
+        minPlanarZ = Math.Min(minPlanarZ, z);
+        maxPlanarZ = Math.Max(maxPlanarZ, z);
         var hits = boxes.Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ).ToArray();
         if (hits.Length == 1)
         {
@@ -910,6 +918,7 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
         finitePoseCount,
         exactFloorKnownCount,
         floorBands = bandCounts,
+        playerPlanarBounds = finitePoseCount == 0 ? null : new { minX = minPlanarX, maxX = maxPlanarX, minZ = minPlanarZ, maxZ = maxPlanarZ },
         uniqueContainmentCount,
         multipleBoxCount,
         noCandidateCount,
