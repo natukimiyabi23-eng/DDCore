@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-11-16 — Lumina public DD sheet surface / EO Room C check
+
+- Added `--deep-dungeon-sheet-surface` to the offline Lumina probe. It reports public property/field signatures for 17 `DeepDungeon*` sheet types and `Level` (18 total), without iterating game-data rows in this mode. The local loaded Lumina assembly identity was `7.0.0.0`; two runs matched at SHA-256 `660EA6C221E76ABDAC69F5547CCECF9634C1E58F6ADC04C952B1FF6F659B6085`.
+- The reflected static model includes `DeepDungeonLayer.RoomA/RoomB/RoomC`, 5x5 room-grid references, a `DeepDungeonRoom.Level` collection, and static `Level` fields such as territory/map references and X/Y/Z/yaw/radius. None of these public type signatures documents current randomized-layout selection, open passage state, or walkability.
+- Extended the EO grid probe to report RoomC reference row IDs. In local game data marker `2026.11.03.0000.0000`, all ten EO floor sets have RoomC row ID 0. Room A/B grid crosswalk remains 10/10 floor sets, planmap present, zero invalid grids and zero mismatches; repeated canonical summaries matched at SHA-256 `60EAC0302AD572CAD6870BAEC84CF4411DB766A4CBB031AECF5F32874B076ACC`.
+- This is additional static-data evidence only. Current dynamic layout, exact room, open edges, traversability, and complete safe BFS inputs remain unknown; M0 stays UNKNOWN. No plugin runtime or game operation was changed.
+
 ## 2026-11-16 — Six-export EO box-trace recheck
 
 - Revalidated the fixed local replay folder: 12 replay exports total; six valid schema-5 EO exports (producer 0.5.3.0) contain 869 snapshots; none has an exact-floor value. A read-only, redacted trace completed all six with zero failures.

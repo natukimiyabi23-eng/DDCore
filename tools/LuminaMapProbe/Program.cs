@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -14,10 +14,11 @@ var luminaDirectory = Path.GetFullPath(args[0]);
 var sqpackDirectory = Path.GetFullPath(args[1]);
 var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
 var deepDungeonGridsOnly = args.Length > 2 && args[2] == "--deep-dungeon-grids";
+var deepDungeonSheetSurfaceOnly = args.Length > 2 && args[2] == "--deep-dungeon-sheet-surface";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
 var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
 if (replayRoomCandidates && args.Length < 4)
 {
     Console.Error.WriteLine("--replay-room-candidates requires an export-directory argument.");
@@ -135,6 +136,28 @@ if (apiSurfaceOnly)
 
     Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, publicApi = relevantTypes, repositoryCatalog }));
     return 0;
+}
+
+if (deepDungeonSheetSurfaceOnly)
+{
+    var sheets = excelAssembly.GetExportedTypes()
+        .Where(static type => type.Namespace == "Lumina.Excel.Sheets" && (type.Name.Contains("DeepDungeon", StringComparison.OrdinalIgnoreCase) || type.Name == "Level"))
+        .OrderBy(static type => type.Name, StringComparer.Ordinal)
+        .Select(static type => new
+        {
+            sheet = type.Name,
+            publicProperties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Select(static property => $"{property.PropertyType.FullName} {property.Name}")
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+            publicFields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Select(static field => $"{field.FieldType.FullName} {field.Name}")
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+        })
+        .ToArray();
+    Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, sheetCount = sheets.Length, sheets }, new JsonSerializerOptions { WriteIndented = true }));
+    return sheets.Length > 0 ? 0 : 1;
 }
 
 var excelApiMethods = excelModule?.GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
@@ -729,6 +752,7 @@ static (int FloorSetCount, bool FloorSetCoverageComplete, int InvalidGridCount, 
         {
             layerRowId = Convert.ToUInt32(GetMember(layer, "RowId")),
             floorSet = Convert.ToByte(GetMember(layer, "FloorSet")),
+            roomCReferenceRowId = Convert.ToUInt32(GetMember(GetMember(layer, "RoomC"), "RowId")),
             variants,
         });
     }

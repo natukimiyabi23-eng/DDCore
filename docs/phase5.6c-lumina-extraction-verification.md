@@ -88,6 +88,23 @@ Each grid has 21 nonzero room references and 32 orthogonally neighboring occupie
 
 The probe compared each nonzero row-major grid index (`row * 5 + column`) against the parsed `planmap.lgb` room-layer EventRange priority minus 100. The index sets matched exactly for all 20 A/B floor-set variants (zero invalid grids and zero mismatches). This is a cross-asset structural mapping: a player-pose match to a uniquely contained EventRange can yield a **candidate** 5x5 room index, following the same index convention used by pinned BossMod `Rooms.cs`. It does not prove the current variant, current room, door state, physical connectivity, or ground truth. The probe's `--deep-dungeon-grids` mode exits nonzero if the known planmap is absent, a grid is not 5x5, one of the ten floor sets is missing, or any index set differs.
 
+### Follow-up: public Deep Dungeon sheet surface and Room C references (2026-11-16)
+
+The standalone probe gained `--deep-dungeon-sheet-surface`, which reflects exported public properties/fields for types in `Lumina.Excel.Sheets` whose names contain `DeepDungeon`, plus the referenced `Level` row type. It reads type metadata only; it does not enumerate Excel rows in this mode. Against the installed hook, it found 18 matching public sheet types (Lumina assembly identity `7.0.0.0`). Two executions produced identical complete output SHA-256 `660EA6C221E76ABDAC69F5547CCECF9634C1E58F6ADC04C952B1FF6F659B6085`.
+
+The relevant generated public shapes are:
+
+| Sheet type | Public typed members observed | Limit |
+|---|---|---|
+| `DeepDungeonLayer` | `DeepDungeon`, `FloorSet`, and `RoomA`/`RoomB`/`RoomC` subrow references | A reference is static sheet linkage, not the active floor instance or its passage state. `Unknown0` remains opaque. |
+| `DeepDungeonMap5X` | `DeepDungeonRoom` collection | Supplies the static cell-to-room reference grid already inspected above. |
+| `DeepDungeonRoom` | `Level` collection | Links room rows to static `Level` rows; the type shape alone does not define connectivity or traversability. |
+| `Level` | `Territory`, `Map`, `Type`, `X`, `Y`, `Z`, `Yaw`, `Radius`, plus object/event references | These are static level-record fields; no field is documented by this inspection as a live DD connection/open-door/walkability state. |
+
+The `--deep-dungeon-grids` read-only data pass was extended to report each EO layer's `RoomC` row reference without treating it as a room grid. In the installed data marker `2026.11.03.0000.0000`, all ten EO floor-set rows (0-9) have `RoomC` row ID 0. The existing Room A/B crosswalk remained complete: 10 floor sets, planmap present, zero invalid grids, and zero priority/index mismatches. Two runs returned the same canonical summary hash `60EAC0302AD572CAD6870BAEC84CF4411DB766A4CBB031AECF5F32874B076ACC` (serialized output file SHA-256 `DFA37FBCEAAA08737939142A687705E6CB2084E183658A11293B72E622405C33`).
+
+This narrows the installed EO static typed-grid data to the observed A/B variants; it does not prove that every dynamic layout is represented by those variants, identify which variant is active, locate the player's current room, reveal open passages, or establish walkability. No public typed live-topology contract was found in this bounded inspection. M0 remains **UNKNOWN**, and no live BFS input is justified.
+
 #### Read-only replay overlay
 
 The fixed export folder was searched again. The latest valid file by filesystem modification time and internal creation timestamp was `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`, schema 5, producer 0.5.3.0, 66 snapshots. Its stored `createdAtUtc` is `2026-11-08T23:29:45.946997+09:00` (equivalent instant `2026-11-08T14:29:45.946997Z`); exact floor is null, and the recorded floor range is 1-10.

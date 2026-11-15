@@ -1,7 +1,27 @@
 # DDCore continuation
 
 Status: in_progress
-Updated: 2026-11-16 JST (redacted per-snapshot box trace)
+Updated: 2026-11-16 JST (Lumina public sheet surface audit)
+
+## Current bounded audit result (2026-11-16)
+
+- Objective: inspect local public Lumina typed DD sheet metadata and EO RoomC usage; no plugin runtime, game UI, game process, private memory, or gameplay changes.
+- Starting point: branch `research/phase56c-sharedgroup-inspection`, HEAD `dd8c72fd050516aadecfb36952e472f02401ecb5`, worktree clean before this slice, Draft PR #22 Open/Draft/unmerged. Last known CI at start passed (`43762402361`).
+- Preflight: last authoritative display available to this task showed 77% five-hour use remaining, without an exact token count. No task-specific follow-up automation is claimed; the change is limited to an offline developer probe and evidence documents.
+- Completed: added `--deep-dungeon-sheet-surface` to inspect public property/field signatures for 17 `DeepDungeon*` types plus `Level` (18 types total); amended `--deep-dungeon-grids` to report EO `RoomC` row references. Local Lumina assembly identity `7.0.0.0`; game marker `2026.11.03.0000.0000`; all ten EO floor-set RoomC references are zero. Static A/B grid and planmap crosswalk remains complete (10 floor sets; 0 invalid grids; 0 mismatches).
+- Determinism: sheet-surface output SHA-256 repeated as `660EA6C221E76ABDAC69F5547CCECF9634C1E58F6ADC04C952B1FF6F659B6085`; grid canonical summary repeated as `60EAC0302AD572CAD6870BAEC84CF4411DB766A4CBB031AECF5F32874B076ACC`.
+- Evidence conclusion: typed static rows expose room-template references and Level coordinates/territory/map metadata, but no inspected field contract establishes active randomized layout, current room, open connections, or walkability. M0 remains UNKNOWN and live BFS remains disconnected.
+- Updated files: `tools/LuminaMapProbe/Program.cs`, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/progress.md`, `CONTINUATION.md`.
+- Verification completed: `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; `dotnet build DDCore.slnx -c Release --no-restore` passed with 0 warnings/errors; `dotnet test DDCore.slnx -c Release --no-build` passed (373 total: Core 197, Observation 163, probe 13); `dotnet list DDCore.slnx package --vulnerable --include-transitive` found no vulnerable packages across six projects; `git diff --check` passed. The Release probe was invoked twice for sheet signatures and twice for EO grid/RoomC data; outputs were byte-identical per mode.
+- Exact unfinished step: review final diff, commit/push this bounded slice on the existing PR #22 branch, and confirm its CI. No plugin package is deployed; no runtime/game test was performed.
+
+## Current bounded source audit (2026-11-16)
+
+- Objective: inspect the installed Lumina Excel public type surface for Deep Dungeon-related typed sheets beyond `DeepDungeon`, `DeepDungeonLayer`, `DeepDungeonMap5X`, and `DeepDungeonRoom`, and determine whether any public static row model actually describes dynamic connections, revealed cells, or walkability.
+- Starting point: `research/phase56c-sharedgroup-inspection`, HEAD `dd8c72fd050516aadecfb36952e472f02401ecb5`, clean worktree; Draft PR #22 Open/Draft/unmerged; the latest CI for this head passed (`43762402361`).
+- Preflight: authoritative five-hour usage is 23% used / 77% remaining; exact token count is unavailable. This is bounded read-only assembly/document inspection; no plugin runtime edits are planned in this slice. No task-tracking automation is claimed.
+- Scope: inspect public `Lumina.Excel` type names and named public fields only; do not read native game memory, parse undocumented addon payloads, reverse hashes, or infer map semantics from opaque fields.
+- First action: enumerate matching public type names and relevant field/property signatures, then stop at the evidence boundary if no typed dynamic-map contract exists.
 
 ## Current bounded verification
 
