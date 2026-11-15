@@ -13,7 +13,9 @@ Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 - Evidence conclusion: typed static rows expose room-template references and Level coordinates/territory/map metadata, but no inspected field contract establishes active randomized layout, current room, open connections, or walkability. M0 remains UNKNOWN and live BFS remains disconnected.
 - Updated files: `tools/LuminaMapProbe/Program.cs`, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/progress.md`, `CONTINUATION.md`.
 - Verification completed: `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; `dotnet build DDCore.slnx -c Release --no-restore` passed with 0 warnings/errors; `dotnet test DDCore.slnx -c Release --no-build` passed (373 total: Core 197, Observation 163, probe 13); `dotnet list DDCore.slnx package --vulnerable --include-transitive` found no vulnerable packages across six projects; `git diff --check` passed. The Release probe was invoked twice for sheet signatures and twice for EO grid/RoomC data; outputs were byte-identical per mode.
-- Exact unfinished step: review final diff, commit/push this bounded slice on the existing PR #22 branch, and confirm its CI. No plugin package is deployed; no runtime/game test was performed.
+- Completed source/evidence commit: `5b9dc81e5ac8e4c3f0ef7b37e5223b7f8320737a`, pushed to the existing PR #22 branch. Push CI run `43763371411` passed restore, Release build, tests, offline probe build, and package step. The final sheet-surface output was re-run after the `Level` inclusion and repeated at SHA-256 `660EA6C221E76ABDAC69F5547CCECF9634C1E58F6ADC04C952B1FF6F659B6085`.
+- No plugin package is deployed; no runtime/game test was performed. PR #22 remains Open/Draft/unmerged.
+- Next meaningful evidence step: independently labeled live floor/layout and passage-state observations from an allowed source. Until then keep M0 UNKNOWN and the live BFS disconnected; do not add movement/combat/input or decode undocumented addon payloads.
 
 ## Current bounded source audit (2026-11-16)
 
