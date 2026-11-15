@@ -3,6 +3,13 @@
 Status: in_progress
 Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 
+## Current integration-prep slice (2026-11-16)
+
+- Branch: `feature/eo-b1-readonly-integration-prep`, created from verified PR #22 head `ec9d65842586ebd7eb4f4b224ca25b78d8cc4b35`; PR #22 stays unchanged and Open/Draft/unmerged.
+- Added an accurate read-only integration status note and manual replay-label collection guide, and linked them in README. The guide documents `--validate-room-labels` schema fields and warns that room-box classification does not validate edges or enable BFS.
+- No plugin/runtime or game data change. Documentation references were checked against the current tree and `git diff --check` passed. PR #23 (`https://github.com/natukimiyabi23-eng/DDCore/pull/23`) is Open/Draft, stacked on PR #22. CI branch filters now include this head and base. Latest content commit `179da4c66f330b190bc82cd54eac7b5c9e12db1e` passed PR CI run `43768059949` (build, tests, offline probe build and package); its push run is also tracked. Next: retain Unknown for live room, active layout and connections; obtain independently labeled captures before any live-map classifier or BFS connection. No live routing or game actions are enabled.
+- Additional data check: candidate-layer counts on the six local schema-5 replays were B-only for 50 unique samples in the newest file, mixed A/B for the next two (82/19 and 59/34), and zero candidates in the three oldest. Exact floor is null in all; do not interpret candidate layer as active tileset.
+
 ## Latest bounded milestone (2026-11-16)
 
 - Objective: compare pinned BossMod EO wall-template coordinates with local Lumina Room A/B candidate bounds offline. No plugin runtime, game process/UI, gameplay, private API, or memory access was changed or used.
