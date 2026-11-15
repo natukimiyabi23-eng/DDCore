@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -16,10 +16,16 @@ var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
 var deepDungeonGridsOnly = args.Length > 2 && args[2] == "--deep-dungeon-grids";
 var deepDungeonSheetSurfaceOnly = args.Length > 2 && args[2] == "--deep-dungeon-sheet-surface";
 var deepDungeonRoomLevelsOnly = args.Length > 2 && args[2] == "--deep-dungeon-room-levels";
+var deepDungeonWallCrosswalk = args.Length > 2 && args[2] == "--deep-dungeon-wall-crosswalk";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
 var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !deepDungeonWallCrosswalk && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
+if (deepDungeonWallCrosswalk && args.Length < 4)
+{
+    Console.Error.WriteLine("--deep-dungeon-wall-crosswalk requires a pinned BossMod Walls.json path.");
+    return 2;
+}
 if (replayRoomCandidates && args.Length < 4)
 {
     Console.Error.WriteLine("--replay-room-candidates requires an export-directory argument.");
@@ -312,6 +318,13 @@ foreach (var layer in layers)
     }
 
     summaries.Add(new { name = layerName, id = layerId, objectCount = layerObjectCount });
+}
+
+if (deepDungeonWallCrosswalk)
+{
+    var crosswalk = CompareStaticWallTemplates(args[3], roomCandidates, planmapSha256);
+    Console.WriteLine(JsonSerializer.Serialize(crosswalk.Report, new JsonSerializerOptions { WriteIndented = true }));
+    return crosswalk.IsComplete ? 0 : 1;
 }
 
 foreach (var assetPath in sharedGroupAssetPaths)
@@ -886,6 +899,191 @@ static (int RoomSetCount, int UnresolvedLevelReferenceCount, object Report) Read
         interpretation = "static references and coordinate metadata only; not current randomized layout, room identity, passage state, or walkability",
     };
     return (roomRowIds.Count, levelRowIds.Count - levels.Count, report);
+}
+
+static (bool IsComplete, object Report) CompareStaticWallTemplates(string wallsJsonPath, List<object> roomCandidates, string planmapSha256)
+{
+    if (!File.Exists(wallsJsonPath))
+        throw new FileNotFoundException("Pinned BossMod Walls.json was not found.");
+
+    var wallsBytes = File.ReadAllBytes(wallsJsonPath);
+    using var wallsDocument = JsonDocument.Parse(wallsBytes);
+    var boxes = new Dictionary<(char Variant, int Index), List<(double MinX, double MaxX, double MinZ, double MaxZ)>>();
+    foreach (var candidate in roomCandidates)
+    {
+        var layer = GetAnonymousProperty<string>(candidate, "layer");
+        var variant = layer.EndsWith("A", StringComparison.Ordinal) ? 'A'
+            : layer.EndsWith("B", StringComparison.Ordinal) ? 'B'
+            : '\0';
+        var index = GetAnonymousProperty<int>(candidate, "priority") - 100;
+        if (variant is '\0' || index is < 0 or >= 25)
+            continue;
+
+        var bounds = GetAnonymousProperty<object>(candidate, "boundsUsingBossModConvention");
+        var key = (variant, index);
+        if (!boxes.TryGetValue(key, out var cellBoxes))
+        {
+            cellBoxes = [];
+            boxes.Add(key, cellBoxes);
+        }
+        cellBoxes.Add((
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minX")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxX")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minZ")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxZ"))));
+    }
+
+    var floorSetResults = new List<object>();
+    var pooledDistances = new Dictionary<(char WallVariant, char BoxVariant), List<double>>();
+    var pooledMissing = new Dictionary<(char WallVariant, char BoxVariant), int>();
+    var invalidTemplateCount = 0;
+    var allFloorKeysPresent = true;
+
+    foreach (var floorSet in Enumerable.Range(1, 10))
+    {
+        var key = $"3.{floorSet}";
+        if (!wallsDocument.RootElement.TryGetProperty(key, out var floorElement))
+        {
+            allFloorKeysPresent = false;
+            continue;
+        }
+
+        var comparisons = new List<object>();
+        foreach (var wallVariant in new[] { 'A', 'B' })
+        {
+            var wallRooms = floorElement.GetProperty($"Rooms{wallVariant}").GetProperty("Rooms");
+            if (wallRooms.GetArrayLength() != 25)
+            {
+                invalidTemplateCount++;
+                continue;
+            }
+
+            var roomWalls = wallRooms.EnumerateArray().Select(static room => ReadRoomWalls(room)).ToArray();
+            if (roomWalls.Sum(static wallsForRoom => wallsForRoom.NonzeroDepthCount) != 28
+                || roomWalls.Any(static wallsForRoom => wallsForRoom.InvalidValues))
+                invalidTemplateCount++;
+
+            foreach (var boxVariant in new[] { 'A', 'B' })
+            {
+                var distances = new List<double>();
+                var missingBoxCount = 0;
+                for (var index = 0; index < roomWalls.Length; index++)
+                {
+                    foreach (var wall in roomWalls[index].Walls)
+                    {
+                        if (wall.Depth <= 0)
+                            continue;
+                        if (!boxes.TryGetValue((boxVariant, index), out var bounds))
+                        {
+                            missingBoxCount++;
+                            continue;
+                        }
+
+                        distances.Add(bounds.Select(box => StaticWallGeometryCrosswalk.DistanceToNearestSupportingLine(
+                                wall.X,
+                                wall.Z,
+                                wall.Direction,
+                                box.MinX,
+                                box.MaxX,
+                                box.MinZ,
+                                box.MaxZ))
+                            .Min());
+                    }
+                }
+
+                var comparisonKey = (wallVariant, boxVariant);
+                if (!pooledDistances.TryGetValue(comparisonKey, out var pooled))
+                {
+                    pooled = [];
+                    pooledDistances.Add(comparisonKey, pooled);
+                    pooledMissing.Add(comparisonKey, 0);
+                }
+                pooled.AddRange(distances);
+                pooledMissing[comparisonKey] += missingBoxCount;
+
+                comparisons.Add(new
+                {
+                    wallTemplate = wallVariant.ToString(),
+                    boxLayer = boxVariant.ToString(),
+                    wallPointCount = distances.Count,
+                    missingBoxCount,
+                    medianSupportingLineDistance = Median(distances),
+                    within5Units = distances.Count(static value => value <= 5),
+                    within10Units = distances.Count(static value => value <= 10),
+                });
+            }
+        }
+
+        floorSetResults.Add(new { floorset = key, comparisons });
+    }
+
+    var overallComparisons = pooledDistances
+        .OrderBy(static pair => pair.Key.WallVariant)
+        .ThenBy(static pair => pair.Key.BoxVariant)
+        .Select(pair => new
+        {
+            wallTemplate = pair.Key.WallVariant.ToString(),
+            boxLayer = pair.Key.BoxVariant.ToString(),
+            wallPointCount = pair.Value.Count,
+            missingBoxCount = pooledMissing[pair.Key],
+            medianSupportingLineDistance = Median(pair.Value),
+            within5Units = pair.Value.Count(static value => value <= 5),
+            within10Units = pair.Value.Count(static value => value <= 10),
+        })
+        .ToArray();
+    var summaryCore = new
+    {
+        dungeonRowId = 3,
+        floorSetCount = floorSetResults.Count,
+        allFloorKeysPresent,
+        roomCandidateShapeCount = roomCandidates.Count,
+        roomCandidateCellCount = boxes.Count,
+        cellsWithMultipleCandidateShapes = boxes.Values.Count(static candidates => candidates.Count > 1),
+        invalidTemplateCount,
+        planmapSha256,
+        wallsJsonSha256 = Convert.ToHexString(SHA256.HashData(wallsBytes)),
+        metric = "distance to nearest orientation-matched infinite edge line using static planmap bounds Translation +/- abs(Scale); ignores segment extent and is uncalibrated",
+        floorSetResults,
+        overallComparisons,
+        inferenceLimit = "static geometry comparison only; not active layout, room identity, wall truth, passage state, collision, or walkability",
+    };
+    var summarySha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(summaryCore))));
+    var complete = floorSetResults.Count == 10 && allFloorKeysPresent && roomCandidates.Count == 53 && boxes.Count == 42
+        && invalidTemplateCount == 0 && pooledMissing.Values.All(static missing => missing == 0)
+        && pooledDistances.Values.All(static distances => distances.Count == 280);
+    return (complete, new { summaryCore, summarySha256 });
+
+    static (IReadOnlyList<(string Direction, double X, double Z, double Depth)> Walls, int NonzeroDepthCount, bool InvalidValues) ReadRoomWalls(JsonElement room)
+    {
+        var walls = new List<(string Direction, double X, double Z, double Depth)>();
+        var nonzeroDepthCount = 0;
+        var invalidValues = false;
+        foreach (var direction in new[] { "North", "South", "West", "East" })
+        {
+            var edge = room.GetProperty(direction);
+            var depth = edge.GetProperty("Depth").GetDouble();
+            var x = edge.GetProperty("Position").GetProperty("X").GetDouble();
+            var z = edge.GetProperty("Position").GetProperty("Z").GetDouble();
+            if (!double.IsFinite(depth) || !double.IsFinite(x) || !double.IsFinite(z))
+            {
+                invalidValues = true;
+                continue;
+            }
+            if (depth != 0)
+                nonzeroDepthCount++;
+            walls.Add((direction, x, z, depth));
+        }
+        return (walls, nonzeroDepthCount, invalidValues);
+    }
+
+    static double Median(List<double> values)
+    {
+        if (values.Count == 0)
+            return double.NaN;
+        var sorted = values.Order().ToArray();
+        var middle = sorted.Length / 2;
+        return sorted.Length % 2 == 1 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    }
 }
 
 static (object Report, int SelectedReplayCount) ReadReplayRoomCandidateCollection(string exportDirectory, List<object> roomCandidates, object[] floorSets)

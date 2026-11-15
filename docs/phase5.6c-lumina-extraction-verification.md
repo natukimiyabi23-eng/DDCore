@@ -296,6 +296,21 @@ For an offline consistency check only, the 28 nonzero directional wall positions
 
 This shows that the A and B candidate families in this static file occupy widely separated coordinate regions, while the same-letter wall/room pairing is only a weak geometric fit under the uncalibrated bounds metric. The close cross-layer comparison does **not** establish which layout is active, prove an individual wall-to-room mapping, verify collision geometry, or identify a live randomized floor. It was one floor-set only, used no ground-truth labels, and is not a route or BFS input.
 
+### Exploratory all-floor-set wall-template crosswalk (2026-11-16)
+
+The offline probe gained `--deep-dungeon-wall-crosswalk <Walls.json>` and compared all ten EO keys (`3.1`-`3.10`) from pinned BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0` against the locally loaded EO `planmap.lgb`. Source file SHA-256: `D33C758C19753043CCD830B28D25719877659C13ED0EEE852E6693DD4E7F4D75`; planmap parsed-data SHA-256: `1B4148C41AD911AB7B056FE2F08E2794E22FA12C10BEC1ED2E281A9FFC672497`.
+
+The input had 20 wall templates, each with 25 room slots and 28 nonzero directional `Depth` entries (560 points total). The planmap had 53 Room A/B `EventRange` shapes across 42 distinct layer/cell keys; 10 keys had multiple shapes. For each wall point and same-index box cell, the probe takes the minimum distance across candidate shapes to an orientation-matched **infinite supporting line** of the box: North/South compare Z with the box min/max Z, East/West compare X with min/max X. This deliberately simple metric ignores segment extents, calibrated coordinate semantics, and collision meaning.
+
+| BossMod template | planmap layer | Points | Median supporting-line distance | Within 5 units | Within 10 units |
+|---|---|---:|---:|---:|---:|
+| A | A | 280 | 11.21 | 64 | 124 |
+| A | B | 280 | 571.17 | 0 | 0 |
+| B | A | 280 | 565.86 | 0 | 0 |
+| B | B | 280 | 10.47 | 56 | 128 |
+
+Two runs returned the same canonical summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`. The result supports only a broad static coordinate-family separation between A and B under this metric. Same-letter medians remain around 10-11 units and do not validate individual boundaries. It does not identify active layout, current room, actual barriers, open connections, collision, or walkability, and is not BFS input. M0 stays **UNKNOWN**.
+
 ## Next prerequisites
 
 1. Obtain multiple user-labelled EO layouts with player positions in the same coordinate frame, plus independent labels of room identity, active A/B template, and open passages. Keep samples anonymized and outside the plugin runtime.

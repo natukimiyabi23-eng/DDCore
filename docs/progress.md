@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-11-16 — EO static wall-template crosswalk across floor sets
+
+- Added an offline `--deep-dungeon-wall-crosswalk <Walls.json>` LuminaMapProbe mode and pure geometry metric tests. It compares every pinned BossMod EO wall template (`3.1`-`3.10`) with matching-index Room A/B planmap candidates; it does not copy BossMod code/data or affect plugin runtime.
+- Inspected source was pinned BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`; `Walls.json` SHA-256 `D33C758C19753043CCD830B28D25719877659C13ED0EEE852E6693DD4E7F4D75`; local `planmap.lgb` parsed-data SHA-256 `1B4148C41AD911AB7B056FE2F08E2794E22FA12C10BEC1ED2E281A9FFC672497`.
+- The 20 templates yielded 560 nonzero directional points. The planmap contained 53 candidate shapes over 42 layer/cell keys, with 10 keys having multiple shapes. Across 280 samples per pairing, median nearest orientation-matched infinite-line distance was A→A 11.21, A→B 571.17, B→A 565.86, B→B 10.47; cross-pairings had no values within 10 units. This uncalibrated metric ignores segment extents and cannot establish wall truth or room identity.
+- Two executions matched at summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`. M0 remains UNKNOWN; dynamic layout, current room, edges and walkability are unavailable, so live BFS remains disconnected.
+
 ## 2026-11-16 — EO room-to-Level static reference probe
 
 - Added `--deep-dungeon-room-levels` to the offline Lumina probe. It follows nonzero Room A/B grid references from EO's ten static floor-set rows into distinct `DeepDungeonRoom` rows and their public `Level` references, emitting counts only.

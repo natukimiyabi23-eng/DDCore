@@ -3,6 +3,16 @@
 Status: in_progress
 Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 
+## Latest bounded milestone (2026-11-16)
+
+- Objective: compare pinned BossMod EO wall-template coordinates with local Lumina Room A/B candidate bounds offline. No plugin runtime, game process/UI, gameplay, private API, or memory access was changed or used.
+- Starting branch/head: `research/phase56c-sharedgroup-inspection` at `de08045714ead8a15efab63c474f964832a7ec82`; PR #22 Open/Draft/unmerged. Existing PRs #16-#21 and `main` were not modified or merged.
+- Changes: `tools/LuminaMapProbe/Program.cs`, new pure helper and tests, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/progress.md`, this file.
+- Offline measurement: 20 EO A/B templates, 560 nonzero directional points; 53 planmap shapes / 42 variant-cell keys (10 keys have multiple shapes). Same-letter pairings were broadly closer than cross-letter pairings under an uncalibrated nearest infinite supporting-line metric; two runs matched summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`.
+- Interpretation: this is static family-level consistency only. It does not establish active randomized layout, current room, actual walls/open passages, collision, walkability, or a valid live BFS graph. M0 remains UNKNOWN.
+- Verification on this tree: Release solution build passed (0 warnings/errors); all 380 tests passed (197 Core, 163 Observation, 20 probe); `dotnet format ... --verify-no-changes --no-restore` passed; NuGet vulnerability audit found none in six projects; `git diff --check` passed; forbidden runtime/game-operation/private-memory scan found no matches in changed implementation files. Full offline probe rerun matched the recorded summary hash.
+- Exact next step: stage only the six listed changed files, commit and push to the existing PR #22 branch, then verify the resulting CI. Do not connect this metric to room identity, BFS, or plugin runtime.
+
 ## Current bounded audit result (2026-11-16)
 
 - Objective: inspect local public Lumina typed DD sheet metadata and EO RoomC usage; no plugin runtime, game UI, game process, private memory, or gameplay changes.
@@ -27,7 +37,12 @@ Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 - Updated evidence files: `tools/LuminaMapProbe/Program.cs`, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/progress.md`, `CONTINUATION.md`.
 - Direct `GetRow(uint)` follow-up result: 589/589 unique nonzero `Level` references threw the public sheet's out-of-range lookup exception; zero resolved, so no territory/map/coordinate aggregates are available. The probe catches those lookup exceptions and emits counts only. Two output runs matched at SHA-256 `B71EB83290943762D2AD0988FC4E51CAFA4CBE48856F84B6381B42D9C3C4C95B`. This does not prove the links are semantically invalid or that no alternate resolver exists.
 - Verification completed: `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; Release solution build passed with 0 warnings/errors; all 373 tests passed (197 Core, 163 Observation, 13 probe); NuGet audit found no vulnerable packages across six projects; `git diff --check` passed.
-- Exact unfinished step: review the final diff, commit/push this read-only probe and evidence update to PR #22, and verify CI. Do not modify plugin runtime or use unresolved Level links for room matching/BFS.
+- Completed source/evidence commit: `de08045714ead8a15efab63c474f964832a7ec82`, pushed to PR #22. Push CI run `43764482536` passed; PR run `43764489932` also passed. PR remains Open/Draft/unmerged.
+- Implementation milestone: added `--deep-dungeon-wall-crosswalk <Walls.json>`, which validates the ten pinned EO template keys and produces only aggregate comparison metrics, and a pure line-distance helper with unit tests. It handles multiple EventRange shapes per variant/cell by minimizing over the candidate shapes, not overwriting them.
+- Offline result: BossMod source at the fixed commit has 20 A/B templates and 560 nonzero directional points. planmap contains 53 shapes over 42 variant/cell keys (10 keys have multiple shapes). Per 280-point pairing, median nearest orientation-matched infinite-line distances: A→A 11.21, A→B 571.17, B→A 565.86, B→B 10.47; cross-variant distances had zero points within 10 units. This uncalibrated metric ignores edge segment extent and is not room/wall truth. Two runs match summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`.
+- BossMod source evidence: pinned commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`; Walls.json SHA-256 `D33C758C19753043CCD830B28D25719877659C13ED0EEE852E6693DD4E7F4D75`. Lumina planmap parsed-data SHA-256 `1B4148C41AD911AB7B056FE2F08E2794E22FA12C10BEC1ED2E281A9FFC672497`.
+- Verification completed: format verification passed; Release solution build passed with 0 warnings/errors; all 380 tests passed (Core 197, Observation 163, LuminaMapProbe 20); NuGet vulnerability audit found none across six projects. Two full live-data-reader runs agreed at summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`; the report covers ten keys, 20 templates, 560 points, 53 shapes/42 cells, zero invalid templates and zero missing boxes. `git diff --check` and runtime/private-access audit remain to finish.
+- Exact unfinished step: finish diff/privacy/safety review, commit/push the offline tool + evidence to PR #22, then verify CI. Do not connect the metric to room identity, walls, BFS, or plugin runtime.
 
 ## Current bounded source audit (2026-11-16)
 
