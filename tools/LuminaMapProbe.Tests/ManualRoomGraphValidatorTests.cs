@@ -25,30 +25,51 @@ public sealed class ManualRoomGraphValidatorTests
         Assert.Equal("offline-route", result.Status);
         Assert.Equal([1], result.Route);
         Assert.Equal(25, result.PresentRoomCount);
+        Assert.Equal(0, result.UnknownRoomCount);
         Assert.Equal(1, result.OpenPassageCount);
+        Assert.Equal(0, result.UnknownPassageCount);
         Assert.True(result.GraphComplete);
         Assert.True(result.IsOfflineOnly);
         Assert.Contains("image meaning is user-asserted", result.EvidenceTrust, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void AnyUnknownRoomOrPassagePreventsRouteOutput()
+    public void UnknownLabelsOutsideKnownOpenPathAllowOnlyAnOfflinePartialRoute()
     {
         using var replay = Replay();
         var unknownRoom = Labels();
         unknownRoom.Rooms[24] = new(24, "unknown", "notObserved");
         var unknownPassage = Labels();
-        unknownPassage.Passages[0] = new(0, 1, "unknown", "notObserved");
+        unknownPassage.Passages[1] = unknownPassage.Passages[1] with { State = "unknown", Evidence = "notObserved" };
+        var pathUnknown = Labels();
+        pathUnknown.Passages[0] = new(0, 1, "unknown", "notObserved");
 
         var first = Evaluate(unknownRoom, replay.RootElement);
         var second = Evaluate(unknownPassage, replay.RootElement);
+        var third = Evaluate(pathUnknown, replay.RootElement);
 
-        Assert.Equal("incomplete", first.Status);
-        Assert.Equal("graph.contains-unknown", first.ReasonCode);
-        Assert.Empty(first.Route);
+        Assert.Equal("offline-partial-route", first.Status);
+        Assert.Equal("route.uses-only-explicitly-open-labeled-passages", first.ReasonCode);
+        Assert.Equal([1], first.Route);
         Assert.False(first.GraphComplete);
-        Assert.Equal("incomplete", second.Status);
-        Assert.Empty(second.Route);
+        Assert.Equal(1, first.UnknownRoomCount);
+        Assert.Equal(0, first.UnknownPassageCount);
+        Assert.Equal("offline-partial-route", second.Status);
+        Assert.Equal([1], second.Route);
+        Assert.Equal(1, second.UnknownPassageCount);
+        Assert.Equal("incomplete", third.Status);
+        Assert.Equal("route.no-known-open-path-in-incomplete-graph", third.ReasonCode);
+        Assert.Empty(third.Route);
+    }
+
+    [Fact]
+    public void OpenPassageCannotUseAnUnknownEndpointRoom()
+    {
+        using var replay = Replay();
+        var labels = Labels();
+        labels.Rooms[1] = new(1, "unknown", "notObserved");
+
+        Assert.Throws<InvalidDataException>(() => Evaluate(labels, replay.RootElement));
     }
 
     [Fact]

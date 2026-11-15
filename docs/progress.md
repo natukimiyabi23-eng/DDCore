@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-11-16 — Offline routes from confirmed portions of the EO graph
+
+- Updated the schema-2 manual graph validator to emit `offline-partial-route` only when the full start-to-destination path consists of explicitly Open passages whose endpoint rooms are explicitly Present. Unknown edges are excluded; an unknown endpoint on an Open passage is rejected.
+- A complete graph still reports `offline-route` or `no-route`. With an incomplete graph and no path through known-open edges, the validator returns `incomplete` rather than claiming no route. Output includes Unknown room/passage counts; partial paths are shortest only in the known-open subgraph and are not live recommendations.
+- Verification: locked restore passed; Release solution build passed with 0 warnings/errors; all 397 tests passed (Core 197, Observation 163, probe 37); explicit probe Release build, format, NuGet audit (none in six projects), and diff check passed. CI for this follow-up is pending push. M0 remains UNKNOWN; no plugin/runtime or game behavior is connected.
+
 ## 2026-11-16 — Bind offline room graph labels to local evidence bytes
 
 - Strengthened the offline EO graph-label format to schema 2. Each screenshot-backed room/passage claim now references its own SHA-256, and the validator requires those bytes plus the context screenshot to exist in a caller-selected local evidence directory. `LuminaMapProbe` checks supported image signatures, caps the scan at 256 files / 50 MiB per file / 250 MiB total, and emits no paths or image contents. It does not inspect image semantics; correctness of the visual claim remains user-asserted.

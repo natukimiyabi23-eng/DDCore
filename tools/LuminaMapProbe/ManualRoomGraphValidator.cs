@@ -22,7 +22,9 @@ public sealed record ManualRoomGraphValidation(
     string Status,
     string ReasonCode,
     int PresentRoomCount,
+    int UnknownRoomCount,
     int OpenPassageCount,
+    int UnknownPassageCount,
     IReadOnlyList<int> Route,
     bool GraphComplete,
     bool IsOfflineOnly,
@@ -66,9 +68,8 @@ public static class ManualRoomGraphValidator
         ValidateRoomLabels(labels.Rooms, availableEvidenceSha256);
         ValidatePassages(labels.Passages, labels.Rooms, availableEvidenceSha256);
         var roomStates = labels.Rooms.ToDictionary(static room => room.Room, static room => room.State);
-        if (labels.Rooms.Any(static room => room.State == "unknown")
-            || labels.Passages.Any(static passage => passage.State == "unknown"))
-            return Result("incomplete", "graph.contains-unknown", labels, [], false);
+        var hasUnknownLabels = labels.Rooms.Any(static room => room.State == "unknown")
+            || labels.Passages.Any(static passage => passage.State == "unknown");
 
         if (labels.ExactFloor is null || labels.Variant is null or not ("A" or "B") || labels.CurrentRoom is null || labels.EvidenceSha256 is null)
             return Result("incomplete", "graph.context-unknown", labels, [], false);
@@ -88,7 +89,7 @@ public static class ManualRoomGraphValidator
         foreach (var passage in labels.Passages.Where(static passage => passage.State == "open"))
         {
             if (roomStates[passage.RoomA] != "present" || roomStates[passage.RoomB] != "present")
-                throw new InvalidDataException("An open passage cannot connect an absent room.");
+                throw new InvalidDataException("An open passage requires both endpoint rooms to be explicitly labeled present.");
             var (flagA, flagB) = DirectionFlags(passage.RoomA, passage.RoomB);
             map[passage.RoomA] |= flagA;
             map[passage.RoomB] |= flagB;
@@ -96,10 +97,14 @@ public static class ManualRoomGraphValidator
 
         var path = RoomPathfinder.FindPath(map, labels.CurrentRoom.Value, destinationRoom);
         if (labels.CurrentRoom == destinationRoom)
-            return Result("same-room", "route.start-equals-destination", labels, [], true);
+            return Result("same-room", "route.start-equals-destination", labels, [], !hasUnknownLabels);
         if (path.Count == 0)
-            return Result("no-route", "route.no-open-path", labels, [], true);
-        return Result("offline-route", "route.validated-from-user-labels", labels, path, true);
+            return hasUnknownLabels
+                ? Result("incomplete", "route.no-known-open-path-in-incomplete-graph", labels, [], false)
+                : Result("no-route", "route.no-open-path", labels, [], true);
+        return hasUnknownLabels
+            ? Result("offline-partial-route", "route.uses-only-explicitly-open-labeled-passages", labels, path, false)
+            : Result("offline-route", "route.validated-from-user-labels", labels, path, true);
     }
 
     private static void ValidateReplaySnapshot(JsonElement replay, ManualRoomGraphLabelSet labels)
@@ -165,8 +170,8 @@ public static class ManualRoomGraphValidator
 
         var roomStates = rooms.ToDictionary(static room => room.Room, static room => room.State);
         if (passages.Any(passage => passage.State == "open"
-            && (roomStates[passage.RoomA] == "absent" || roomStates[passage.RoomB] == "absent")))
-            throw new InvalidDataException("An open passage cannot touch a room labeled absent.");
+            && (roomStates[passage.RoomA] != "present" || roomStates[passage.RoomB] != "present")))
+            throw new InvalidDataException("An open passage requires both endpoint rooms to be explicitly present.");
     }
 
     private static bool IsCurrentRoomCandidateSupported(
@@ -283,7 +288,9 @@ public static class ManualRoomGraphValidator
             status,
             reason,
             labels.Rooms.Count(static room => room.State == "present"),
+            labels.Rooms.Count(static room => room.State == "unknown"),
             labels.Passages.Count(static passage => passage.State == "open"),
+            labels.Passages.Count(static passage => passage.State == "unknown"),
             route,
             graphComplete,
             true,
