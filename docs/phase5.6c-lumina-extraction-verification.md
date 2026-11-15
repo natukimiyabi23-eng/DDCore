@@ -113,7 +113,22 @@ Among the three recordings with any unique box containment (267 samples), 244 we
 
 All six selected recordings report only the same 1-10 floor band and have zero exact-floor observations. The three oldest, zero-containment recordings' projected player X/Z positions occupy the aggregate envelope X `[-310.51, -281.42]`, Z `[-319.02, -280.85]`; the three later recordings with some containment span X `[-305.12, 370.61]`, Z `[-438.55, 295.00]`. This shows the unmatched samples are spatially concentrated in a region outside the current candidate boxes, but cannot distinguish an unrepresented room/corridor, floor-specific geometry, or a coordinate/bounds mismatch. Exact floor and room labels are absent, so none of those explanations is confirmed.
 
-The new offline collection mode reproduced this aggregate twice: six selected recordings, zero malformed schema-5 files, zero other-DD schema-5 files in the inspected directory, 869 samples, and canonical sanitized-output SHA-256 `D440CC2F6247A07E61E9E65D636FF6E3F003FB3DF7C624DB4394EB29D41BA995` on both runs. Sequence comparison resets across 10-floor-band changes instead of treating the old and new band as adjacent room evidence; these six recordings had no such boundary crossing. A deliberately nonexistent export directory was rejected with exit code 2. No raw replay was written, moved, or staged.
+#### Nearest candidate-box distance check
+
+The parsed static candidates were also checked for a simple rotation omission: all 53 Room A/B candidates have `TriggerBoxShapeBox`, finite transforms, and rotation `(0,0,0)`, so nonzero room-box rotation does not explain this replay matcher discrepancy. The probe now reports the nearest distance from each unmatched player pose to any candidate axis-aligned X/Z box. These distances use the same uncalibrated `Translation +/- abs(Scale)` convention; median averages the middle pair when the sample count is even, and P90 uses nearest-rank `ceil(0.9*n)`. They are not hallway or walkability measurements:
+
+| Recording ordinal (newest first) | Unmatched samples | Minimum | Median | P90 | Maximum |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 13 | 136.70 | 430.64 | 430.64 | 430.64 |
+| 2 | 2 | 137.29 | 137.29 | 137.29 | 137.29 |
+| 3 | 3 | 136.85 | 136.85 | 136.85 | 136.85 |
+| 4 | 63 | 440.78 | 441.32 | 445.08 | 445.08 |
+| 5 | 245 | 417.98 | 428.99 | 434.98 | 445.36 |
+| 6 | 294 | 418.80 | 430.97 | 438.33 | 445.39 |
+
+The older unmatched group is consistently far from every current candidate box under this convention, so a small boundary overshoot is not a sufficient explanation for those samples. It remains unknown whether they reflect an absent floor/layout geometry, another coordinate relation, or another cause; this does not establish a transform or justify shifting the boxes.
+
+The new offline collection mode reproduced this aggregate twice: six selected recordings, zero malformed schema-5 files, zero other-DD schema-5 files in the inspected directory, 869 samples, and canonical sanitized-output SHA-256 `3EC606D7AB84FB6DB1458410D62190003A69A601C3D8965CBE9FD1FCC52B58D5` on both runs. Sequence comparison resets across 10-floor-band changes instead of treating the old and new band as adjacent room evidence; these six recordings had no such boundary crossing. A deliberately nonexistent export directory was rejected with exit code 2. No raw replay was written, moved, or staged.
 
 ### Extracted structure
 
@@ -129,7 +144,7 @@ Across the 53 records in the two room layers, X/Z centers range from `-426.207` 
 
 ## Offline probe and checks
 
-Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. Its `--deep-dungeon-grids` mode extracts EO's static 5x5 sheet references and fails on grid shape, missing floorset, planmap, or room-index mismatch. Its `--replay-room-candidates <export-directory>` mode selects up to six newest schema-5 files whose first snapshot is identified as EO with a floor band; malformed schema-5 files and other-DD files are counted separately. It outputs ordinal/times, projected planar coordinate bounds, and anonymous counts/index candidates (not filenames, session IDs, actor IDs, chat, or names), and summarizes adjacent-sample candidate-index transitions; it neither writes to source exports nor treats candidates as route input. The tool does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
+Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. Its `--deep-dungeon-grids` mode extracts EO's static 5x5 sheet references and fails on grid shape, missing floorset, planmap, or room-index mismatch. Its `--replay-room-candidates <export-directory>` mode selects up to six newest schema-5 files whose first snapshot is identified as EO with a floor band; malformed schema-5 files and other-DD files are counted separately. It outputs ordinal/times, projected planar coordinate bounds, anonymous counts/index candidates, and nearest uncalibrated candidate-box distance summaries for unmatched poses (not filenames, session IDs, actor IDs, chat, or names), and summarizes adjacent-sample candidate-index transitions; it neither writes to source exports nor treats candidates as route input. The tool does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
 
 Commands used:
 

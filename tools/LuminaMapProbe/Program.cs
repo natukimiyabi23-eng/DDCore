@@ -804,6 +804,7 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
     var bandCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
     var layerCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
     var indexCounts = new SortedDictionary<int, int>();
+    var noCandidateDistances = new List<double>();
     var sequence = new List<CandidateCell?>(snapshotCount);
 
     foreach (var snapshot in snapshots.EnumerateArray())
@@ -859,6 +860,16 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
         else
         {
             noCandidateCount++;
+            if (boxes.Length > 0)
+            {
+                var nearestDistance = boxes.Min(box =>
+                {
+                    var deltaX = Math.Max(0, Math.Max(box.MinX - x, x - box.MaxX));
+                    var deltaZ = Math.Max(0, Math.Max(box.MinZ - z, z - box.MaxZ));
+                    return Math.Sqrt(deltaX * deltaX + deltaZ * deltaZ);
+                });
+                noCandidateDistances.Add(nearestDistance);
+            }
             sequence.Add(null);
         }
     }
@@ -907,6 +918,13 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
             nonNeighborIndexTransitionCount++;
     }
 
+    var sortedNoCandidateDistances = noCandidateDistances.Order().ToArray();
+    var noCandidateDistanceCount = sortedNoCandidateDistances.Length;
+    double? noCandidateDistanceMedian = noCandidateDistanceCount == 0
+        ? null
+        : noCandidateDistanceCount % 2 == 0
+            ? (sortedNoCandidateDistances[(noCandidateDistanceCount / 2) - 1] + sortedNoCandidateDistances[noCandidateDistanceCount / 2]) / 2
+            : sortedNoCandidateDistances[noCandidateDistanceCount / 2];
     return new
     {
         recordingOrdinal,
@@ -922,6 +940,15 @@ static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, Date
         uniqueContainmentCount,
         multipleBoxCount,
         noCandidateCount,
+        noCandidateNearestBoxDistance = sortedNoCandidateDistances.Length == 0 ? null : new
+        {
+            count = sortedNoCandidateDistances.Length,
+            minimum = sortedNoCandidateDistances[0],
+            median = noCandidateDistanceMedian,
+            p90 = sortedNoCandidateDistances[(int)Math.Ceiling(0.9 * sortedNoCandidateDistances.Length) - 1],
+            maximum = sortedNoCandidateDistances[^1],
+            metric = "Euclidean distance in projected X/Z coordinates to nearest uncalibrated axis-aligned candidate room box; median averages the two middle values for even counts; P90 uses nearest-rank ceil(0.9*n); not a corridor or navigability measurement",
+        },
         uniqueCandidateLayers = layerCounts,
         uniqueCandidateRoomIndices = indexCounts,
         consecutiveTransitionsWithTwoUniqueMatches = sameCellTransitionCount + orthogonalNeighborIndexTransitionCount + nonNeighborIndexTransitionCount + crossVariantTransitionCount + crossFloorBandTransitionCount,
