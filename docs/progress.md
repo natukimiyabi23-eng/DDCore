@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-11-16 — Six-export EO box-trace recheck
+
+- Revalidated the fixed local replay folder: 12 replay exports total; six valid schema-5 EO exports (producer 0.5.3.0) contain 869 snapshots; none has an exact-floor value. A read-only, redacted trace completed all six with zero failures.
+- Counts: 244 unique static box candidates, 5 ambiguous distinct variant/cell candidates, and 620 without box containment. This aligns with the prior split: the later three had 244/5/18; the older three had 602 no-containment samples. No independent user-authored room labels or screenshot fixtures exist inside the repository; no claim is made about other machine locations.
+- This is a consistency check of uncalibrated geometry, not map accuracy or traversability. M0 remains UNKNOWN. Updated `docs/phase5.6c-lumina-extraction-verification.md` and `CONTINUATION.md`; no source or game data changed in this verification.
+
 ## 2026-11-16 — Redacted replay-to-static-box trace
 
 - Added a standalone offline `--replay-room-box-trace` mode to help manually correlate replay snapshot ordinals with independently inspected evidence. It reports only sample index, EO floor band, fail-closed context/pose status, and static candidate box variant/index; it omits coordinates, exact floor, timestamps, source filenames, session/object IDs, chat, and names.

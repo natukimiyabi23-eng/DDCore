@@ -3,6 +3,15 @@
 Status: in_progress
 Updated: 2026-11-16 JST (redacted per-snapshot box trace)
 
+## Current bounded verification
+
+- Objective: revalidate whether the current local replay set contains independent user-authored room labels or additional screenshots, then exercise the redacted box-trace mode across available compatible EO exports. Do not derive ground truth from the candidate trace.
+- Starting state: `research/phase56c-sharedgroup-inspection`, HEAD `cb83fb0035e4e834c5e5d6a7ed5434e73dada711`, clean worktree, Draft PR #22 Open/Draft/unmerged; latest CI on this head passed (`43761547048`).
+- Preflight: authoritative five-hour use is 22% (78% remaining); exact token count is unavailable. This is a bounded read-only verification, not a plugin-runtime change. No task-tracking automation is claimed.
+- Initial inventory: fixed export directory currently has 12 `*.replay.json` files; repository contains no `*label*.json`, `*room*.json`, or image fixtures. Continue with aggregate-only reporting; do not expose filenames or raw replay data.
+- Completed read-only scan: among the 12 files, six are valid schema-5 EO replays (producer 0.5.3.0) with 869 snapshots total and zero exact-floor snapshots. Redacted trace classifications: 244 unique static box candidates, 5 ambiguous distinct candidates, 620 with no box containment; zero trace failures after correcting the PowerShell aggregation wrapper. Results align with earlier aggregate counts (the 602 oldest samples all had no containment). Repository scan found no user-authored room-label JSON or screenshot fixtures; this only covers the repository, not the rest of the machine.
+- No independent labels or map ground truth were found in the checked repository/data, so the scan does not improve M0 beyond UNKNOWN. `docs/phase5.6c-lumina-extraction-verification.md` records the scope, counts, and classification limits. Next meaningful evidence requires independent user-authored room/floor labels or an allowed, separately scoped live diagnostic that exposes only verified public information. Do not convert geometric candidates into room identity or BFS inputs.
+
 ## Active bounded iteration (2026-11-16)
 
 - Objective: add an offline-only, redacted per-snapshot trace of static `planmap.lgb` box containments to help a human correlate replay sample ordinals with independently supplied screenshots/labels. It must never claim room identity, active variant, exact floor, connectivity, or traversability; it must emit no coordinates, timestamps, filenames, session/object IDs, chat, or names.

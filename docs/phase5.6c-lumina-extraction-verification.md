@@ -196,6 +196,21 @@ This is only a reproducible geometric candidate lookup over one replay and one s
 
 ## Static data versus dynamic floor state
 
+### Redacted per-snapshot box trace across local EO exports (2026-11-16)
+
+The new offline `--replay-room-box-trace` was applied read-only to all six valid schema-5 EO exports in the fixed local export folder, ordered by their internal `createdAtUtc` values from 2026-11-08 22:15:11 to 23:29:45 +09:00. Their producer version was `0.5.3.0`; together they contain 869 snapshots, and none stores an exact floor. The 12-file folder also contains six other files outside this selected schema-5 EO set; their contents were not needed for this trace summary.
+
+| Trace classification | Snapshots |
+|---|---:|
+| Unique static box candidate | 244 |
+| Multiple distinct variant/cell candidates | 5 |
+| No candidate box containment | 620 |
+| **Total** | **869** |
+
+These counts align with the earlier three-recording analysis: the three more recent files had 244 unique, 5 ambiguous, and 18 outside all boxes; the three older files had no containment in 602 samples. They remain geometric containment results under uncalibrated `Translation +/- abs(Scale)` bounds, not room identity. Exact-floor evidence, independent room labels, active A/B choice, open edges, and walkability remain absent. A repository scan found no user-authored label JSON or screenshot fixture; this does not assert that none exists elsewhere on the user's machine.
+
+The first PowerShell aggregate wrapper mishandled status-count accumulation and converted the wrapper error into per-file failure counts; a separate single-file invocation confirmed the CLI path worked, and the corrected aggregate wrapper completed all six files with zero trace failures. No replay was changed. The trace status tally is 244/5/620, and no new ground truth was obtained. M0 remains UNKNOWN.
+
 ### Follow-up: referenced shared SGB and collision-box records (2026-11-16)
 
 The standalone probe was extended to inspect the `SharedGroup` references exposed by Lumina's parsed `LgbFile` and the parsed `SgbFile` layer objects. This remains an offline, read-only experiment; no asset bytes or full extraction output are committed.
