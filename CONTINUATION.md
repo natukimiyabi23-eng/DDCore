@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-15 22:31 JST (Stage 5.6B selected-object correlation)
+Status: complete
+Updated: 2026-11-15 22:45 JST (Stage 5.6B implementation and CI complete)
 
 ## Active Stage 5.6B objective
 
@@ -16,14 +16,14 @@ Finish the approved read-only selected-object correlation and environment-object
 - Local verification complete: locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 + Observation 163/163 = 360 tests passed; format verification passed; NuGet audit found no vulnerable packages; dependency audit confirms Core has no project references and Observation/Plugin reference only DDCore layers.
 - Package: `0.5.7.0`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `CDAD99E3FD2D9428F27B1DDC2ABE904BD94E291CF55011002DF2F6C7DBE1474F` (10 entries).
 - Read-only original-data recheck: 12 replay JSONs (2,167 snapshots) have no matches for the two BaseIds; separate diagnostics contained 11 files/four unique payloads. Schema-1 samples substantiate a `2007357` targetability change at seq. 25 and disappearance after seq. 43, and a `2007358` change at seq. 79 and disappearance after seq. 99. All 11 input hashes were unchanged. Screen-to-object meaning remains unproven because those originals lack target selection and open-event fields.
-- Exact unfinished step: final diff review, commit/push, open a stacked Draft PR against `phase5.6a/environment-object-diagnostics`, wait for CI and record its result.
-- Deployment/game verification: none; user performs the explicit diagnostic start/stop and in-game selection test. No live result is claimed.
+- Completion: commit `bd636f9ba2aa53998e596df6a87dda91884270d5` pushed; Draft PR #16 `https://github.com/natukimiyabi23-eng/DDCore/pull/16` is OPEN and targets `phase5.6a/environment-object-diagnostics`; GitHub Actions run `43720466400` passed at the same head. Worktree is clean.
+- Deployment/game verification: none; user performs the explicit diagnostic start/stop and in-game selection test. No live result is claimed. PR #15 and `main` were not merged or modified.
 
 ## Stage 5.6A historical checkpoint
 
 Status: complete (2026-11-11 07:04 JST)
 
-## Current Stage 5.6A objective
+## Historical Stage 5.6A objective (complete)
 
 Implement the approved public-API-only environment-object diagnostic on `phase5.6a/environment-object-diagnostics`, based on Phase 5.6 Draft PR #14. Capture only `EventObj`, `Treasure`, and `Aetheryte` through copied public `IObjectTable`/`IGameObject` values; keep the feature initial-OFF, explicit start/stop, anonymous, bounded, local-only, versioned independently, and disconnected from replay schemas, floor diagnostics, strategy, BFS, and execution. Add Japanese UI, confirmation-gated export/delete, tests, documentation, package, Draft PR and CI. Do not operate FF14/Dalamud/UI, access native/private APIs, merge existing PRs/main, or start Stage 5.6B.
 
