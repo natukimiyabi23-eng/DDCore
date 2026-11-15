@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -15,10 +15,11 @@ var sqpackDirectory = Path.GetFullPath(args[1]);
 var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
 var deepDungeonGridsOnly = args.Length > 2 && args[2] == "--deep-dungeon-grids";
 var deepDungeonSheetSurfaceOnly = args.Length > 2 && args[2] == "--deep-dungeon-sheet-surface";
+var deepDungeonRoomLevelsOnly = args.Length > 2 && args[2] == "--deep-dungeon-room-levels";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
 var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
 if (replayRoomCandidates && args.Length < 4)
 {
     Console.Error.WriteLine("--replay-room-candidates requires an export-directory argument.");
@@ -158,6 +159,13 @@ if (deepDungeonSheetSurfaceOnly)
         .ToArray();
     Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, sheetCount = sheets.Length, sheets }, new JsonSerializerOptions { WriteIndented = true }));
     return sheets.Length > 0 ? 0 : 1;
+}
+
+if (deepDungeonRoomLevelsOnly)
+{
+    var levelSummary = ReadEurekaRoomLevelSummary(gameData, gameDataType, excelAssembly, excelModule);
+    Console.WriteLine(JsonSerializer.Serialize(levelSummary.Report, new JsonSerializerOptions { WriteIndented = true }));
+    return levelSummary.RoomSetCount > 0 ? 0 : 1;
 }
 
 var excelApiMethods = excelModule?.GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
@@ -768,6 +776,117 @@ static (int FloorSetCount, bool FloorSetCoverageComplete, int InvalidGridCount, 
 }
 
 static T GetAnonymousProperty<T>(object value, string name) => (T)value.GetType().GetProperty(name)!.GetValue(value)!;
+
+static (int RoomSetCount, int UnresolvedLevelReferenceCount, object Report) ReadEurekaRoomLevelSummary(object gameData, Type gameDataType, Assembly excelAssembly, object? excelModule)
+{
+    static IEnumerable ReadSheet(object gameData, Type gameDataType, Assembly excelAssembly, string sheetName)
+    {
+        var rowType = excelAssembly.GetType($"Lumina.Excel.Sheets.{sheetName}", throwOnError: true)!;
+        var getSheet = gameDataType.GetMethods().Single(method => method.Name == "GetExcelSheet" && method.IsGenericMethod)
+            .MakeGenericMethod(rowType);
+        return (IEnumerable)getSheet.Invoke(gameData, [null, null])!;
+    }
+
+    var roomRowIds = new HashSet<uint>();
+    foreach (var layer in ReadSheet(gameData, gameDataType, excelAssembly, "DeepDungeonLayer"))
+    {
+        var dungeon = GetPublicProperty(layer, "DeepDungeon");
+        if (Convert.ToUInt32(GetPublicProperty(dungeon, "RowId")) != 3)
+            continue;
+
+        foreach (var variantName in new[] { "RoomA", "RoomB" })
+        {
+            var mapReference = GetPublicProperty(layer, variantName);
+            foreach (var mapRow in (IEnumerable)GetPublicProperty(mapReference, "Value")!)
+            {
+                foreach (var roomReference in (IEnumerable)GetPublicProperty(mapRow, "DeepDungeonRoom")!)
+                {
+                    var rowId = Convert.ToUInt32(GetPublicProperty(roomReference, "RowId"));
+                    if (rowId != 0)
+                        roomRowIds.Add(rowId);
+                }
+            }
+        }
+    }
+
+    var rooms = ReadSheet(gameData, gameDataType, excelAssembly, "DeepDungeonRoom")
+        .Cast<object>()
+        .Where(room => roomRowIds.Contains(Convert.ToUInt32(GetPublicProperty(room, "RowId"))))
+        .ToDictionary(room => Convert.ToUInt32(GetPublicProperty(room, "RowId")));
+    var levelRowIds = new HashSet<uint>();
+    var levelReferenceCount = 0;
+    foreach (var room in rooms.Values)
+    {
+        foreach (var levelReference in (IEnumerable)GetPublicProperty(room, "Level")!)
+        {
+            levelReferenceCount++;
+            var rowId = Convert.ToUInt32(GetPublicProperty(levelReference, "RowId"));
+            if (rowId != 0)
+                levelRowIds.Add(rowId);
+        }
+    }
+
+    var levelType = excelAssembly.GetType("Lumina.Excel.Sheets.Level", throwOnError: true)!;
+    var getSheet = excelModule?.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+        .Single(method => method.Name == "GetSheet" && method.IsGenericMethodDefinition && method.GetParameters().Length == 2);
+    var levelSheet = getSheet?.MakeGenericMethod(levelType).Invoke(excelModule, [null, "Level"]);
+    var getRow = levelSheet?.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+        .FirstOrDefault(method => method.Name == "GetRow" && method.GetParameters() is [{ ParameterType: var parameterType }] && parameterType == typeof(uint));
+    var levels = new Dictionary<uint, object>();
+    var levelRowLookupFailureCount = 0;
+    foreach (var rowId in levelRowIds)
+    {
+        try
+        {
+            var level = getRow?.Invoke(levelSheet, [rowId]);
+            if (level is not null)
+                levels.Add(Convert.ToUInt32(GetPublicProperty(level, "RowId")), level);
+        }
+        catch (TargetInvocationException)
+        {
+            levelRowLookupFailureCount++;
+        }
+    }
+    var territoryCounts = new SortedDictionary<uint, int>();
+    var mapCounts = new SortedDictionary<uint, int>();
+    var typeCounts = new SortedDictionary<byte, int>();
+    var finitePositionCount = 0;
+
+    foreach (var level in levels.Values)
+    {
+        var territoryId = Convert.ToUInt32(GetPublicProperty(GetPublicProperty(level, "Territory"), "RowId"));
+        var mapId = Convert.ToUInt32(GetPublicProperty(GetPublicProperty(level, "Map"), "RowId"));
+        var type = Convert.ToByte(GetPublicProperty(level, "Type"));
+        territoryCounts[territoryId] = territoryCounts.GetValueOrDefault(territoryId) + 1;
+        mapCounts[mapId] = mapCounts.GetValueOrDefault(mapId) + 1;
+        typeCounts[type] = typeCounts.GetValueOrDefault(type) + 1;
+        if (float.IsFinite(Convert.ToSingle(GetPublicProperty(level, "X")))
+            && float.IsFinite(Convert.ToSingle(GetPublicProperty(level, "Y")))
+            && float.IsFinite(Convert.ToSingle(GetPublicProperty(level, "Z")))
+            && float.IsFinite(Convert.ToSingle(GetPublicProperty(level, "Yaw")))
+            && float.IsFinite(Convert.ToSingle(GetPublicProperty(level, "Radius"))))
+            finitePositionCount++;
+    }
+
+    var report = new
+    {
+        dungeonRowId = 3,
+        variantGridCount = 20,
+        roomSetCount = roomRowIds.Count,
+        resolvedRoomRowCount = rooms.Count,
+        levelReferenceCount,
+        uniqueLevelRowCount = levelRowIds.Count,
+        resolvedLevelRowCount = levels.Count,
+        unresolvedLevelReferenceCount = levelRowIds.Count - levels.Count,
+        levelRowLookupFailureCount,
+        finitePositionCount,
+        territoryRowIdCounts = territoryCounts,
+        mapRowIdCounts = mapCounts,
+        levelTypeCounts = typeCounts,
+        interpretation = "static references and coordinate metadata only; not current randomized layout, room identity, passage state, or walkability",
+    };
+    return (roomRowIds.Count, levelRowIds.Count - levels.Count, report);
+}
 
 static (object Report, int SelectedReplayCount) ReadReplayRoomCandidateCollection(string exportDirectory, List<object> roomCandidates, object[] floorSets)
 {

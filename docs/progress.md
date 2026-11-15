@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-11-16 — EO room-to-Level static reference probe
+
+- Added `--deep-dungeon-room-levels` to the offline Lumina probe. It follows nonzero Room A/B grid references from EO's ten static floor-set rows into distinct `DeepDungeonRoom` rows and their public `Level` references, emitting counts only.
+- Local data contained 20 variant grids, 252 distinct referenced room rows, 1,260 Level links, and 589 distinct nonzero Level row IDs. Public `GetSheet<Level>("Level").GetRow(uint)` failed with the sheet's out-of-range lookup for all 589 IDs; zero resolved Level rows, so no territory/map/coordinate summary was available. Two executions matched at SHA-256 `B71EB83290943762D2AD0988FC4E51CAFA4CBE48856F84B6381B42D9C3C4C95B`.
+- This is an unresolved static linkage, not evidence that no alternate documented resolver exists. It does not establish dynamic layout, current room, edges, or walkability; M0 remains UNKNOWN and BFS is not connected. No plugin runtime or game interaction changed.
+
 ## 2026-11-16 — Lumina public DD sheet surface / EO Room C check
 
 - Added `--deep-dungeon-sheet-surface` to the offline Lumina probe. It reports public property/field signatures for 17 `DeepDungeon*` sheet types and `Level` (18 total), without iterating game-data rows in this mode. The local loaded Lumina assembly identity was `7.0.0.0`; two runs matched at SHA-256 `660EA6C221E76ABDAC69F5547CCECF9634C1E58F6ADC04C952B1FF6F659B6085`.

@@ -105,6 +105,12 @@ The `--deep-dungeon-grids` read-only data pass was extended to report each EO la
 
 This narrows the installed EO static typed-grid data to the observed A/B variants; it does not prove that every dynamic layout is represented by those variants, identify which variant is active, locate the player's current room, reveal open passages, or establish walkability. No public typed live-topology contract was found in this bounded inspection. M0 remains **UNKNOWN**, and no live BFS input is justified.
 
+### Follow-up: EO room-to-Level reference resolution (2026-11-16)
+
+The offline `--deep-dungeon-room-levels` probe followed the 20 static Room A/B grids through their nonzero `DeepDungeonRoom` row references, then inspected the public `Level` collection on each distinct room row. It found 252 distinct referenced room rows, 1,260 Level references, and 589 distinct nonzero Level row IDs. In the installed Lumina Excel module, public `GetSheet<Level>("Level").GetRow(uint)` threw the public sheet's out-of-range lookup exception for all 589 IDs; none resolved to a Level row, so no territory/map/coordinate aggregate could be established from these references. The tool reports only counts and fixed interpretation text, not raw IDs or coordinates. Two runs were identical at SHA-256 `B71EB83290943762D2AD0988FC4E51CAFA4CBE48856F84B6381B42D9C3C4C95B`.
+
+This is an **unresolved linkage**, not proof that the references are meaningless or that no alternate public lookup exists. It does not add evidence for EO territory mapping, current layout, current room, passage state, or walkability. A verified resolution rule for these references would be needed before using them as location data; M0 remains **UNKNOWN** and BFS stays disconnected.
+
 #### Read-only replay overlay
 
 The fixed export folder was searched again. The latest valid file by filesystem modification time and internal creation timestamp was `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`, schema 5, producer 0.5.3.0, 66 snapshots. Its stored `createdAtUtc` is `2026-11-08T23:29:45.946997+09:00` (equivalent instant `2026-11-08T14:29:45.946997Z`); exact floor is null, and the recorded floor range is 1-10.

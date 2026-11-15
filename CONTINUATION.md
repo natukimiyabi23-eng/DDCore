@@ -17,6 +17,18 @@ Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 - No plugin package is deployed; no runtime/game test was performed. PR #22 remains Open/Draft/unmerged.
 - Next meaningful evidence step: independently labeled live floor/layout and passage-state observations from an allowed source. Until then keep M0 UNKNOWN and the live BFS disconnected; do not add movement/combat/input or decode undocumented addon payloads.
 
+## Next bounded static-data check (2026-11-16)
+
+- Objective: determine whether the static `DeepDungeonRoom.Level` references in installed EO Room A/B grid rows carry territory/map/position-linked records that add useful static candidate evidence. This remains offline/public Lumina data only; it cannot establish active random layout or dynamic edges.
+- Starting point: branch `research/phase56c-sharedgroup-inspection`, HEAD `37f5ad30dd9b5d8db32fa9ba65c1e4d680fd795f`, clean worktree; PR #22 Open/Draft/unmerged; latest CI run `43763559002` succeeded.
+- Scope and stop condition: inspect row references and only documented public `Level` fields; aggregate counts and finite-value status, do not export raw asset rows or commit game assets. Stop if the linkage does not identify current layout/connectivity/walkability.
+- Initial probe result: the 20 static grids reference 252 distinct nonzero `DeepDungeonRoom` rows and 1,260 `Level` references (589 distinct nonzero Level row IDs). Enumerating `GetExcelSheet<Level>` did not resolve any of the 589 references, so this is not yet evidence that the links are absent; test the documented/generated direct sheet row lookup path before concluding.
+- Direct lookup follow-up: used the probe's public `GetSheet<Level>("Level").GetRow(uint)` pattern. All 589 distinct Level IDs raised the sheet's out-of-range lookup exception; zero Level rows resolved. The tool contains per-ID exception handling and emits only aggregate counts. Two runs matched at SHA-256 `B71EB83290943762D2AD0988FC4E51CAFA4CBE48856F84B6381B42D9C3C4C95B`. This is unresolved linkage, not proof of absence or invalid semantics.
+- Updated evidence files: `tools/LuminaMapProbe/Program.cs`, `docs/phase5.6c-lumina-extraction-verification.md`, `docs/progress.md`, `CONTINUATION.md`.
+- Direct `GetRow(uint)` follow-up result: 589/589 unique nonzero `Level` references threw the public sheet's out-of-range lookup exception; zero resolved, so no territory/map/coordinate aggregates are available. The probe catches those lookup exceptions and emits counts only. Two output runs matched at SHA-256 `B71EB83290943762D2AD0988FC4E51CAFA4CBE48856F84B6381B42D9C3C4C95B`. This does not prove the links are semantically invalid or that no alternate resolver exists.
+- Verification completed: `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; Release solution build passed with 0 warnings/errors; all 373 tests passed (197 Core, 163 Observation, 13 probe); NuGet audit found no vulnerable packages across six projects; `git diff --check` passed.
+- Exact unfinished step: review the final diff, commit/push this read-only probe and evidence update to PR #22, and verify CI. Do not modify plugin runtime or use unresolved Level links for room matching/BFS.
+
 ## Current bounded source audit (2026-11-16)
 
 - Objective: inspect the installed Lumina Excel public type surface for Deep Dungeon-related typed sheets beyond `DeepDungeon`, `DeepDungeonLayer`, `DeepDungeonMap5X`, and `DeepDungeonRoom`, and determine whether any public static row model actually describes dynamic connections, revealed cells, or walkability.
