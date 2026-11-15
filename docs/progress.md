@@ -11,6 +11,7 @@
 - Compared the 28 nonzero directional wall positions for BossMod EO key `3.1` with same-index Room A/B boxes from the locally parsed `planmap.lgb`, using the probe's uncalibrated `Translation +/- abs(Scale)` bounds and orientation-compatible nearest-edge distance.
 - Same-letter medians were A→A 12.39 and B→B 12.57 coordinate units (3/28 and 3/28 samples within 5 units); cross-letter medians were A→B 807.52 and B→A 809.84 (0/28 within 10). This supports only that the static A/B coordinate families are widely separated; it does not validate individual room/wall correspondence, active random layout, or geometry semantics.
 - One floorset, no ground truth, no code/asset committed. M0 remains UNKNOWN; no map or edge data is eligible for BFS.
+- Documentation/evidence commit `75ed3665e32bd7b14cb42a2a5805490eee05b8c8` passed CI run `43745937797`; the worktree was clean after push.
 
 ## 2026-11-16 — Pinned BossMod EO static wall-template inspection
 
