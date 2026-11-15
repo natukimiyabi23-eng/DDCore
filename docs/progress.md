@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-16 — Offline user-label evaluation path
+
+- Added `--validate-room-labels` to the standalone Lumina probe and a small evaluator that compares one schema-5 replay's finite EO player positions with user-authored exact-floor / Room A-B / row-major cell labels. Labels are bound to exact replay bytes by SHA-256; duplicate samples, unsupported schema/evidence, absent static cells, floor-band conflicts, malformed context, and extra properties are rejected or excluded rather than coerced.
+- Output is aggregate only: matched expected candidate, ambiguous, other candidate, unmatched, invalid pose, and context conflict counts. It does not emit the replay path, sample coordinates/timestamps, per-sample labels, or identifiers. The command is local/offline; no replay label file or screenshot is included in the repository.
+- Added `docs/room-label-validation.md` with strict schema, run instructions, evidence rules, and interpretation limits. No human-labeled replay was available, so the evaluator has only synthetic unit coverage and has not produced a real-map accuracy result.
+- Added 8 synthetic tests covering exact match, overlapping ambiguity, wrong candidate vs no candidate, floor conflict, replay/map hash mismatches, duplicate indices, missing pose, valid versioned JSON, and rejection of unknown label fields. All prior tests remain included.
+- The existing EO candidate and nearest-distance results remain uncalibrated; M0 remains UNKNOWN, and the evaluator does not produce live room IDs, edges, a BFS graph, or route input.
+- Final local checks for this slice: Release solution build passed with 0 warnings/errors; all 368 tests passed (197 Core, 163 Observation, 8 label-evaluator); probe Release build, format verification, NuGet vulnerability audit (none across six projects), and `git diff --check` passed. No user-labeled real replay was available, so label accuracy remains unverified. No runtime plugin or game interaction was added; push/CI remain pending.
+
 ## 2026-11-16 — EO typed room-grid / planmap crosswalk
 
 - Extended the standalone offline Lumina probe to enumerate all ten EO `DeepDungeonLayer` floor sets and their Room A/B 5×5 `DeepDungeonRoom` grids, then compare occupied row-major cell indices with `planmap.lgb` Room A/B `EventRange` priority minus 100.
