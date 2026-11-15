@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -16,7 +16,8 @@ var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
 var deepDungeonGridsOnly = args.Length > 2 && args[2] == "--deep-dungeon-grids";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !replayRoomCandidates && !validateRoomLabels ? args[2] : null;
+var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
 if (replayRoomCandidates && args.Length < 4)
 {
     Console.Error.WriteLine("--replay-room-candidates requires an export-directory argument.");
@@ -25,6 +26,11 @@ if (replayRoomCandidates && args.Length < 4)
 if (validateRoomLabels && args.Length < 5)
 {
     Console.Error.WriteLine("--validate-room-labels requires a replay JSON and a user-authored labels JSON.");
+    return 2;
+}
+if (replayRoomBoxTrace && args.Length < 4)
+{
+    Console.Error.WriteLine("--replay-room-box-trace requires one schema-5 replay JSON.");
     return 2;
 }
 var luminaPath = Path.Combine(luminaDirectory, "Lumina.dll");
@@ -397,7 +403,7 @@ foreach (var assetPath in sharedGroupAssetPaths)
     });
 }
 
-if (replayRoomCandidates || validateRoomLabels)
+if (replayRoomCandidates || validateRoomLabels || replayRoomBoxTrace)
 {
     var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
     object report;
@@ -413,9 +419,7 @@ if (replayRoomCandidates || validateRoomLabels)
         else
         {
             var bytes = File.ReadAllBytes(args[3]);
-            var labelsBytes = File.ReadAllBytes(args[4]);
             using var replayDocument = JsonDocument.Parse(bytes);
-            using var labelsDocument = JsonDocument.Parse(labelsBytes);
             var boxes = roomCandidates.Select(candidate =>
             {
                 var bounds = GetAnonymousProperty<object>(candidate, "boundsUsingBossModConvention");
@@ -427,21 +431,41 @@ if (replayRoomCandidates || validateRoomLabels)
                     Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minZ")),
                     Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxZ")));
             }).Where(static box => box.Index is >= 0 and < 25).ToArray();
-            var labels = JsonSerializer.Deserialize<ReplayRoomLabelSet>(labelsDocument.RootElement.GetRawText(), ReplayRoomLabelEvaluator.JsonOptions)
-                ?? throw new InvalidDataException("The labels JSON was empty.");
             var replaySha256 = Convert.ToHexString(SHA256.HashData(bytes));
-            var summary = ReplayRoomLabelEvaluator.Evaluate(replayDocument.RootElement, replaySha256, planmapSha256, labels, boxes);
-            var labelCanonical = JsonSerializer.Serialize(summary);
-            report = new
+            if (validateRoomLabels)
             {
-                schemaVersion = 2,
-                replaySha256,
-                planmapSha256,
-                evidenceMode = "user-authored labels compared with static candidate boxes; not live topology or traversability",
-                summary,
-                canonicalSummarySha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(labelCanonical))),
-            };
-            resultCount = labels.Labels.Count;
+                var labelsBytes = File.ReadAllBytes(args[4]);
+                using var labelsDocument = JsonDocument.Parse(labelsBytes);
+                var labels = JsonSerializer.Deserialize<ReplayRoomLabelSet>(labelsDocument.RootElement.GetRawText(), ReplayRoomLabelEvaluator.JsonOptions)
+                    ?? throw new InvalidDataException("The labels JSON was empty.");
+                var summary = ReplayRoomLabelEvaluator.Evaluate(replayDocument.RootElement, replaySha256, planmapSha256, labels, boxes);
+                var labelCanonical = JsonSerializer.Serialize(summary);
+                report = new
+                {
+                    schemaVersion = 2,
+                    replaySha256,
+                    planmapSha256,
+                    evidenceMode = "user-authored labels compared with static candidate boxes; not live topology or traversability",
+                    summary,
+                    canonicalSummarySha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(labelCanonical))),
+                };
+                resultCount = labels.Labels.Count;
+            }
+            else
+            {
+                var trace = ReplayRoomLabelEvaluator.CreateBoxTrace(replayDocument.RootElement, boxes);
+                var canonicalTrace = JsonSerializer.Serialize(trace);
+                report = new
+                {
+                    schemaVersion = 1,
+                    replaySha256,
+                    planmapSha256,
+                    evidenceMode = "per-snapshot containment in uncalibrated static room boxes; not room identity, active layout, topology, or traversability",
+                    trace,
+                    canonicalTraceSha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonicalTrace))),
+                };
+                resultCount = trace.Count;
+            }
         }
     }
     catch (Exception exception) when (exception is IOException or JsonException or InvalidDataException or UnauthorizedAccessException or OverflowException)
@@ -449,7 +473,7 @@ if (replayRoomCandidates || validateRoomLabels)
         Console.Error.WriteLine(exception.Message);
         return 2;
     }
-    Console.WriteLine(JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine(JsonSerializer.Serialize(report, new JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true }));
     return resultCount > 0 ? 0 : 1;
 }
 

@@ -1,7 +1,17 @@
 # DDCore continuation
 
 Status: in_progress
-Updated: 2026-11-16 JST (offline independent-label validator)
+Updated: 2026-11-16 JST (redacted per-snapshot box trace)
+
+## Active bounded iteration (2026-11-16)
+
+- Objective: add an offline-only, redacted per-snapshot trace of static `planmap.lgb` box containments to help a human correlate replay sample ordinals with independently supplied screenshots/labels. It must never claim room identity, active variant, exact floor, connectivity, or traversability; it must emit no coordinates, timestamps, filenames, session/object IDs, chat, or names.
+- Starting point: branch `research/phase56c-sharedgroup-inspection`, HEAD `76f030fc5086d7f87e3a23f4b4da099ae7e46e76`, clean worktree; Draft PR #22 Open/Draft/unmerged. Current CI run `43759785722` passed.
+- Bounded scope: standalone LuminaMapProbe CLI + pure evaluator/tests + usage/evidence note only. No plugin runtime/API/UI changes, game data/replay modifications, gameplay, BFS integration, or merge.
+- Preflight: authoritative five-hour usage shows 19% used / 81% remaining, but does not expose an exact token count; exact token arithmetic is unavailable. Host policy does not permit creating an automation to track a specific work item, so no five-hour follow-up is claimed. This is a small, resumable offline-tool slice, not a substantial plugin-runtime change.
+- Completed: added `--replay-room-box-trace <schema-5-replay.json>` to the standalone Lumina probe. It emits zero-based sample index, EO floor range only, fail-closed pose/context status, and matching static box variant/index only. It does not emit coordinates, exact floor, timestamps, filenames, session/object IDs, chat, or names, and calls each result an uncalibrated box containment rather than a room identity.
+- Verification: 13/13 probe tests pass; full Release build succeeds with 0 warnings/errors; all 373 solution tests pass (197 Core, 163 Observation, 13 probe); `dotnet format DDCore.slnx --verify-no-changes --no-restore` passes; NuGet vulnerability audit reports none in all six solution projects. The existing local EO replay `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json` was read-only: 66 rows, 50 unique box containments, 3 ambiguous, 13 no containment. Two executions produced identical output SHA-256 `71E792F412F50C82CA51E75D1D47FD72AABE25FACE407526085734A6DB527D2F`; output scan found none of the prohibited pose/identity/chat/coordinate field markers. This is reproducibility only, not a map-accuracy result.
+- Current unfinished step: review the final diff, update the offline-tool usage/evidence docs and progress record, then commit/push to PR #22 and verify CI. Keep M0 UNKNOWN and the runtime plugin untouched.
 
 ## Current autonomous objective
 

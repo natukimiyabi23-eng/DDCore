@@ -6,6 +6,17 @@
 
 The labels file is not game-produced. A human must identify the exact floor, visible room cell, Room A/B variant if known, and evidence source. Do not create labels from the candidate output itself. If any value is uncertain, do not label that sample. This keeps the check from circularly confirming its own assumptions.
 
+For reviewing a recording before preparing labels, `--replay-room-box-trace` emits one redacted row per snapshot with its zero-based sample index, observed floor band (never an exact floor), a geometry-only status, and any static box candidates. The trace intentionally omits coordinates, sample timestamps, export filenames, session/object identifiers, names, and chat. It is only a navigation aid for matching independently inspected evidence to a sample; it must not be used to create a label without that independent evidence.
+
+```powershell
+$replay = "<path to one local schema-5 replay>"
+dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
+  "<Lumina.dll directory>" "<SqPack directory>" `
+  --replay-room-box-trace $replay
+```
+
+The output's `status` values are `contextUnknown`, `invalidPose`, `untrustedPose`, `noBoxContainment`, `uniqueBoxContainment`, or `ambiguousBoxContainment`. `uniqueBoxContainment` is not a room identification: the Room A/B boxes and coordinate convention have not been validated against independently labelled layouts. The output is written to stdout; redirect it only to a private local file and do not commit it.
+
 ## Labels format
 
 Create a local labels JSON file with schema version 1. The aggregate evaluator report uses schema version 2. Bind labels to the exact replay bytes and exact `planmap.lgb` bytes using SHA-256; this prevents accidentally applying labels to a different recording or static map revision. The regular probe output's `assetSha256` is the `planmapSha256` value. `snapshotIndex` is the zero-based position in that replay's `snapshots` array. Only the following evidence values are accepted:

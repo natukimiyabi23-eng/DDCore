@@ -181,6 +181,76 @@ public sealed class ReplayRoomLabelEvaluatorTests
         Assert.Null(summary.MatchRate);
     }
 
+    [Fact]
+    public void BoxTraceReportsContainmentCategoriesWithoutCoordinates()
+    {
+        using var replay = CreateReplay("eurekaOrthos", 1, 10, null, 1.25, 2.25, 6, 6, 20, 20);
+
+        var trace = ReplayRoomLabelEvaluator.CreateBoxTrace(
+            replay.RootElement,
+            [
+                new ReplayRoomCandidateBox("LVD_Room_A", 3, 0, 3, 0, 3),
+                new ReplayRoomCandidateBox("LVD_Room_B", 7, 5, 8, 5, 8),
+                new ReplayRoomCandidateBox("LVD_Room_A", 8, 5, 8, 5, 8),
+            ]);
+
+        Assert.Collection(
+            trace,
+            unique =>
+            {
+                Assert.Equal(0, unique.SnapshotIndex);
+                Assert.Equal("uniqueBoxContainment", unique.Status);
+                Assert.Equal("1-10", unique.FloorRange);
+                var onlyCandidate = Assert.Single(unique.Candidates);
+                Assert.Equal(new ReplayRoomBoxTraceCandidate("A", 3), onlyCandidate);
+            },
+            ambiguous =>
+            {
+                Assert.Equal(1, ambiguous.SnapshotIndex);
+                Assert.Equal("ambiguousBoxContainment", ambiguous.Status);
+                Assert.Equal(2, ambiguous.Candidates.Count);
+            },
+            unmatched => Assert.Equal("noBoxContainment", unmatched.Status));
+
+        var json = JsonSerializer.Serialize(trace);
+        Assert.DoesNotContain("1.25", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("coordinates", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("playerPose", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BoxTraceKeepsContextAndPoseFailuresDistinct()
+    {
+        using var replay = JsonDocument.Parse("""
+            {"schemaVersion":5,"snapshots":[
+              {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"direct"}}},
+              {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":{"position":{"isFinite":true,"x":1,"y":1},"metadata":{"source":"publicDalamud","quality":"stale"}}},
+              {"dungeon":{"kind":"unsupported","floorRange":null},"playerPose":null},
+              {"dungeon":{"kind":"eurekaOrthos","floorRange":{"start":1,"end":10}},"playerPose":null}
+            ]}
+            """);
+
+        var trace = ReplayRoomLabelEvaluator.CreateBoxTrace(
+            replay.RootElement,
+            [new ReplayRoomCandidateBox("LVD_Room_B", 4, 0, 3, 0, 3)]);
+
+        Assert.Equal(
+            ["uniqueBoxContainment", "untrustedPose", "contextUnknown", "invalidPose"],
+            trace.Select(static entry => entry.Status));
+    }
+
+    [Fact]
+    public void BoxTraceRejectsInvalidSchemaAndCandidateBounds()
+    {
+        using var replay = CreateReplay("eurekaOrthos", 1, 10, null, 1, 1);
+        Assert.Throws<InvalidDataException>(() => ReplayRoomLabelEvaluator.CreateBoxTrace(
+            replay.RootElement,
+            [new ReplayRoomCandidateBox("LVD_Room_C", 0, 0, 1, 0, 1)]));
+
+        using var invalidReplay = JsonDocument.Parse("""{"schemaVersion":4,"snapshots":[]}""");
+        Assert.Throws<InvalidDataException>(() => ReplayRoomLabelEvaluator.CreateBoxTrace(invalidReplay.RootElement, []));
+    }
+
     private static ReplayRoomLabelSet Labels(params ReplayRoomLabel[] labels) => new(1, ReplaySha256, PlanmapSha256, [.. labels]);
 
     private static JsonDocument CreateReplay(string kind, int floorStart, int floorEnd, int? exactFloor, params double[] coordinates)

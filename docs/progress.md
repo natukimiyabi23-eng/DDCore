@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-16 — Redacted replay-to-static-box trace
+
+- Added a standalone offline `--replay-room-box-trace` mode to help manually correlate replay snapshot ordinals with independently inspected evidence. It reports only sample index, EO floor band, fail-closed context/pose status, and static candidate box variant/index; it omits coordinates, exact floor, timestamps, source filenames, session/object IDs, chat, and names.
+- The mode labels results as box containment under the current uncalibrated bounds, not room identity or active layout. It does not generate labels, topology, walkability, or BFS inputs.
+- Against the existing schema-5 EO replay with 66 snapshots, it returned 50 unique containments, 3 ambiguous containments, and 13 without containment. Two runs yielded identical JSON SHA-256 `71E792F412F50C82CA51E75D1D47FD72AABE25FACE407526085734A6DB527D2F`; prohibited pose/identity/chat/coordinate field scan was empty. Replay original remained read-only.
+- Verification: probe tests 13/13; solution Release build 0 warnings/errors; full suite 373/373 (Core 197, Observation 163, probe 13); format check passed; NuGet vulnerability audit reported no vulnerable packages in all six solution projects. CI pending until push.
+- Branch remains `research/phase56c-sharedgroup-inspection` on top of PR #22; no runtime plugin changes, deployment, game operation, BFS connection, or merge.
+- M0 remains UNKNOWN: these counts reproduce geometric matching only. Independent user-authored floor/room labels and active connection/walkability evidence are still absent.
+
 ## 2026-11-16 — Offline user-label evaluation path
 
 - Added `--validate-room-labels` to the standalone Lumina probe and a small evaluator that compares one schema-5 replay's finite EO player positions with user-authored exact-floor / Room A-B / row-major cell labels. Labels are bound to exact replay bytes by SHA-256; duplicate samples, unsupported schema/evidence, absent static cells, floor-band conflicts, malformed context, and extra properties are rejected or excluded rather than coerced.

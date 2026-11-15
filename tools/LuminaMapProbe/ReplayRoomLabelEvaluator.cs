@@ -8,6 +8,10 @@ public sealed record ReplayRoomLabel(int SnapshotIndex, int ExactFloor, string V
 
 public readonly record struct ReplayRoomCandidateBox(string Layer, int Index, double MinX, double MaxX, double MinZ, double MaxZ);
 
+public sealed record ReplayRoomBoxTraceCandidate(string Variant, int RoomIndex);
+
+public sealed record ReplayRoomBoxTraceEntry(int SnapshotIndex, string Status, string? FloorRange, IReadOnlyList<ReplayRoomBoxTraceCandidate> Candidates);
+
 public sealed record ReplayRoomLabelSummary(
     int LabelCount,
     int MatchedExpectedCandidateCount,
@@ -145,6 +149,96 @@ public static class ReplayRoomLabelEvaluator
             screenshotEvidence,
             userConfirmedEvidence,
             evaluableCount == 0 ? null : (double)matched / evaluableCount);
+    }
+
+    public static IReadOnlyList<ReplayRoomBoxTraceEntry> CreateBoxTrace(JsonElement replay, IReadOnlyList<ReplayRoomCandidateBox> candidateBoxes)
+    {
+        ValidateReplayAndCandidates(replay, candidateBoxes);
+        var snapshots = replay.GetProperty("snapshots");
+        var trace = new List<ReplayRoomBoxTraceEntry>(snapshots.GetArrayLength());
+
+        for (var index = 0; index < snapshots.GetArrayLength(); index++)
+        {
+            var snapshot = snapshots[index];
+            if (!TryReadFloorRange(snapshot, out var floorRange))
+            {
+                trace.Add(new(index, "contextUnknown", null, []));
+                continue;
+            }
+
+            if (!TryReadPose(snapshot, out var x, out var z))
+            {
+                trace.Add(new(index, "invalidPose", floorRange, []));
+                continue;
+            }
+
+            if (!HasTrustedPoseMetadata(snapshot))
+            {
+                trace.Add(new(index, "untrustedPose", floorRange, []));
+                continue;
+            }
+
+            var candidates = candidateBoxes
+                .Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ)
+                .Select(static box => new ReplayRoomBoxTraceCandidate(box.Layer[^1].ToString(), box.Index))
+                .OrderBy(static candidate => candidate.Variant, StringComparer.Ordinal)
+                .ThenBy(static candidate => candidate.RoomIndex)
+                .ToArray();
+            var status = candidates.Length switch
+            {
+                0 => "noBoxContainment",
+                1 => "uniqueBoxContainment",
+                _ => "ambiguousBoxContainment",
+            };
+            trace.Add(new(index, status, floorRange, candidates));
+        }
+
+        return trace;
+    }
+
+    private static void ValidateReplayAndCandidates(JsonElement replay, IReadOnlyList<ReplayRoomCandidateBox> candidateBoxes)
+    {
+        if (candidateBoxes.Any(static box => box.Index is < 0 or >= 25
+            || box.Layer is not ("LVD_Room_A" or "LVD_Room_B")
+            || !double.IsFinite(box.MinX)
+            || !double.IsFinite(box.MaxX)
+            || !double.IsFinite(box.MinZ)
+            || !double.IsFinite(box.MaxZ)
+            || box.MinX > box.MaxX
+            || box.MinZ > box.MaxZ))
+            throw new InvalidDataException("Candidate bounds are invalid.");
+
+        if (replay.ValueKind != JsonValueKind.Object
+            || !replay.TryGetProperty("schemaVersion", out var schema)
+            || schema.ValueKind != JsonValueKind.Number
+            || !schema.TryGetInt32(out var schemaVersion)
+            || schemaVersion != 5
+            || !replay.TryGetProperty("snapshots", out var snapshots)
+            || snapshots.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException("Only schema-5 replay data with a snapshots array is supported.");
+    }
+
+    private static bool TryReadFloorRange(JsonElement snapshot, out string floorRange)
+    {
+        floorRange = string.Empty;
+        if (snapshot.ValueKind != JsonValueKind.Object
+            || !snapshot.TryGetProperty("dungeon", out var dungeon)
+            || dungeon.ValueKind != JsonValueKind.Object
+            || !dungeon.TryGetProperty("kind", out var kind)
+            || kind.ValueKind != JsonValueKind.String
+            || kind.GetString() != "eurekaOrthos"
+            || !dungeon.TryGetProperty("floorRange", out var range)
+            || range.ValueKind != JsonValueKind.Object
+            || !range.TryGetProperty("start", out var start)
+            || !range.TryGetProperty("end", out var end)
+            || !start.TryGetInt32(out var first)
+            || !end.TryGetInt32(out var last)
+            || first < 1
+            || last < first)
+            return false;
+
+        floorRange = $"{first}-{last}";
+        return true;
     }
 
     private static bool HasCompatibleContext(JsonElement snapshot, int exactFloor)
