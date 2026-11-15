@@ -71,7 +71,7 @@ public sealed class EnvironmentObjectDiagnosticsTests
 
         var json = Encoding.UTF8.GetString(storage.LastWrite!);
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(1, document.RootElement.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(2, document.RootElement.GetProperty("schemaVersion").GetInt32());
         Assert.Contains("obj-000001", json, StringComparison.Ordinal);
         Assert.DoesNotContain("4277009102", json, StringComparison.Ordinal);
         Assert.DoesNotContain("entityId", json, StringComparison.OrdinalIgnoreCase);
@@ -95,6 +95,10 @@ public sealed class EnvironmentObjectDiagnosticsTests
         Assert.Equal("obj-000001", samples[0].GetProperty("objects")[0].GetProperty("anonymousObjectId").GetString());
         Assert.Equal(0, samples[1].GetProperty("objects").GetArrayLength());
         Assert.Equal("obj-000002", samples[2].GetProperty("objects")[0].GetProperty("anonymousObjectId").GetString());
+        var returned = samples[2].GetProperty("transitions")[0];
+        Assert.Equal("reappeared", returned.GetProperty("kind").GetString());
+        Assert.Equal("obj-000002", returned.GetProperty("anonymousObjectId").GetString());
+        Assert.Contains("continuity-unknown", returned.GetProperty("reasonCode").GetString());
     }
 
     [Fact]
@@ -108,6 +112,116 @@ public sealed class EnvironmentObjectDiagnosticsTests
         var json = Encoding.UTF8.GetString(storage.LastWrite!);
         Assert.Contains("obj-000001", json, StringComparison.Ordinal);
         Assert.Contains("obj-000002", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SelectedTreasureCorrelatesOnlyByExactSessionRuntimeKey()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var item = Object(8) with { Kind = EnvironmentObjectKind.Treasure, BaseId = 2007357 };
+        var selected = new RawSelectedObjectObservation(8, item.RuntimeIndex, item.Kind, item.BaseId, item.Position, item.Rotation, true, true);
+        recorder.Record(Started, Context(), [item], selected);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var target = json.RootElement.GetProperty("samples")[0].GetProperty("selectedObject");
+        Assert.Equal("exactRuntimeMatch", target.GetProperty("quality").GetString());
+        Assert.Equal("obj-000001", target.GetProperty("anonymousObjectId").GetString());
+        Assert.Equal(2007357u, target.GetProperty("baseId").GetUInt32());
+        Assert.DoesNotContain("runtimeId", Encoding.UTF8.GetString(storage.LastWrite!).ToLowerInvariant());
+    }
+
+    [Fact]
+    public void SelectionMismatchIsNotGuessed()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var item = Object(8) with { Kind = EnvironmentObjectKind.Treasure };
+        var missing = new RawSelectedObjectObservation(10, 10, EnvironmentObjectKind.Treasure, item.BaseId, item.Position, item.Rotation, true, true);
+        recorder.Record(Started, Context(), [item], missing);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var target = json.RootElement.GetProperty("samples")[0].GetProperty("selectedObject");
+        Assert.Equal("noMatch", target.GetProperty("quality").GetString());
+        Assert.Equal(JsonValueKind.Null, target.GetProperty("anonymousObjectId").ValueKind);
+    }
+
+    [Fact]
+    public void DuplicateRuntimeMatchesAreAmbiguous()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var item = Object(8) with { Kind = EnvironmentObjectKind.Treasure };
+        var selected = new RawSelectedObjectObservation(8, item.RuntimeIndex, item.Kind, item.BaseId, item.Position, item.Rotation, true, true);
+        recorder.Record(Started, Context(), [item, item], selected);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var target = json.RootElement.GetProperty("samples")[0].GetProperty("selectedObject");
+        Assert.Equal("ambiguous", target.GetProperty("quality").GetString());
+        Assert.Equal(JsonValueKind.Null, target.GetProperty("anonymousObjectId").ValueKind);
+    }
+
+    [Fact]
+    public void ClearedTargetAndFloorBoundaryDoNotRetainOldCorrelation()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var item = Object(8) with { Kind = EnvironmentObjectKind.Treasure };
+        var selected = new RawSelectedObjectObservation(8, item.RuntimeIndex, item.Kind, item.BaseId, item.Position, item.Rotation, true, true);
+        recorder.Record(Started, Context(exactFloor: 1), [item], selected);
+        recorder.Record(Started.AddSeconds(1), Context(exactFloor: 2), [item], null);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var samples = json.RootElement.GetProperty("samples");
+        Assert.Equal("obj-000001", samples[0].GetProperty("selectedObject").GetProperty("anonymousObjectId").GetString());
+        Assert.Equal(JsonValueKind.Null, samples[1].GetProperty("selectedObject").ValueKind);
+        Assert.Equal("obj-000002", samples[1].GetProperty("objects")[0].GetProperty("anonymousObjectId").GetString());
+    }
+
+    [Fact]
+    public void CorrelationDoesNotUpgradeMissingTargetCoordinates()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var item = Object(8) with { Kind = EnvironmentObjectKind.Treasure, Position = null, Rotation = null };
+        var selected = new RawSelectedObjectObservation(8, item.RuntimeIndex, item.Kind, item.BaseId, null, null, true, true);
+        recorder.Record(Started, Context(), [item], selected);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var target = json.RootElement.GetProperty("samples")[0].GetProperty("selectedObject");
+        Assert.Equal("exactRuntimeMatch", target.GetProperty("quality").GetString());
+        Assert.Equal("missing", target.GetProperty("coordinateQuality").GetString());
+        Assert.Equal(JsonValueKind.Null, target.GetProperty("position").ValueKind);
+    }
+
+    [Fact]
+    public void TargetabilityAndDisappearanceAreRecordedWithoutOpenClaim()
+    {
+        var recorder = CreateRecorder(out var storage, interval: TimeSpan.Zero);
+        recorder.Start();
+        var first = Object(8) with { Kind = EnvironmentObjectKind.Treasure, IsTargetable = true };
+        var second = first with { IsTargetable = false };
+        recorder.Record(Started, Context(), [first]);
+        recorder.Record(Started.AddSeconds(1), Context(), [second]);
+        recorder.Record(Started.AddSeconds(2), Context(), []);
+        recorder.Stop();
+        using var json = JsonDocument.Parse(storage.LastWrite!);
+        var samples = json.RootElement.GetProperty("samples");
+        Assert.Equal("targetabilityChanged", samples[1].GetProperty("transitions")[0].GetProperty("kind").GetString());
+        Assert.Equal("disappeared", samples[2].GetProperty("transitions")[0].GetProperty("kind").GetString());
+        Assert.Contains("not-open-confirmed", samples[2].GetProperty("transitions")[0].GetProperty("reasonCode").GetString());
+    }
+
+    [Fact]
+    public void SchemaOneDiagnosticWithoutNewFieldsRemainsReadable()
+    {
+        const string json = "{\"schemaVersion\":1,\"producerVersion\":\"0.5.6.0\",\"recordingSessionId\":\"s\",\"createdAtUtc\":\"2026-11-11T00:00:00Z\",\"samples\":[{\"sequence\":1,\"observedAtUtc\":\"2026-11-11T00:00:00Z\",\"isDeepDungeon\":true,\"dungeonKind\":\"eurekaOrthos\",\"floorRange\":null,\"exactFloor\":null,\"observationSessionId\":\"s\",\"floorEpochId\":null,\"continuityReason\":\"unknown\",\"objects\":[{\"anonymousObjectId\":\"obj-000001\",\"objectKind\":\"treasure\",\"baseId\":2007357,\"position\":{\"x\":1,\"y\":2},\"rotation\":0.5,\"coordinateQuality\":\"usable\",\"isTargetable\":true,\"observedAtUtc\":\"2026-11-11T00:00:00Z\",\"provenance\":\"publicDalamud\",\"reasonCode\":null}]}]}";
+        var document = EnvironmentObjectDiagnosticRecorder.DeserializeDocument(Encoding.UTF8.GetBytes(json));
+        Assert.Equal(1, document.SchemaVersion);
+        var sample = Assert.Single(document.Samples);
+        Assert.Null(sample.SelectedObject);
+        Assert.True(sample.Transitions.IsDefault);
+        Assert.Equal("obj-000001", Assert.Single(sample.Objects).AnonymousObjectId);
     }
 
     [Fact]

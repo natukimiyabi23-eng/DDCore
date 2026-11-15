@@ -1,9 +1,40 @@
 # DDCore continuation
 
 Status: complete
-Updated: 2026-11-11 07:04 JST (Stage 5.6A environment-object diagnostics complete)
+Updated: 2026-11-15 JST (Stage 5.6B live-verification documents and CI complete)
 
-## Current Stage 5.6A objective
+## Current continuation: Stage 5.6B live evidence update
+
+- Objective: record the user's DDCore 0.5.7.0/schema-2 EO B1 live verification on the existing Draft PR #16 branch; documentation and consistency checks only. No feature work, phase transition, or merge.
+- Branch/base PR: `phase5.6b/selected-object-correlation`, Draft PR #16 to `phase5.6a/environment-object-diagnostics`; implementation head before this documentation update was `c693ae9778ee6e4c59bc43ecd0664e9afe0fe599`.
+- Read-only source evidence re-read: local schema-2 environment diagnostic originals. 2007358 run `...135052...` has 69 exact matches (`obj-000005`, sequences 74-142); reproducer 2013286 run `...135332...` has 80 (`obj-000002`, seq 23-102); 2007357 run `...135426...` has 37 exact matches; separate transition run `...135441...` has 42 snapshots, targetability transition at seq 20 and disappearance at seq 40 for `obj-000001`, while same-BaseId `obj-000003` persists through seq 42. Cross-recording anonymous IDs are not continuity evidence. JSON remains unmodified and untracked.
+- Changed docs: `docs/phase5.6b-live-verification.md`, `docs/phase5.6b-object-correlation.md`, `docs/progress.md`. No source or test files changed.
+- Verification: `git diff --check` passed; existing Release test assemblies passed without rebuilding (Core 197/197, Observation 163/163, 360 total). GitHub Actions run `43722893993` passed restore, Release build, tests and package step at head `675185e4ecb8d5ffa94af463fdb6e2eb6d4b693f`. The five relevant original diagnostic JSONs were only read by commands; no JSON was staged or modified.
+- Completion: evidence-document commit `0e359b38ed7b161047d6c26cea611b09c2019eb2` and completion-record commit `675185e4ecb8d5ffa94af463fdb6e2eb6d4b693f` were pushed to the existing branch. PR #16 remains OPEN, Draft, unmerged, and targets `phase5.6a/environment-object-diagnostics`. Worktree was clean after the checkpoint. No package was rebuilt or deployed by this docs-only update.
+- Next step: wait for user review; do not implement another stage or merge.
+- User verification still required: broader floors/DDs, floor transitions/re-entry, cross-session object identity, automatic reproducer activation-state, and causal proof that chest opening caused disappearance. Do not infer opening from targetability/disappearance. `exactFloor` remains null in JSON.
+
+## Active Stage 5.6B objective
+
+Finish the approved read-only selected-object correlation and environment-object transition diagnostics on `phase5.6b/selected-object-correlation`, with schema 1 read compatibility and schema 2 output. Do not operate FF14/Dalamud/UI, infer treasure meaning/open state, connect data to BFS/strategy, or merge any PR/main.
+
+- Start: `2026-11-15 22:31 JST`.
+- Authoritative usage preflight: five-hour window 98% remaining; estimate for remaining verification/docs/CI/PR work 18%; projected balance `98% - 18% = 80%`.
+- Continuation heartbeat: `ddcore-stage-5-6b-continuation`, ACTIVE; scheduled once for `2026-11-16 03:31 JST` (five hours after the recorded 22:31 JST start). Purpose: check this file, active goal, Git state, tests/build, PR/CI and remaining usage, then resume only unfinished Stage 5.6B work.
+- Base: `phase5.6a/environment-object-diagnostics` at `3e1bf44`; this branch began clean at that commit.
+- Completed: public `ITargetManager.Target` copied to values; exact same-frame correlation only; anonymous IDs in export; targetability/disappearance/reappearance transitions with continuity uncertainty; Japanese UI preview; schema 2; old schema 1 document read test. Version `0.5.7.0`.
+- Changed files: `.github/workflows/phase2-build.yml`, `CONTINUATION.md`, `README.md`, `docs/phase5.6a-environment-object-diagnostics.md`, `docs/phase5.6b-object-correlation.md`, `docs/phase5.6b-live-verification.md`, `docs/progress.md`, `src/DDCore.Observation/EnvironmentObjectDiagnostics.cs`, `src/DDCore.Plugin/DDCore.Plugin.csproj`, `src/DDCore.Plugin/Observation/DalamudEnvironmentObjectDiagnosticSource.cs`, `src/DDCore.Plugin/Plugin.cs`, `src/DDCore.Plugin/Windows/MainWindow.cs`, `tests/DDCore.Observation.Tests/EnvironmentObjectDiagnosticsTests.cs`.
+- Local verification complete: locked restore passed; Release build passed with 0 warnings/errors; Core 197/197 + Observation 163/163 = 360 tests passed; format verification passed; NuGet audit found no vulnerable packages; dependency audit confirms Core has no project references and Observation/Plugin reference only DDCore layers.
+- Package: `0.5.7.0`, Dalamud API 15, `src/DDCore.Plugin/bin/x64/Release/DDCore/latest.zip`, SHA-256 `CDAD99E3FD2D9428F27B1DDC2ABE904BD94E291CF55011002DF2F6C7DBE1474F` (10 entries).
+- Read-only original-data recheck: 12 replay JSONs (2,167 snapshots) have no matches for the two BaseIds; separate diagnostics contained 11 files/four unique payloads. Schema-1 samples substantiate a `2007357` targetability change at seq. 25 and disappearance after seq. 43, and a `2007358` change at seq. 79 and disappearance after seq. 99. All 11 input hashes were unchanged. Screen-to-object meaning remains unproven because those originals lack target selection and open-event fields.
+- Completion: commit `bd636f9ba2aa53998e596df6a87dda91884270d5` pushed; Draft PR #16 `https://github.com/natukimiyabi23-eng/DDCore/pull/16` is OPEN and targets `phase5.6a/environment-object-diagnostics`; GitHub Actions run `43720466400` passed at the same head. Worktree is clean.
+- Deployment/game verification: none; user performs the explicit diagnostic start/stop and in-game selection test. No live result is claimed. PR #15 and `main` were not merged or modified.
+
+## Stage 5.6A historical checkpoint
+
+Status: complete (2026-11-11 07:04 JST)
+
+## Historical Stage 5.6A objective (complete)
 
 Implement the approved public-API-only environment-object diagnostic on `phase5.6a/environment-object-diagnostics`, based on Phase 5.6 Draft PR #14. Capture only `EventObj`, `Treasure`, and `Aetheryte` through copied public `IObjectTable`/`IGameObject` values; keep the feature initial-OFF, explicit start/stop, anonymous, bounded, local-only, versioned independently, and disconnected from replay schemas, floor diagnostics, strategy, BFS, and execution. Add Japanese UI, confirmation-gated export/delete, tests, documentation, package, Draft PR and CI. Do not operate FF14/Dalamud/UI, access native/private APIs, merge existing PRs/main, or start Stage 5.6B.
 

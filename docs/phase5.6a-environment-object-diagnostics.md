@@ -45,3 +45,11 @@ Stage 5.6Aは、Dalamud API 15の公開`IObjectTable` / `IGameObject`から得�
 7. 階層移動、DD退出・再入場、対象消失を別々に記録し、古い対象や匿名IDが現在値として残らないか確認する。
 
 実機検証前は、特定BaseIdの意味、対象ObjectKind、targetable状態、同一Territory階層移動時の公開観測挙動を確認済みと扱わない。
+
+## Stage 5.6B 選択対象照合・状態遷移
+
+schema 2では公開`ITargetManager.Target`からコピーしたObjectKind/BaseId/匿名化対象座標/targetableを、同一サンプルの`IObjectTable`値とRuntimeId+ObjectIndex+Kind+BaseIdの全一致で照合する。永続化するのは一致した匿名IDと品質・根拠コードであり、生IDは保存しない。不一致・複数一致・座標品質不良は別品質として記録し、候補を推定で選ばない。
+
+対象ごとのtargetable変更、観測消失、ランタイムキーの再出現をtransitionとして記録する。消失理由は`disappeared-not-open-confirmed`、再出現理由は`runtime-key-returned-continuity-unknown`とし、再出現時は新しい匿名IDを割り当てる。いずれも開封済みとは判定しない。診断停止・再開始と観測セッション/正確な階層変更で照合状態を引き継がない。schema 1の旧JSONは新フィールドなしでも読込可能で、schema 2を新規出力する。
+
+画面上で選択した対象とBaseIdの対応は未検証。Stage 5.6Bの再調査では、固定replay exports内にはBaseId 2007357/2007358がなかった一方、別の`recordings`配下にあるschema-1環境診断JSONで両IDを確認した。詳細なサンプル番号・時刻・連続観測の差分は[Stage 5.6B照合資料](phase5.6b-object-correlation.md)に記録した。targetable変化と観測消失は原本JSONから確認できたが、JSONに選択ターゲット情報や開封イベントはなく、画面上の各宝箱との対応・開封の因果関係は未確定のまま維持する。

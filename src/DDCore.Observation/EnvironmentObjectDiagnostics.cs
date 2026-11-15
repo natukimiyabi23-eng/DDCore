@@ -39,6 +39,12 @@ public sealed record RawEnvironmentObjectObservation(
     bool IsValid,
     string? MissingReason = null);
 
+public sealed record RawSelectedObjectObservation(ulong RuntimeId, ushort RuntimeIndex, EnvironmentObjectKind Kind, uint BaseId, RawPosition? Position, double? Rotation, bool IsTargetable, bool IsValid);
+public enum ObjectCorrelationQuality { Unknown, ExactRuntimeMatch, NoMatch, Ambiguous }
+public enum EnvironmentObjectTransitionKind { TargetabilityChanged, Disappeared, Reappeared }
+public sealed record EnvironmentObjectTransition(string AnonymousObjectId, EnvironmentObjectTransitionKind Kind, bool? PreviousTargetable, bool? CurrentTargetable, DateTimeOffset ObservedAtUtc, string ReasonCode);
+public sealed record SelectedObjectCorrelation(ObjectCorrelationQuality Quality, string? AnonymousObjectId, EnvironmentObjectKind? ObjectKind, uint? BaseId, Coordinate2D? Position, double? Rotation, SpatialUsability CoordinateQuality, bool? IsTargetable, string ReasonCode);
+
 public sealed record EnvironmentObjectContext(
     bool IsDeepDungeon,
     DeepDungeonKind DungeonKind,
@@ -68,7 +74,9 @@ public sealed record EnvironmentObjectDiagnosticSample(
     string ObservationSessionId,
     string? FloorEpochId,
     string ContinuityReason,
-    ImmutableArray<EnvironmentObjectDiagnosticEntry> Objects);
+    ImmutableArray<EnvironmentObjectDiagnosticEntry> Objects,
+    SelectedObjectCorrelation? SelectedObject = null,
+    ImmutableArray<EnvironmentObjectTransition> Transitions = default);
 
 public sealed record EnvironmentObjectDiagnosticDocument(
     int SchemaVersion,
@@ -106,9 +114,11 @@ public sealed record EnvironmentObjectRecordingPreview(
     int MissingCount,
     long StoredBytes,
     DateTimeOffset? LastObservedAtUtc,
-    string? LatestReason)
+    string? LatestReason,
+    string? LatestSelection,
+    int LatestTransitionCount)
 {
-    public static EnvironmentObjectRecordingPreview Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0, null, null);
+    public static EnvironmentObjectRecordingPreview Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, 0);
 }
 
 public sealed record EnvironmentObjectRecordingStatus(
@@ -183,6 +193,8 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
     private readonly Func<DateTimeOffset> utcNow;
     private readonly List<EnvironmentObjectDiagnosticSample> samples = [];
     private readonly Dictionary<RuntimeKey, TrackedIdentity> activeIdentities = [];
+    private readonly Dictionary<string, bool> lastTargetable = new(StringComparer.Ordinal);
+    private readonly Dictionary<RuntimeKey, DateTimeOffset> recentlyAbsent = [];
     private EnvironmentObjectRecordingStatus status = EnvironmentObjectRecordingStatus.Off;
     private string recordingSessionId = string.Empty;
     private DateTimeOffset? lastSampleAt;
@@ -210,6 +222,14 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
 
     public EnvironmentObjectRecordingStatus Status { get { lock (gate) { return status; } } }
 
+    public static EnvironmentObjectDiagnosticDocument DeserializeDocument(ReadOnlySpan<byte> json)
+    {
+        var document = JsonSerializer.Deserialize<EnvironmentObjectDiagnosticDocument>(json, JsonOptions)
+            ?? throw new InvalidDataException("Environment object diagnostic document could not be read.");
+        if (document.SchemaVersion is not (1 or 2)) throw new InvalidDataException("Unsupported environment object diagnostic schema.");
+        return document;
+    }
+
     public bool Start()
     {
         lock (gate)
@@ -217,6 +237,8 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
             if (disposed || status.State == EnvironmentObjectRecordingState.Recording) return false;
             samples.Clear();
             activeIdentities.Clear();
+            lastTargetable.Clear();
+            recentlyAbsent.Clear();
             sequence = 0;
             nextAnonymousId = 0;
             lastSampleAt = null;
@@ -229,7 +251,7 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
         }
     }
 
-    public bool Record(DateTimeOffset observedAtUtc, EnvironmentObjectContext context, IReadOnlyCollection<RawEnvironmentObjectObservation> objects)
+    public bool Record(DateTimeOffset observedAtUtc, EnvironmentObjectContext context, IReadOnlyCollection<RawEnvironmentObjectObservation> objects, RawSelectedObjectObservation? selected = null)
     {
         lock (gate)
         {
@@ -247,21 +269,48 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
                 ArgumentNullException.ThrowIfNull(objects);
                 var contextChanged = lastObservationSessionId is not null && lastObservationSessionId != context.ObservationSessionId;
                 var floorChanged = lastExactFloor.HasValue && context.ExactFloor.HasValue && lastExactFloor != context.ExactFloor;
-                if (contextChanged || floorChanged) activeIdentities.Clear();
+                if (contextChanged || floorChanged) { activeIdentities.Clear(); lastTargetable.Clear(); recentlyAbsent.Clear(); }
 
                 var present = new HashSet<RuntimeKey>();
                 var entries = ImmutableArray.CreateBuilder<EnvironmentObjectDiagnosticEntry>();
+                var transitions = ImmutableArray.CreateBuilder<EnvironmentObjectTransition>();
+                var currentAnonymous = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var observed in objects)
                 {
                     present.Add(new RuntimeKey(observed.RuntimeId, observed.RuntimeIndex));
                     var identity = ResolveIdentity(observed);
+                    currentAnonymous.Add(identity.AnonymousId);
+                    if (lastTargetable.TryGetValue(identity.AnonymousId, out var previous) && previous != observed.IsTargetable)
+                        transitions.Add(new(identity.AnonymousId, EnvironmentObjectTransitionKind.TargetabilityChanged, previous, observed.IsTargetable, observedAtUtc, "environment-object.targetability-changed"));
+                    var runtimeKey = new RuntimeKey(observed.RuntimeId, observed.RuntimeIndex);
+                    if (recentlyAbsent.Remove(runtimeKey))
+                        transitions.Add(new(identity.AnonymousId, EnvironmentObjectTransitionKind.Reappeared, null, observed.IsTargetable, observedAtUtc, "environment-object.runtime-key-returned-continuity-unknown"));
+                    lastTargetable[identity.AnonymousId] = observed.IsTargetable;
                     var spatial = EnvironmentObjectSpatialQualifier.Qualify(observed);
                     entries.Add(new EnvironmentObjectDiagnosticEntry(
                         identity.AnonymousId, observed.Kind, observed.BaseId, spatial.Position, spatial.Rotation,
                         spatial.Usability, observed.IsTargetable, observedAtUtc, ObservationValueSource.PublicDalamud, spatial.ReasonCode));
                 }
 
-                foreach (var removed in activeIdentities.Keys.Where(id => !present.Contains(id)).ToArray()) activeIdentities.Remove(removed);
+                foreach (var removed in activeIdentities.Where(pair => !present.Contains(pair.Key)).ToArray())
+                {
+                    activeIdentities.Remove(removed.Key);
+                    if (lastTargetable.TryGetValue(removed.Value.AnonymousId, out var previous))
+                        transitions.Add(new(removed.Value.AnonymousId, EnvironmentObjectTransitionKind.Disappeared, previous, null, observedAtUtc, "environment-object.disappeared-not-open-confirmed"));
+                    lastTargetable.Remove(removed.Value.AnonymousId);
+                    recentlyAbsent[removed.Key] = observedAtUtc;
+                }
+                foreach (var missing in lastTargetable.Keys.Where(id => !currentAnonymous.Contains(id)).ToArray())
+                {
+                    lastTargetable.Remove(missing);
+                }
+                while (recentlyAbsent.Count > limits.MaximumSamples)
+                {
+                    var oldest = recentlyAbsent.OrderBy(pair => pair.Value).ThenBy(pair => pair.Key.RuntimeId).ThenBy(pair => pair.Key.RuntimeIndex).First();
+                    recentlyAbsent.Remove(oldest.Key);
+                }
+
+                var selectedCorrelation = CorrelateSelected(selected, objects);
 
                 var exactFloor = context.ExactFloor;
                 var sample = new EnvironmentObjectDiagnosticSample(
@@ -269,7 +318,7 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
                     context.ObservationSessionId,
                     exactFloor is { } floor ? $"floor-{floor}" : null,
                     exactFloor is not null ? "environment-object.floor-exact-observed" : "environment-object.floor-continuity-unverified",
-                    entries.ToImmutable());
+                    entries.ToImmutable(), selectedCorrelation, transitions.ToImmutable());
                 samples.Add(sample);
                 if (samples.Count > limits.MaximumSamples)
                 {
@@ -300,6 +349,18 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
         }
     }
 
+    private SelectedObjectCorrelation? CorrelateSelected(RawSelectedObjectObservation? selected, IReadOnlyCollection<RawEnvironmentObjectObservation> objects)
+    {
+        if (selected is null) return null;
+        var candidates = objects.Where(x => x.RuntimeId == selected.RuntimeId && x.RuntimeIndex == selected.RuntimeIndex && x.Kind == selected.Kind && x.BaseId == selected.BaseId).ToArray();
+        var spatialInput = new RawEnvironmentObjectObservation(selected.RuntimeId, selected.RuntimeIndex, selected.Kind, selected.BaseId, selected.Position, selected.Rotation, selected.IsTargetable, selected.IsValid);
+        var spatial = EnvironmentObjectSpatialQualifier.Qualify(spatialInput);
+        if (candidates.Length != 1) return new(candidates.Length > 1 ? ObjectCorrelationQuality.Ambiguous : ObjectCorrelationQuality.NoMatch, null, selected.Kind, selected.BaseId, spatial.Position, spatial.Rotation, spatial.Usability, selected.IsTargetable, candidates.Length > 1 ? "environment-object.selection.ambiguous" : "environment-object.selection.no-match");
+        var runtimeKey = new RuntimeKey(selected.RuntimeId, selected.RuntimeIndex);
+        if (!activeIdentities.TryGetValue(runtimeKey, out var identity)) return new(ObjectCorrelationQuality.NoMatch, null, selected.Kind, selected.BaseId, spatial.Position, spatial.Rotation, spatial.Usability, selected.IsTargetable, "environment-object.selection.identity-unavailable");
+        return new(ObjectCorrelationQuality.ExactRuntimeMatch, identity.AnonymousId, selected.Kind, selected.BaseId, spatial.Position, spatial.Rotation, spatial.Usability, selected.IsTargetable, "environment-object.selection.exact-runtime-match");
+    }
+
     public void ReportSourceFailure(string reason, Exception exception)
     {
         lock (gate)
@@ -327,8 +388,7 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
             {
                 storage.EnsureDirectory(exportDirectory);
                 var bytes = Serialize();
-                _ = JsonSerializer.Deserialize<EnvironmentObjectDiagnosticDocument>(bytes, JsonOptions)
-                    ?? throw new InvalidDataException("Environment object diagnostic document could not be validated.");
+                _ = DeserializeDocument(bytes);
                 var path = Path.Combine(exportDirectory, $"ddcore-environment-objects-{utcNow():yyyyMMdd-HHmmss}.diagnostic.json");
                 storage.WriteAtomically(path, bytes);
                 status = status with { ExportPath = path, LatestError = null };
@@ -401,7 +461,13 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
             objects.Count(x => x.CoordinateQuality == SpatialUsability.Usable),
             objects.Count(x => x.CoordinateQuality == SpatialUsability.Quarantined),
             objects.Count(x => x.CoordinateQuality == SpatialUsability.Missing),
-            storedBytes, latest?.ObservedAtUtc, latest?.Objects.LastOrDefault(x => x.ReasonCode is not null)?.ReasonCode ?? latest?.ContinuityReason);
+            storedBytes,
+            latest?.ObservedAtUtc,
+            latest?.Objects.LastOrDefault(x => x.ReasonCode is not null)?.ReasonCode ?? latest?.ContinuityReason,
+            latest?.SelectedObject is { } selected
+                ? $"{selected.Quality}: {selected.ObjectKind} / BaseId {selected.BaseId?.ToString() ?? "不明"} / {selected.AnonymousObjectId ?? "匿名IDなし"} / 座標 {selected.CoordinateQuality} / {selected.ReasonCode}"
+                : "選択対象なし",
+            latest?.Transitions.Length ?? 0);
     }
 
     private void StopInternal(EnvironmentObjectRecordingState finalState, string reason)
@@ -428,7 +494,7 @@ public sealed class EnvironmentObjectDiagnosticRecorder : IDisposable
     }
 
     private byte[] Serialize() => JsonSerializer.SerializeToUtf8Bytes(
-        new EnvironmentObjectDiagnosticDocument(1, producerVersion, recordingSessionId, status.StartedAtUtc ?? utcNow(), samples.ToImmutableArray()),
+        new EnvironmentObjectDiagnosticDocument(2, producerVersion, recordingSessionId, status.StartedAtUtc ?? utcNow(), samples.ToImmutableArray()),
         JsonOptions);
 
     private void Fault(string reason, Exception exception) => status = status with
