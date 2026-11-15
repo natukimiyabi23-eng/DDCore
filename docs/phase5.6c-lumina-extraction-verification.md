@@ -26,6 +26,22 @@ The locally reflected public surface included `GameData(string, LuminaOptions)`,
 
 The documented API describes reading game files; it does not promise that a static LGB contains the live randomized floor state. The local version above is an observed development-hook build, not a claim that all future Dalamud API 15 builds use the same Lumina version.
 
+### Follow-up: public SqPack index surface (2026-11-16)
+
+To avoid guessing additional `planmap.lgb`/collision paths, the offline probe gained `--public-api-surface`. It inspects **public** members of the installed Lumina assembly and summarizes the public repository/category metadata. This was run against the same local API 15 hook and SqPack; no live game process or non-public member was read.
+
+| Public surface / observed value | Result | What it does not establish |
+|---|---|---|
+| `GameData.GetFile<T>(string)`, `FileExists(string)`, `GetFileMetadata(string)` | Present in the local assembly and documented by Lumina. Each requires a virtual path. | No method that lists every virtual file path was found in the inspected `GameData` public surface. |
+| `GameData.Repositories` → `Repository.Categories` | Publicly exposes the loaded repository/category collections. The local `ex4` repository reports 12 categories and 134,220 `IndexHashTableEntries` in aggregate; the other expansion repositories were also summarized. | Repository/category IDs and index-entry counts are not path names or semantic asset labels. |
+| `Category.IndexHashTableEntries` / `Index2HashTableEntries` | Public dictionaries keyed by 64-bit / 32-bit file hashes with index metadata. In this local snapshot the `ex4` categories showed 134,220 ordinary hash entries and no loaded index2 entries. | Hash keys cannot be reversed to recover arbitrary original paths. They do not identify which entry is EO topology, collision geometry, or a map file. |
+| `Repository.FindIndexes(byte, int, int)` | Public method returns matching `.index`/`.index2` files for category/expansion/chunk. | It enumerates index containers, not their original virtual path strings. |
+| Candidate-path lookup | `GameData.GetFileHash(string)` and `FileExists(string)` permit checking a path already known from a source/reference. | It cannot discover an unknown path without a candidate name. |
+
+The public API reference describes `Repositories` as the available SqPack repositories and `FileExists` as checking a supplied path against indexes; `Category` exposes hash tables, while `Repository.FindIndexes` finds index files. See [Lumina GameData](https://lumina.xiv.dev/api/Lumina.Lumina.html), [Repository](https://lumina.xiv.dev/api/Lumina.Data.Repository.html), [Category](https://lumina.xiv.dev/api/Lumina.Data.Category.html), and [SqPackIndex](https://lumina.xiv.dev/api/Lumina.Data.SqPackIndex.html). Local reflection of the installed `GameData`/`Repository`/`Category`/index public surfaces agreed with those documented members. This means the checked public API supports **candidate verification**, not general path discovery; the finding does not claim there are no third-party path catalogs or other independent sources.
+
+The API-surface JSON was identical across two executions (SHA-256 `3CBE046631F656C51F5FCC97B50DB46CBDA98601DA722668AC91998C72F71C46`). The actual `planmap.lgb` probe still exited 0 afterward. This does not change M0: static Room A/B candidates remain readable, but live layout, current room, open edges, collision topology and a complete BFS graph remain unknown. No hash-table brute-force or custom SqPack parser was added.
+
 ## Asset identification and extraction
 
 The probe read `TerritoryType` row 1099 from the installed Excel data. Its `Bg` field is:
@@ -62,7 +78,7 @@ Across the 53 records in the two room layers, X/Z centers range from `-426.207` 
 
 ## Offline probe and checks
 
-Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
+Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
 
 Commands used:
 
@@ -71,6 +87,10 @@ dotnet build tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release --no-restore
 dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
   'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
   'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack'
+dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
+  'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
+  'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack' `
+  --public-api-surface
 ```
 
 Observed checks:

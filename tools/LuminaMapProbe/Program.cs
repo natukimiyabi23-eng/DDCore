@@ -6,13 +6,14 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface]");
     return 2;
 }
 
 var luminaDirectory = Path.GetFullPath(args[0]);
 var sqpackDirectory = Path.GetFullPath(args[1]);
-var virtualPath = args.Length > 2 ? args[2] : null;
+var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
+var virtualPath = args.Length > 2 && !apiSurfaceOnly ? args[2] : null;
 var luminaPath = Path.Combine(luminaDirectory, "Lumina.dll");
 var excelPath = Path.Combine(luminaDirectory, "Lumina.Excel.dll");
 
@@ -37,6 +38,67 @@ var options = Activator.CreateInstance(optionsType)!;
 var gameData = Activator.CreateInstance(gameDataType, sqpackDirectory, options)!;
 var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
 var excelModule = GetMember(gameData, "Excel");
+if (apiSurfaceOnly)
+{
+    var gameDataPropertyTypes = gameDataType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        .Select(static property => property.PropertyType)
+        .SelectMany(static type => type.IsGenericType ? type.GetGenericArguments().Append(type) : [type])
+        .ToArray();
+    var repositoryType = luminaAssembly.GetType("Lumina.Data.Repository");
+    var repositoryPropertyTypes = repositoryType?.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        .Select(static property => property.PropertyType)
+        .SelectMany(static type => type.IsGenericType ? type.GetGenericArguments().Append(type) : [type])
+        .ToArray() ?? [];
+    var relevantTypes = luminaAssembly.GetExportedTypes()
+        .Where(static type => type.Name.Contains("File", StringComparison.OrdinalIgnoreCase)
+            || type.Name.Contains("SqPack", StringComparison.OrdinalIgnoreCase)
+            || type.Name.Contains("Index", StringComparison.OrdinalIgnoreCase))
+        .Concat(gameDataPropertyTypes)
+        .Concat(repositoryPropertyTypes)
+        .Append(luminaAssembly.GetType("Lumina.Data.Category", throwOnError: true)!)
+        .Append(gameDataType)
+        .Distinct()
+        .OrderBy(static type => type.FullName, StringComparer.Ordinal)
+        .Select(static type => new
+        {
+            type = type.FullName,
+            methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Select(static method => method.ToString())
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+            properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Select(static property => $"{property.PropertyType.FullName} {property.Name}")
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+        })
+        .ToArray();
+    var repositoryCatalog = EnumeratePairs(GetPublicProperty(gameData, "Repositories")!)
+        .Select(entry => new
+        {
+            name = entry.Key?.ToString(),
+            expansion = GetPublicProperty(entry.Value, "ExpansionId"),
+            categories = EnumeratePairs(GetPublicProperty(entry.Value, "Categories")!)
+                .SelectMany(categoryEntry => ((IEnumerable)categoryEntry.Value!).Cast<object>())
+                .Select(category => new
+                {
+                    categoryId = GetPublicProperty(category, "CategoryId"),
+                    expansion = GetPublicProperty(category, "Expansion"),
+                    chunk = GetPublicProperty(category, "Chunk"),
+                    indexHashCount = GetDictionaryCount(GetPublicProperty(category, "IndexHashTableEntries")),
+                    index2HashCount = GetDictionaryCount(GetPublicProperty(category, "Index2HashTableEntries")),
+                })
+                .OrderBy(static category => category.expansion)
+                .ThenBy(static category => category.categoryId)
+                .ThenBy(static category => category.chunk)
+                .ToArray(),
+        })
+        .OrderBy(static repository => repository.name, StringComparer.Ordinal)
+        .ToArray();
+
+    Console.WriteLine(JsonSerializer.Serialize(new { luminaAssemblyVersion = version, publicApi = relevantTypes, repositoryCatalog }));
+    return 0;
+}
+
 var excelApiMethods = excelModule?.GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
     .Where(static method => method.Name.Contains("Sheet", StringComparison.OrdinalIgnoreCase))
     .Select(static method => method.ToString())
@@ -343,6 +405,17 @@ static object? GetMember(object? instance, string name)
     return type.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(instance)
         ?? type.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(instance);
 }
+
+static object? GetPublicProperty(object? instance, string name) => instance?.GetType()
+    .GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)?.GetValue(instance);
+
+static IEnumerable<(object? Key, object? Value)> EnumeratePairs(object dictionary) => ((IEnumerable)dictionary)
+    .Cast<object>()
+    .Select(static pair => (
+        Key: pair.GetType().GetProperty("Key", BindingFlags.Public | BindingFlags.Instance)?.GetValue(pair),
+        Value: pair.GetType().GetProperty("Value", BindingFlags.Public | BindingFlags.Instance)?.GetValue(pair)));
+
+static int? GetDictionaryCount(object? value) => value is IDictionary dictionary ? dictionary.Count : null;
 
 static string[] GetMemberNames(object? instance)
 {
