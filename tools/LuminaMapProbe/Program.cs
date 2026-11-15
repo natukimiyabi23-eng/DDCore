@@ -59,6 +59,7 @@ var collisionExcelTypes = excelAssembly.GetTypes()
     })
     .OrderBy(static type => type.fullName, StringComparer.Ordinal)
     .ToArray();
+var collisionIdPalletRow9 = ReadCollisionIdPalletRow9(excelModule, excelAssembly);
 var fileExists = gameDataType.GetMethod("FileExists", [typeof(string)])!;
 var getFile = gameDataType.GetMethods().Single(method => method.Name == "GetFile" && method.IsGenericMethod);
 var lgbType = luminaAssembly.GetType("Lumina.Data.Files.LgbFile", throwOnError: true)!;
@@ -318,6 +319,7 @@ var result = new
     countsByAssetType,
     excelApiMethods,
     collisionExcelTypes,
+    collisionIdPalletRow9,
     objectTypeSummaries,
     sharedGroupCount = sharedGroupSummaries.Count,
     sharedGroupSummaries,
@@ -355,6 +357,40 @@ static string[] GetMemberNames(object? instance)
         .Distinct(StringComparer.Ordinal)
         .Order(StringComparer.Ordinal)
         .ToArray();
+}
+
+static object ReadCollisionIdPalletRow9(object? excelModule, Assembly excelAssembly)
+{
+    var rowType = excelAssembly.GetType("Lumina.Excel.Sheets.CollisionIdPallet", throwOnError: false);
+    if (excelModule is null || rowType is null)
+        return new { supported = false, reason = "sheet type unavailable" };
+
+    try
+    {
+        var getSheet = excelModule.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Single(method => method.Name == "GetSheet" && method.IsGenericMethodDefinition && method.GetParameters().Length == 2);
+        var sheet = getSheet.MakeGenericMethod(rowType).Invoke(excelModule, [null, "CollisionIdPallet"]);
+        if (sheet is null)
+            return new { supported = false, reason = "sheet unavailable" };
+
+        var getRow = sheet.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(method => method.Name == "GetRow" && method.GetParameters() is [{ ParameterType: var parameterType }] && parameterType == typeof(uint));
+        if (getRow is null)
+            return new { supported = false, reason = "row reader unavailable" };
+
+        var row = getRow.Invoke(sheet, [9u]);
+        if (row is null)
+            return new { supported = true, rowId = 9, rowFound = false };
+
+        var values = rowType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(static property => property.GetMethod is not null)
+            .ToDictionary(property => property.Name, property => property.GetValue(row)?.ToString(), StringComparer.Ordinal);
+        return new { supported = true, rowId = 9, rowFound = true, values };
+    }
+    catch (Exception exception)
+    {
+        return new { supported = false, reason = exception.GetType().Name };
+    }
 }
 
 static float[] ReadVector(object? value) =>
