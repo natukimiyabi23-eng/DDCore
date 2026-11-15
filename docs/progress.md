@@ -358,3 +358,11 @@
 - A separate 2007357 run reports `obj-000001` exact selection samples; in another run it changes targetability at sample 20 and has a disappearance transition at sample 40, while `obj-000003` with the same BaseId remains. The screenshot's visible reproducer label and user-reported manual chest opening remain separate evidence labels; JSON does not prove semantic identity or opening causality.
 - Stage 5.6B scoped completion is confirmed. `exactFloor` remains null; floor transitions, re-entry, other DDs, reappearance identity, and automatic reproducer activation-state detection remain unverified.
 - Final documentation checkpoint `0e359b38ed7b161047d6c26cea611b09c2019eb2` pushed to the existing Draft PR #16; GitHub Actions run `43722744224` passed. Local Release tests passed 360/360; `git diff --check` passed. PR remains open/Draft and unmerged.
+
+## 2026-11-16 — Offline room-label evaluator provenance guard
+
+- Reviewed the local screenshot folders and DDCore export directory read-only. The latest six EO schema-5 replays contain 869 snapshots; every player pose is marked `source=publicDalamud`, `quality=direct`. No independent B1 room-layout screenshot or user-authored label JSON was found in the inspected locations. Reviewed captures showed EO B8/B9/B10 or the diagnostics panel, so none was used as a B1 label.
+- Hardened the offline `--validate-room-labels` evaluator: finite coordinates are now scored only when pose provenance is explicitly `publicDalamud` with `direct` quality. Missing, stale, inferred, or other-source metadata increments `untrustedPoseCount` and is excluded from the match-rate denominator.
+- Bumped the aggregate evaluator report schema to 2 for the new summary field; the user-authored labels input remains schema 1.
+- Added two regression cases for stale quality and unknown source. Probe evaluator tests pass 10/10; the first run exposed a test JSON-string syntax issue, corrected before successful verification.
+- This is an offline tooling/data-integrity change only. No plugin runtime, replay original, game asset, BFS, strategy, or game process was changed. Independent labeled B1 data remains unavailable; no live-map accuracy claim or M0 PASS is made.

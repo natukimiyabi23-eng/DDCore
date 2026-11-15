@@ -434,7 +434,7 @@ if (replayRoomCandidates || validateRoomLabels)
             var labelCanonical = JsonSerializer.Serialize(summary);
             report = new
             {
-                schemaVersion = 1,
+                schemaVersion = 2,
                 replaySha256,
                 planmapSha256,
                 evidenceMode = "user-authored labels compared with static candidate boxes; not live topology or traversability",

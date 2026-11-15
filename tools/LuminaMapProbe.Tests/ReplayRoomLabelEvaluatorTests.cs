@@ -147,6 +147,40 @@ public sealed class ReplayRoomLabelEvaluatorTests
         Assert.Null(summary.MatchRate);
     }
 
+    [Theory]
+    [InlineData("stale", "publicDalamud")]
+    [InlineData("direct", "unknown")]
+    public void PoseWithoutDirectPublicProvenanceIsNotScored(string quality, string source)
+    {
+        using var replay = JsonDocument.Parse(JsonSerializer.Serialize(new
+        {
+            schemaVersion = 5,
+            snapshots = new[]
+            {
+                new
+                {
+                    dungeon = new { kind = "eurekaOrthos", floorRange = new { start = 1, end = 10 } },
+                    playerPose = new
+                    {
+                        position = new { isFinite = true, x = 1d, y = 1d },
+                        metadata = new { source, quality },
+                    },
+                },
+            },
+        }));
+
+        var summary = ReplayRoomLabelEvaluator.Evaluate(
+            replay.RootElement,
+            ReplaySha256,
+            PlanmapSha256,
+            Labels(new ReplayRoomLabel(0, 2, "B", 4, "userScreenshot")),
+            [new ReplayRoomCandidateBox("LVD_Room_B", 4, 0, 3, 0, 3)]);
+
+        Assert.Equal(1, summary.UntrustedPoseCount);
+        Assert.Equal(0, summary.MatchedExpectedCandidateCount);
+        Assert.Null(summary.MatchRate);
+    }
+
     private static ReplayRoomLabelSet Labels(params ReplayRoomLabel[] labels) => new(1, ReplaySha256, PlanmapSha256, [.. labels]);
 
     private static JsonDocument CreateReplay(string kind, int floorStart, int floorEnd, int? exactFloor, params double[] coordinates)
@@ -160,7 +194,11 @@ public sealed class ReplayRoomLabelEvaluatorTests
                 floor = exactFloor,
                 floorRange = new { start = floorStart, end = floorEnd },
             },
-            playerPose = new { position = new { isFinite = true, x = pair[0], y = pair[1] } },
+            playerPose = new
+            {
+                position = new { isFinite = true, x = pair[0], y = pair[1] },
+                metadata = new { source = "publicDalamud", quality = "direct", missingReason = (string?)null },
+            },
         });
         return JsonDocument.Parse(JsonSerializer.Serialize(new { schemaVersion = 5, snapshots }));
     }

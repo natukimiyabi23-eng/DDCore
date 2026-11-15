@@ -15,6 +15,7 @@ public sealed record ReplayRoomLabelSummary(
     int OtherCandidateCount,
     int UnmatchedCount,
     int InvalidPoseCount,
+    int UntrustedPoseCount,
     int ContextConflictCount,
     int ScreenshotEvidenceCount,
     int UserConfirmedEvidenceCount,
@@ -76,6 +77,7 @@ public static class ReplayRoomLabelEvaluator
         var other = 0;
         var unmatched = 0;
         var invalidPose = 0;
+        var untrustedPose = 0;
         var contextConflict = 0;
         var screenshotEvidence = 0;
         var userConfirmedEvidence = 0;
@@ -112,6 +114,12 @@ public static class ReplayRoomLabelEvaluator
                 continue;
             }
 
+            if (!HasTrustedPoseMetadata(snapshot))
+            {
+                untrustedPose++;
+                continue;
+            }
+
             var hits = candidateBoxes.Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ).ToArray();
             var expectedHit = hits.Any(box => box.Layer == expectedLayer && box.Index == label.RoomIndex);
             if (expectedHit && hits.Length == 1)
@@ -124,7 +132,7 @@ public static class ReplayRoomLabelEvaluator
                 unmatched++;
         }
 
-        var evaluableCount = labelSet.Labels.Count - invalidPose - contextConflict;
+        var evaluableCount = labelSet.Labels.Count - invalidPose - untrustedPose - contextConflict;
         return new ReplayRoomLabelSummary(
             labelSet.Labels.Count,
             matched,
@@ -132,6 +140,7 @@ public static class ReplayRoomLabelEvaluator
             other,
             unmatched,
             invalidPose,
+            untrustedPose,
             contextConflict,
             screenshotEvidence,
             userConfirmedEvidence,
@@ -182,4 +191,16 @@ public static class ReplayRoomLabelEvaluator
 
         return true;
     }
+
+    private static bool HasTrustedPoseMetadata(JsonElement snapshot) =>
+        snapshot.TryGetProperty("playerPose", out var pose)
+        && pose.ValueKind == JsonValueKind.Object
+        && pose.TryGetProperty("metadata", out var metadata)
+        && metadata.ValueKind == JsonValueKind.Object
+        && metadata.TryGetProperty("source", out var source)
+        && source.ValueKind == JsonValueKind.String
+        && source.GetString() == "publicDalamud"
+        && metadata.TryGetProperty("quality", out var quality)
+        && quality.ValueKind == JsonValueKind.String
+        && quality.GetString() == "direct";
 }
