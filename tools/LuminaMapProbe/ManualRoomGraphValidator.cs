@@ -14,9 +14,15 @@ public sealed record ManualRoomGraphLabelSet(
     List<ManualRoomPresenceLabel> Rooms,
     List<ManualPassageLabel> Passages);
 
-public sealed record ManualRoomPresenceLabel(int Room, string State, string Evidence, string? EvidenceSha256 = null);
+public sealed record ManualRoomPresenceLabel(int Room, string State, string Evidence, string? EvidenceSha256 = null, int? EvidenceSnapshotIndex = null);
 
-public sealed record ManualPassageLabel(int RoomA, int RoomB, string State, string Evidence, string? EvidenceSha256 = null);
+public sealed record ManualPassageLabel(
+    int RoomA,
+    int RoomB,
+    string State,
+    string Evidence,
+    string? EvidenceSha256 = null,
+    int? EvidenceSnapshotIndex = null);
 
 public sealed record ManualRoomGraphValidation(
     string Status,
@@ -56,7 +62,7 @@ public static class ManualRoomGraphValidator
         if (!string.Equals(labels.ReplaySha256, actualReplaySha256, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(labels.PlanmapSha256, actualPlanmapSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Graph labels do not match the exact replay and planmap inputs.");
-        if (labels.SchemaVersion != 2)
+        if (labels.SchemaVersion != 3)
             throw new InvalidDataException("Graph labels have an unsupported schema.");
         if (candidateBoxes.Any(static box => box.Index is < 0 or >= RoomPathfinder.RoomCount
             || box.Layer is not ("LVD_Room_A" or "LVD_Room_B")
@@ -78,6 +84,7 @@ public static class ManualRoomGraphValidator
         ValidateHash(labels.EvidenceSha256, nameof(labels.EvidenceSha256));
         if (!availableEvidenceSha256.Contains(labels.EvidenceSha256))
             return Result("unavailable", "evidence.context-image-not-found", labels, [], true);
+        ValidateScreenshotContexts(labels, replay, candidateBoxes);
 
         if (roomStates[labels.CurrentRoom.Value] != "present" || roomStates[destinationRoom] != "present")
             return Result("unavailable", "route.endpoint-not-present", labels, [], true);
@@ -136,7 +143,7 @@ public static class ManualRoomGraphValidator
             || rooms.Select(static room => room.Room).Distinct().Count() != RoomPathfinder.RoomCount
             || rooms.Any(room => room.Room is < 0 or >= RoomPathfinder.RoomCount
                 || room.State is not ("present" or "absent" or "unknown")
-                || !HasValidEvidence(room.State, room.Evidence, room.EvidenceSha256, availableEvidenceSha256)))
+                || !HasValidEvidence(room.State, room.Evidence, room.EvidenceSha256, room.EvidenceSnapshotIndex, availableEvidenceSha256)))
             throw new InvalidDataException("Room labels must cover each of 25 cells exactly once with valid state/evidence.");
     }
 
@@ -163,7 +170,7 @@ public static class ManualRoomGraphValidator
                 || passage.RoomA >= passage.RoomB
                 || !IsAdjacent(passage.RoomA, passage.RoomB)
                 || passage.State is not ("open" or "closed" or "unknown")
-                || !HasValidEvidence(passage.State, passage.Evidence, passage.EvidenceSha256, availableEvidenceSha256))
+                || !HasValidEvidence(passage.State, passage.Evidence, passage.EvidenceSha256, passage.EvidenceSnapshotIndex, availableEvidenceSha256))
             || passages.Select(static passage => (passage.RoomA, passage.RoomB)).Distinct().Count() != expected.Count
             || passages.Any(passage => !expected.Contains((passage.RoomA, passage.RoomB))))
             throw new InvalidDataException("Passage labels must cover each of the 40 orthogonal cell pairs exactly once.");
@@ -172,6 +179,41 @@ public static class ManualRoomGraphValidator
         if (passages.Any(passage => passage.State == "open"
             && (roomStates[passage.RoomA] != "present" || roomStates[passage.RoomB] != "present")))
             throw new InvalidDataException("An open passage requires both endpoint rooms to be explicitly present.");
+    }
+
+    private static void ValidateScreenshotContexts(
+        ManualRoomGraphLabelSet labels,
+        JsonElement replay,
+        IReadOnlyList<ReplayRoomCandidateBox> candidateBoxes)
+    {
+        var snapshots = replay.GetProperty("snapshots");
+        var screenshotIndexes = labels.Rooms
+            .Where(static room => room.Evidence == "userScreenshot")
+            .Select(static room => room.EvidenceSnapshotIndex!.Value)
+            .Concat(labels.Passages
+                .Where(static passage => passage.Evidence == "userScreenshot")
+                .Select(static passage => passage.EvidenceSnapshotIndex!.Value));
+        var expectedLayer = $"LVD_Room_{labels.Variant}";
+
+        foreach (var index in screenshotIndexes.Distinct())
+        {
+            if (index >= snapshots.GetArrayLength())
+                throw new InvalidDataException("A screenshot-backed label references a missing replay snapshot.");
+
+            var snapshot = snapshots[index];
+            if (!ReplayRoomLabelEvaluator.HasCompatibleContext(snapshot, labels.ExactFloor!.Value)
+                || !ReplayRoomLabelEvaluator.TryReadPose(snapshot, out var x, out var z)
+                || !ReplayRoomLabelEvaluator.HasTrustedPoseMetadata(snapshot))
+                throw new InvalidDataException("A screenshot-backed label snapshot lacks matching floor context or a trusted direct pose.");
+
+            var candidates = candidateBoxes
+                .Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ)
+                .Select(static box => (box.Layer, box.Index))
+                .Distinct()
+                .ToArray();
+            if (candidates.Length != 1 || candidates[0].Layer != expectedLayer)
+                throw new InvalidDataException("A screenshot-backed label snapshot does not uniquely support the graph layout family.");
+        }
     }
 
     private static bool IsCurrentRoomCandidateSupported(
@@ -216,15 +258,20 @@ public static class ManualRoomGraphValidator
         b == a + RoomPathfinder.GridWidth
         || (b == a + 1 && a / RoomPathfinder.GridWidth == b / RoomPathfinder.GridWidth);
 
-    private static bool HasValidEvidence(string state, string evidence, string? evidenceSha256, IReadOnlySet<string> availableEvidenceSha256)
+    private static bool HasValidEvidence(
+        string state,
+        string evidence,
+        string? evidenceSha256,
+        int? evidenceSnapshotIndex,
+        IReadOnlySet<string> availableEvidenceSha256)
     {
         if (state == "unknown")
-            return evidence == "notObserved" && evidenceSha256 is null;
+            return evidence == "notObserved" && evidenceSha256 is null && evidenceSnapshotIndex is null;
 
         if (evidence == "userConfirmed")
-            return evidenceSha256 is null;
+            return evidenceSha256 is null && evidenceSnapshotIndex is null;
 
-        if (evidence != "userScreenshot" || evidenceSha256 is null)
+        if (evidence != "userScreenshot" || evidenceSha256 is null || evidenceSnapshotIndex is null || evidenceSnapshotIndex < 0)
             return false;
 
         try
@@ -276,7 +323,7 @@ public static class ManualRoomGraphValidator
                 passages.Add(new(room, room + RoomPathfinder.GridWidth, "unknown", "notObserved"));
         }
 
-        return new(2, replaySha256, planmapSha256, null, snapshotIndex, null, null, null, rooms, passages);
+        return new(3, replaySha256, planmapSha256, null, snapshotIndex, null, null, null, rooms, passages);
     }
 
     private static ManualRoomGraphValidation Result(

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-11-16 — Bind screenshot labels to replay pose context
+
+- On `feature/offline-eo-graph-validation` / Draft PR #24, graph label schema 3 adds `evidenceSnapshotIndex` to each `userScreenshot` room/passage row. The validator requires that replay snapshot to exist, match the graph's EO floor band, contain trusted direct public pose, and map uniquely to the selected Room A/B family. This is provenance/context consistency only; image meaning and the user-authored label remain unverified.
+- Regression coverage rejects missing/out-of-range indices, ambiguous pose, and conflicting A/B context. Locked restore, Release solution build (0 warnings/errors), all 398 tests (197 Core, 163 Observation, 38 probe), explicit probe Release build, format verification, and NuGet audit (no vulnerable packages in six projects) passed. No plugin/runtime/game-operation code changed; M0 remains UNKNOWN. Commit/push and CI update are pending.
+
 ## 2026-11-16 — Offline routes from confirmed portions of the EO graph
 
 - Updated the schema-2 manual graph validator to emit `offline-partial-route` only when the full start-to-destination path consists of explicitly Open passages whose endpoint rooms are explicitly Present. Unknown edges are excluded; an unknown endpoint on an Open passage is rejected.

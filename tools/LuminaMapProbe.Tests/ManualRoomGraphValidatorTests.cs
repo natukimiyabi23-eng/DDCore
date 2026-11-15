@@ -92,17 +92,14 @@ public sealed class ManualRoomGraphValidatorTests
     public void AmbiguousPlayerPoseCandidatePreventsRouteOutput()
     {
         using var replay = Replay();
-        var result = ManualRoomGraphValidator.Evaluate(
-            Labels(), ReplayHash, PlanmapHash, replay.RootElement,
-            [
-                new ReplayRoomCandidateBox("LVD_Room_A", 0, 0, 2, 0, 2),
-                new ReplayRoomCandidateBox("LVD_Room_B", 0, 0, 2, 0, 2),
-            ],
-            new HashSet<string>([EvidenceHash], StringComparer.OrdinalIgnoreCase),
-            destinationRoom: 1);
-
-        Assert.Equal("route.current-pose-ambiguous", result.ReasonCode);
-        Assert.Empty(result.Route);
+        Assert.Throws<InvalidDataException>(() => ManualRoomGraphValidator.Evaluate(
+                Labels(), ReplayHash, PlanmapHash, replay.RootElement,
+                [
+                    new ReplayRoomCandidateBox("LVD_Room_A", 0, 0, 2, 0, 2),
+                    new ReplayRoomCandidateBox("LVD_Room_B", 0, 0, 2, 0, 2),
+                ],
+                new HashSet<string>([EvidenceHash], StringComparer.OrdinalIgnoreCase),
+                destinationRoom: 1));
     }
 
     [Fact]
@@ -159,7 +156,7 @@ public sealed class ManualRoomGraphValidatorTests
     public void SchemaRejectsUnknownFieldsAndInvalidEvidenceHash()
     {
         const string json = """
-            {"schemaVersion":2,"replaySha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","planmapSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","evidenceSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","snapshotIndex":0,"exactFloor":2,"variant":"A","currentRoom":0,"rooms":[],"passages":[],"characterName":"not-allowed"}
+            {"schemaVersion":3,"replaySha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","planmapSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","evidenceSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","snapshotIndex":0,"exactFloor":2,"variant":"A","currentRoom":0,"rooms":[],"passages":[],"characterName":"not-allowed"}
             """;
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ManualRoomGraphLabelSet>(json, ManualRoomGraphValidator.JsonOptions));
 
@@ -178,7 +175,7 @@ public sealed class ManualRoomGraphValidatorTests
         Assert.Null(template.Variant);
         Assert.Null(template.CurrentRoom);
         Assert.Null(template.EvidenceSha256);
-        Assert.Equal(2, template.SchemaVersion);
+        Assert.Equal(3, template.SchemaVersion);
         Assert.Equal(25, template.Rooms.Count);
         Assert.Equal(40, template.Passages.Count);
         Assert.All(template.Rooms, static row => Assert.Equal("unknown", row.State));
@@ -207,9 +204,28 @@ public sealed class ManualRoomGraphValidatorTests
     {
         using var replay = Replay();
         var labels = Labels();
-        labels.Rooms[0] = labels.Rooms[0] with { Evidence = "userScreenshot", EvidenceSha256 = new string('d', 64) };
+        labels.Rooms[0] = labels.Rooms[0] with { Evidence = "userScreenshot", EvidenceSha256 = new string('d', 64), EvidenceSnapshotIndex = 0 };
 
         Assert.Throws<InvalidDataException>(() => Evaluate(labels, replay.RootElement));
+    }
+
+    [Fact]
+    public void ScreenshotLabelRequiresACompatibleReplaySnapshotIndex()
+    {
+        using var replay = Replay();
+        var missingSnapshot = Labels();
+        missingSnapshot.Passages[0] = missingSnapshot.Passages[0] with { EvidenceSnapshotIndex = null };
+        var outOfRangeSnapshot = Labels();
+        outOfRangeSnapshot.Passages[0] = outOfRangeSnapshot.Passages[0] with { EvidenceSnapshotIndex = 1 };
+        var wrongLayoutFamily = Labels();
+
+        Assert.Throws<InvalidDataException>(() => Evaluate(missingSnapshot, replay.RootElement));
+        Assert.Throws<InvalidDataException>(() => Evaluate(outOfRangeSnapshot, replay.RootElement));
+        Assert.Throws<InvalidDataException>(() => ManualRoomGraphValidator.Evaluate(
+            wrongLayoutFamily, ReplayHash, PlanmapHash, replay.RootElement,
+            [new ReplayRoomCandidateBox("LVD_Room_B", 0, 0, 2, 0, 2)],
+            new HashSet<string>([EvidenceHash], StringComparer.OrdinalIgnoreCase),
+            destinationRoom: 1));
     }
 
     [Fact]
@@ -262,8 +278,8 @@ public sealed class ManualRoomGraphValidatorTests
             if (room / 5 < 4)
                 passages.Add(new(room, room + 5, "closed", "userConfirmed"));
         }
-        passages[0] = new(0, 1, "open", "userScreenshot", EvidenceHash);
-        return new(2, ReplayHash, PlanmapHash, EvidenceHash, 0, 2, "A", 0, rooms, passages);
+        passages[0] = new(0, 1, "open", "userScreenshot", EvidenceHash, 0);
+        return new(3, ReplayHash, PlanmapHash, EvidenceHash, 0, 2, "A", 0, rooms, passages);
     }
 
     private static JsonDocument Replay() => JsonDocument.Parse("""
