@@ -96,6 +96,23 @@ All 66 player poses were finite. Using the existing candidate bounds convention 
 
 These are replay-to-static-geometry candidates, not verified room IDs or proof that Room B was the active layout: there is no independent room/template label, exact floor, or open-edge label in this replay. The result demonstrates that the data crosswalk can produce a compact candidate cell index while retaining ambiguous and unmatched observations as such; it does not unlock live BFS.
 
+#### Cross-recording exploratory overlay (six schema-5 EO exports)
+
+The six newest valid schema-5 exports whose first snapshot identifies EO and a floor band in the fixed directory were also read without modification. Other valid schema-5 DD exports are counted separately rather than classified as malformed. Selection is by internal `createdAtUtc` (filesystem modification time as tie-break); they total 869 snapshots and all 869 stored player positions are finite. Every selected recording identifies EO and the 1-10 band, while its exact floor remains null. Using the same uncalibrated inclusive Room A/B box bounds and the static row-major crosswalk, results were:
+
+| Recording ordinal (UTC `createdAtUtc`) | Samples | Unique box candidates | Multiple boxes | No candidate | Candidate index counts |
+|---|---:|---:|---:|---:|---|
+| 1 (13:15:11.6933961Z) | 294 | 0 | 0 | 294 | none |
+| 2 (13:18:00.5475772Z) | 245 | 0 | 0 | 245 | none |
+| 3 (13:20:18.3950899Z) | 63 | 0 | 0 | 63 | none |
+| 4 (13:44:33.9999913Z) | 96 | 93 | 0 | 3 | 2:18, 7:16, 8:27, 9:22, 13:10 |
+| 5 (13:51:21.5841943Z) | 105 | 101 | 2 | 2 | 2:36, 7:14, 12:14, 13:21, 17:16 |
+| 6 (14:29:45.946997Z) | 66 | 50 | 3 | 13 | 12:22, 17:13, 18:15 |
+
+Among the three recordings with any unique box containment (267 samples), 244 were unique, 5 were multi-box, and 18 were outside all candidate boxes. In their ordered sample sequences, the 236 consecutive pairs with two unique classifications were either the same cell (230) or orthogonally neighboring indices (6); no non-neighbor jump was observed. This is only temporal consistency of uncalibrated geometric candidates and an abstract grid-index convention. It does not validate a traversable connection, compass orientation, active A/B template, room ground truth, or independent randomized layout labels. The three earlier recordings had finite poses but no containment in the candidate bounds, so they are evidence that this box/coordinate match is not a complete classifier.
+
+The new offline collection mode reproduced this aggregate twice: six selected recordings, zero malformed schema-5 files, zero other-DD schema-5 files in the inspected directory, 869 samples, and canonical sanitized-output SHA-256 `F8D8DAC614EA0201DBB829D258903886FC2F39445819D0CEABCE729CF60BCB73` on both runs. Sequence comparison resets across 10-floor-band changes instead of treating the old and new band as adjacent room evidence; these six recordings had no such boundary crossing. A deliberately nonexistent export directory was rejected with exit code 2. No raw replay was written, moved, or staged.
+
 ### Extracted structure
 
 | Layer | Objects | EventRange candidates | Distinct priorities | Shape / transform checks |
@@ -110,7 +127,7 @@ Across the 53 records in the two room layers, X/Z centers range from `-426.207` 
 
 ## Offline probe and checks
 
-Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. Its `--deep-dungeon-grids` mode extracts EO's static 5x5 sheet references and fails on grid shape, missing floorset, planmap, or room-index mismatch. It does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
+Added standalone tool [`tools/LuminaMapProbe`](../tools/LuminaMapProbe/Program.cs). It loads the caller-supplied local Lumina assemblies and SqPack root via reflection, obtains TerritoryType 1099, derives the candidate asset path by the pinned BossMod rule, and outputs a JSON summary of the TerritoryType Map row reference, layer IDs, object counts, EventRange priority/shape/transforms, and data hashes. Its `--public-api-surface` mode records public API/type shape and category hash-entry counts to distinguish known-path lookup from path enumeration. Its `--deep-dungeon-grids` mode extracts EO's static 5x5 sheet references and fails on grid shape, missing floorset, planmap, or room-index mismatch. Its `--replay-room-candidates <export-directory>` mode selects up to six newest schema-5 files whose first snapshot is identified as EO with a floor band; malformed schema-5 files and other-DD files are counted separately. It outputs ordinal/times and anonymous counts/index candidates (not filenames, session IDs, actor IDs, chat, or names), and summarizes adjacent-sample candidate-index transitions; it neither writes to source exports nor treats candidates as route input. The tool does not depend on or modify DDCore runtime, write extracted game assets, or require an FF14 process.
 
 Commands used:
 
@@ -127,6 +144,11 @@ dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
   'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
   'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack' `
   --deep-dungeon-grids
+dotnet run --project tools/LuminaMapProbe/LuminaMapProbe.csproj -c Release -- `
+  'C:\Users\wasur\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.0-80-gbd3a49a6c-estell.56' `
+  'C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack' `
+  --replay-room-candidates `
+  'C:\Users\wasur\AppData\Roaming\XIVLauncher\pluginConfigs\DDCore\recordings\exports'
 ```
 
 Observed checks:

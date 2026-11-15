@@ -6,14 +6,21 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--replay-room-candidates <export-directory>]");
     return 2;
 }
 
 var luminaDirectory = Path.GetFullPath(args[0]);
 var sqpackDirectory = Path.GetFullPath(args[1]);
 var apiSurfaceOnly = args.Length > 2 && args[2] == "--public-api-surface";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly ? args[2] : null;
+var deepDungeonGridsOnly = args.Length > 2 && args[2] == "--deep-dungeon-grids";
+var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !replayRoomCandidates ? args[2] : null;
+if (replayRoomCandidates && args.Length < 4)
+{
+    Console.Error.WriteLine("--replay-room-candidates requires an export-directory argument.");
+    return 2;
+}
 var luminaPath = Path.Combine(luminaDirectory, "Lumina.dll");
 var excelPath = Path.Combine(luminaDirectory, "Lumina.Excel.dll");
 
@@ -38,7 +45,7 @@ var options = Activator.CreateInstance(optionsType)!;
 var gameData = Activator.CreateInstance(gameDataType, sqpackDirectory, options)!;
 var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
 var excelModule = GetMember(gameData, "Excel");
-if (args.Length > 2 && args[2] == "--deep-dungeon-grids")
+if (deepDungeonGridsOnly)
 {
     var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
     Console.WriteLine(JsonSerializer.Serialize(new
@@ -383,6 +390,23 @@ foreach (var assetPath in sharedGroupAssetPaths)
     });
 }
 
+if (replayRoomCandidates)
+{
+    var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
+    (object Report, int SelectedReplayCount) replayReport;
+    try
+    {
+        replayReport = ReadReplayRoomCandidateCollection(args[3], roomCandidates, gridReport.FloorSets);
+    }
+    catch (DirectoryNotFoundException exception)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 2;
+    }
+    Console.WriteLine(JsonSerializer.Serialize(replayReport.Report, new JsonSerializerOptions { WriteIndented = true }));
+    return replayReport.SelectedReplayCount > 0 ? 0 : 1;
+}
+
 var canonical = JsonSerializer.Serialize(new { summaries, countsByAssetType, objectTypeSummaries, roomCandidates, sharedGroupSummaries, referencedSgbSummaries });
 var canonicalHash = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonical)));
 var digest = Convert.ToHexString(SHA256.HashData(data));
@@ -650,3 +674,281 @@ static (int FloorSetCount, bool FloorSetCoverageComplete, int InvalidGridCount, 
 }
 
 static T GetAnonymousProperty<T>(object value, string name) => (T)value.GetType().GetProperty(name)!.GetValue(value)!;
+
+static (object Report, int SelectedReplayCount) ReadReplayRoomCandidateCollection(string exportDirectory, List<object> roomCandidates, object[] floorSets)
+{
+    if (!Directory.Exists(exportDirectory))
+        throw new DirectoryNotFoundException("The replay export directory does not exist.");
+
+    var firstFloorSet = floorSets.FirstOrDefault() ?? throw new InvalidDataException("No EO floor-set grid was available.");
+    var variants = GetAnonymousProperty<IEnumerable>(firstFloorSet, "variants").Cast<object>().ToArray();
+    var roomGridIndices = GetAnonymousProperty<int[]>(variants[0], "roomGridIndices").ToHashSet();
+    var boxes = roomCandidates.Select(candidate =>
+    {
+        var bounds = GetAnonymousProperty<object>(candidate, "boundsUsingBossModConvention");
+        return new CandidateRoomBox(
+            GetAnonymousProperty<string>(candidate, "layer"),
+            GetAnonymousProperty<int>(candidate, "priority") - 100,
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minX")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxX")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minZ")),
+            Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxZ")));
+    }).Where(static box => box.Index is >= 0 and < 25).ToArray();
+
+    var validReplays = new List<(string Name, DateTimeOffset CreatedAt, DateTime LastWriteUtc, JsonDocument Document)>();
+    var invalidSchemaFiveFiles = 0;
+    var nonEurekaOrthosSchemaFiveFiles = 0;
+    foreach (var path in Directory.EnumerateFiles(exportDirectory, "*.replay.json"))
+    {
+        try
+        {
+            var document = JsonDocument.Parse(File.ReadAllBytes(path));
+            var root = document.RootElement;
+            if (!root.TryGetProperty("schemaVersion", out var schema) || schema.GetInt32() != 5)
+            {
+                document.Dispose();
+                continue;
+            }
+
+            if (!root.TryGetProperty("snapshots", out var snapshots)
+                || snapshots.ValueKind != JsonValueKind.Array
+                || snapshots.GetArrayLength() == 0
+                || !root.TryGetProperty("createdAtUtc", out var createdAtElement)
+                || !DateTimeOffset.TryParse(createdAtElement.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var createdAt))
+            {
+                invalidSchemaFiveFiles++;
+                document.Dispose();
+                continue;
+            }
+
+            if (!TryGetEurekaOrthosBand(snapshots[0], out _))
+            {
+                nonEurekaOrthosSchemaFiveFiles++;
+                document.Dispose();
+                continue;
+            }
+
+            validReplays.Add((Path.GetFileName(path), createdAt, File.GetLastWriteTimeUtc(path), document));
+        }
+        catch (JsonException)
+        {
+            invalidSchemaFiveFiles++;
+        }
+        catch (IOException)
+        {
+            invalidSchemaFiveFiles++;
+        }
+        catch (InvalidOperationException)
+        {
+            invalidSchemaFiveFiles++;
+        }
+        catch (KeyNotFoundException)
+        {
+            invalidSchemaFiveFiles++;
+        }
+        catch (FormatException)
+        {
+            invalidSchemaFiveFiles++;
+        }
+    }
+
+    var selected = validReplays.OrderByDescending(static replay => replay.CreatedAt)
+        .ThenByDescending(static replay => replay.LastWriteUtc)
+        .Take(6)
+        .ToArray();
+    var results = new List<object>();
+    for (var ordinal = 0; ordinal < selected.Length; ordinal++)
+    {
+        var replay = selected[ordinal];
+        try
+        {
+            results.Add(AnalyzeReplay(ordinal + 1, replay.CreatedAt, replay.LastWriteUtc, replay.Document.RootElement, boxes, roomGridIndices));
+        }
+        finally
+        {
+            replay.Document.Dispose();
+        }
+    }
+
+    foreach (var replay in validReplays.Except(selected))
+        replay.Document.Dispose();
+
+    var totalSnapshots = results.Sum(static result => GetAnonymousProperty<int>(result, "snapshotCount"));
+    var canonical = JsonSerializer.Serialize(results);
+    var report = new
+    {
+        selectionRule = "six newest schema-5 exports whose first snapshot identifies Eureka Orthos and a floor band, ordered by internal createdAtUtc with filesystem modification time as tie-break",
+        selectedReplayCount = selected.Length,
+        invalidSchemaFiveFileCount = invalidSchemaFiveFiles,
+        nonEurekaOrthosSchemaFiveFileCount = nonEurekaOrthosSchemaFiveFiles,
+        totalSnapshots,
+        replayResults = results,
+        canonicalSummarySha256 = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonical))),
+    };
+    return (report, selected.Length);
+}
+
+static object AnalyzeReplay(int recordingOrdinal, DateTimeOffset createdAt, DateTime lastWriteUtc, JsonElement root, CandidateRoomBox[] boxes, HashSet<int> roomGridIndices)
+{
+    var snapshots = root.GetProperty("snapshots");
+    var snapshotCount = snapshots.GetArrayLength();
+    var finitePoseCount = 0;
+    var uniqueContainmentCount = 0;
+    var multipleBoxCount = 0;
+    var noCandidateCount = 0;
+    var exactFloorKnownCount = 0;
+    var bandCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
+    var layerCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
+    var indexCounts = new SortedDictionary<int, int>();
+    var sequence = new List<CandidateCell?>(snapshotCount);
+
+    foreach (var snapshot in snapshots.EnumerateArray())
+    {
+        if (!TryGetEurekaOrthosBand(snapshot, out var band))
+        {
+            sequence.Add(null);
+            continue;
+        }
+        AddCount(bandCounts, band);
+
+        var dungeon = snapshot.TryGetProperty("dungeon", out var dungeonElement) ? dungeonElement : default;
+        if (dungeon.ValueKind == JsonValueKind.Object
+            && dungeon.TryGetProperty("floor", out var floor)
+            && floor.ValueKind == JsonValueKind.Number)
+            exactFloorKnownCount++;
+
+        if (!snapshot.TryGetProperty("playerPose", out var pose)
+            || !pose.TryGetProperty("position", out var position)
+            || position.ValueKind != JsonValueKind.Object
+            || !position.TryGetProperty("isFinite", out var isFinite)
+            || !isFinite.GetBoolean()
+            || !position.TryGetProperty("x", out var xElement)
+            || !position.TryGetProperty("y", out var zElement)
+            || !xElement.TryGetDouble(out var x)
+            || !zElement.TryGetDouble(out var z)
+            || !double.IsFinite(x)
+            || !double.IsFinite(z))
+        {
+            sequence.Add(null);
+            continue;
+        }
+
+        finitePoseCount++;
+        var hits = boxes.Where(box => x >= box.MinX && x <= box.MaxX && z >= box.MinZ && z <= box.MaxZ).ToArray();
+        if (hits.Length == 1)
+        {
+            var hit = hits[0];
+            uniqueContainmentCount++;
+            AddCount(layerCounts, hit.Layer);
+            AddCount(indexCounts, hit.Index);
+            sequence.Add(new CandidateCell(band, hit.Layer, hit.Index));
+        }
+        else if (hits.Length > 1)
+        {
+            multipleBoxCount++;
+            sequence.Add(null);
+        }
+        else
+        {
+            noCandidateCount++;
+            sequence.Add(null);
+        }
+    }
+
+    var sameCellTransitionCount = 0;
+    var orthogonalNeighborIndexTransitionCount = 0;
+    var nonNeighborIndexTransitionCount = 0;
+    var crossVariantTransitionCount = 0;
+    var crossFloorBandTransitionCount = 0;
+    var unclassifiedTransitionCount = 0;
+    for (var index = 1; index < sequence.Count; index++)
+    {
+        var from = sequence[index - 1];
+        var to = sequence[index];
+        if (from is null || to is null)
+        {
+            unclassifiedTransitionCount++;
+            continue;
+        }
+
+        var fromCell = from.Value;
+        var toCell = to.Value;
+        if (!string.Equals(fromCell.FloorBand, toCell.FloorBand, StringComparison.Ordinal))
+        {
+            crossFloorBandTransitionCount++;
+            continue;
+        }
+
+        if (!string.Equals(fromCell.Layer, toCell.Layer, StringComparison.Ordinal))
+        {
+            crossVariantTransitionCount++;
+            continue;
+        }
+
+        if (fromCell.Index == toCell.Index)
+        {
+            sameCellTransitionCount++;
+            continue;
+        }
+
+        var rowDelta = Math.Abs(fromCell.Index / 5 - toCell.Index / 5);
+        var columnDelta = Math.Abs(fromCell.Index % 5 - toCell.Index % 5);
+        if (rowDelta + columnDelta == 1 && roomGridIndices.Contains(fromCell.Index) && roomGridIndices.Contains(toCell.Index))
+            orthogonalNeighborIndexTransitionCount++;
+        else
+            nonNeighborIndexTransitionCount++;
+    }
+
+    return new
+    {
+        recordingOrdinal,
+        createdAtUtc = createdAt,
+        filesystemLastWriteTimeUtc = lastWriteUtc,
+        schemaVersion = 5,
+        producerVersion = root.TryGetProperty("producerVersion", out var producer) ? producer.GetString() : null,
+        snapshotCount,
+        finitePoseCount,
+        exactFloorKnownCount,
+        floorBands = bandCounts,
+        uniqueContainmentCount,
+        multipleBoxCount,
+        noCandidateCount,
+        uniqueCandidateLayers = layerCounts,
+        uniqueCandidateRoomIndices = indexCounts,
+        consecutiveTransitionsWithTwoUniqueMatches = sameCellTransitionCount + orthogonalNeighborIndexTransitionCount + nonNeighborIndexTransitionCount + crossVariantTransitionCount + crossFloorBandTransitionCount,
+        sameCellTransitionCount,
+        orthogonalNeighborIndexTransitionCount,
+        nonNeighborIndexTransitionCount,
+        crossVariantTransitionCount,
+        crossFloorBandTransitionCount,
+        unclassifiedTransitionCount,
+        interpretation = "geometric candidates only; bounds are uncalibrated and do not identify active variant, current room, open passage, or traversability",
+    };
+}
+
+static bool TryGetEurekaOrthosBand(JsonElement snapshot, out string band)
+{
+    band = "unknown";
+    if (!snapshot.TryGetProperty("dungeon", out var dungeon)
+        || dungeon.ValueKind != JsonValueKind.Object
+        || !dungeon.TryGetProperty("kind", out var kind)
+        || kind.GetString() != "eurekaOrthos"
+        || !dungeon.TryGetProperty("floorRange", out var range)
+        || range.ValueKind != JsonValueKind.Object
+        || !range.TryGetProperty("start", out var start)
+        || !range.TryGetProperty("end", out var end)
+        || !start.TryGetInt32(out var startFloor)
+        || !end.TryGetInt32(out var endFloor))
+        return false;
+
+    band = $"{startFloor}-{endFloor}";
+    return true;
+}
+
+static void AddCount<TKey>(IDictionary<TKey, int> counts, TKey key) where TKey : notnull
+{
+    counts[key] = counts.TryGetValue(key, out var value) ? value + 1 : 1;
+}
+
+readonly record struct CandidateRoomBox(string Layer, int Index, double MinX, double MaxX, double MinZ, double MaxZ);
+readonly record struct CandidateCell(string FloorBand, string Layer, int Index);
