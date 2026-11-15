@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-11-16 — Static shared-SGB inspection
+
+- Extended the standalone `tools/LuminaMapProbe` to follow the 42 `SharedGroup` records in EO `planmap.lgb` through Lumina's parsed `SgbFile` API. All 42 placements reference `bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0945.sgb` (21 under each zone layer).
+- The actual local SGB parsed as 1 layer group / 1 layer / 11 objects: 8 `CollisionBox`, 2 `Sound`, 1 `VFX`. The 8 collision boxes expose transform, box trigger shape, attributes and `CollisionAssetPath="9"`; no verified mapping or wall/passage/navmesh meaning was established.
+- Release probe build passed with 0 warnings/errors; `dotnet format ... --verify-no-changes --no-restore` passed; two complete JSON outputs had the same SHA-256 `C6E8323B8B6D9B0FBA8993BEDB32341FF59BF11AC31CB1076FBBCB2EC6DF774C`. Missing virtual asset was rejected with exit code 1.
+- No raw game asset or generated JSON was added to Git. No runtime plugin, private API/memory access, BFS link, game operation, or automation was added. M0 remains UNKNOWN; active randomized layout, room/edge truth, collision mesh and walkable space remain unproven. See `docs/phase5.6c-lumina-extraction-verification.md`.
+
 ## 2026-11-16 — Exploratory EO static-box / replay-pose comparison
 
 - Re-read the latest local replay export in place: `ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`, `createdAtUtc` 2026-11-08T14:29:45.946997+00:00, schema 5, producer 0.5.3.0, 66 snapshots. All 66 snapshots had a finite direct player pose, EO context, floor band 1-10, and unknown exact floor. SHA-256 before/after: `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.

@@ -35,10 +35,18 @@ var gameDataType = luminaAssembly.GetType("Lumina.GameData", throwOnError: true)
 var optionsType = luminaAssembly.GetType("Lumina.LuminaOptions", throwOnError: true)!;
 var options = Activator.CreateInstance(optionsType)!;
 var gameData = Activator.CreateInstance(gameDataType, sqpackDirectory, options)!;
+var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
+var collisionExcelTypes = excelAssembly.GetTypes()
+    .Where(static type => type.Namespace == "Lumina.Excel.Sheets" && type.Name.Contains("Collision", StringComparison.OrdinalIgnoreCase))
+    .Select(static type => type.FullName)
+    .Order(StringComparer.Ordinal)
+    .ToArray();
 var fileExists = gameDataType.GetMethod("FileExists", [typeof(string)])!;
 var getFile = gameDataType.GetMethods().Single(method => method.Name == "GetFile" && method.IsGenericMethod);
 var lgbType = luminaAssembly.GetType("Lumina.Data.Files.LgbFile", throwOnError: true)!;
 var getLgb = getFile.MakeGenericMethod(lgbType);
+var sgbType = luminaAssembly.GetType("Lumina.Data.Files.SgbFile", throwOnError: false);
+var getSgb = sgbType is null ? null : getFile.MakeGenericMethod(sgbType);
 
 var territoryPath = ReadTerritoryBackground(gameData, gameDataType);
 var derivedPath = $"bg/{territoryPath[..territoryPath.LastIndexOf('/')]}/planmap.lgb";
@@ -62,7 +70,11 @@ var data = (byte[])GetMember(file, "Data")!;
 var layers = (IEnumerable)GetMember(file, "Layers")!;
 var summaries = new List<object>();
 var roomCandidates = new List<object>();
+var sharedGroupSummaries = new List<object>();
+var referencedSgbSummaries = new List<object>();
+var sharedGroupAssetPaths = new SortedSet<string>(StringComparer.Ordinal);
 var countsByAssetType = new SortedDictionary<string, int>(StringComparer.Ordinal);
+var objectTypeSummaries = new SortedDictionary<string, object>(StringComparer.Ordinal);
 var eventRanges = 0;
 var usableTransforms = 0;
 
@@ -78,6 +90,39 @@ foreach (var layer in layers)
         layerObjectCount++;
         var assetType = GetMember(instance!, "AssetType")?.ToString() ?? "Unknown";
         countsByAssetType[assetType] = countsByAssetType.GetValueOrDefault(assetType) + 1;
+        if (!objectTypeSummaries.ContainsKey(assetType))
+        {
+            var payloadSummary = GetMember(instance, "Object");
+            objectTypeSummaries[assetType] = new
+            {
+                layer = layerName,
+                wrapperType = instance!.GetType().FullName,
+                payloadType = payloadSummary?.GetType().FullName,
+                payloadMembers = GetMemberNames(payloadSummary),
+            };
+        }
+
+        if (assetType == "SharedGroup")
+        {
+            var sharedGroupPayload = GetMember(instance, "Object");
+            var sharedGroupTransform = GetMember(instance, "Transform");
+            var sharedGroupAssetPath = GetMember(sharedGroupPayload, "AssetPath")?.ToString();
+            if (!string.IsNullOrWhiteSpace(sharedGroupAssetPath))
+                sharedGroupAssetPaths.Add(sharedGroupAssetPath);
+
+            sharedGroupSummaries.Add(new
+            {
+                layer = layerName,
+                assetPath = sharedGroupAssetPath,
+                translation = ReadVector(GetMember(sharedGroupTransform, "Translation")),
+                scale = ReadVector(GetMember(sharedGroupTransform, "Scale")),
+                rotation = ReadVector(GetMember(sharedGroupTransform, "Rotation")),
+                initialDoorState = GetMember(sharedGroupPayload, "InitialDoorState")?.ToString(),
+                notCreateNavimeshDoor = GetMember(sharedGroupPayload, "NotCreateNavimeshDoor"),
+                collisionControllableWithoutEventObject = GetMember(sharedGroupPayload, "IsCollisionControllableWithoutEObj"),
+            });
+        }
+
         if (assetType != "EventRange")
             continue;
 
@@ -117,7 +162,127 @@ foreach (var layer in layers)
     summaries.Add(new { name = layerName, id = layerId, objectCount = layerObjectCount });
 }
 
-var canonical = JsonSerializer.Serialize(new { summaries, countsByAssetType, roomCandidates });
+foreach (var assetPath in sharedGroupAssetPaths)
+{
+    var exists = (bool)fileExists.Invoke(gameData, [assetPath])!;
+    if (!exists || getSgb is null)
+    {
+        referencedSgbSummaries.Add(new { assetPath, exists, sgbTypeAvailable = sgbType is not null });
+        continue;
+    }
+
+    var referencedFile = getSgb.Invoke(gameData, [assetPath]);
+    if (referencedFile is null)
+    {
+        referencedSgbSummaries.Add(new { assetPath, exists, sgbTypeAvailable = true, parsed = false });
+        continue;
+    }
+
+    var referencedBytes = GetMember(referencedFile, "Data") as byte[];
+    var layerGroupsValue = GetMember(referencedFile, "LayerGroups");
+    if (layerGroupsValue is not IEnumerable layerGroups)
+    {
+        referencedSgbSummaries.Add(new
+        {
+            assetPath,
+            exists,
+            sgbTypeAvailable = true,
+            parsed = false,
+            rootType = referencedFile.GetType().FullName,
+            rootMembers = GetMemberNames(referencedFile),
+            byteCount = referencedBytes?.Length,
+        });
+        continue;
+    }
+
+    var groupSummaries = new List<object>();
+    foreach (var group in layerGroups)
+    {
+        var nestedLayers = GetMember(group, "Layers") as IEnumerable;
+        var layerSummaries = new List<object>();
+        if (nestedLayers is not null)
+        {
+            foreach (var layer in nestedLayers)
+            {
+                var objects = GetMember(layer, "InstanceObjects") as IEnumerable;
+                var typeCounts = new SortedDictionary<string, int>(StringComparer.Ordinal);
+                var payloadTypes = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+                var collisionBoxes = new List<object>();
+                if (objects is not null)
+                {
+                    foreach (var item in objects)
+                    {
+                        var type = GetMember(item, "AssetType")?.ToString() ?? "Unknown";
+                        typeCounts[type] = typeCounts.GetValueOrDefault(type) + 1;
+                        var payload = GetMember(item, "Object");
+                        var payloadType = payload?.GetType().FullName ?? "Unknown";
+                        if (!payloadTypes.TryGetValue(type, out var names))
+                        {
+                            names = new SortedSet<string>(StringComparer.Ordinal);
+                            payloadTypes.Add(type, names);
+                        }
+
+                        names.Add(payloadType);
+                        if (type == "CollisionBox")
+                        {
+                            var transform = GetMember(item, "Transform");
+                            var parentData = GetMember(payload, "ParentData");
+                            var collisionAssetPath = GetMember(payload, "CollisionAssetPath");
+                            collisionBoxes.Add(new
+                            {
+                                payloadType,
+                                collisionAssetPath = collisionAssetPath?.ToString(),
+                                collisionAssetPathType = collisionAssetPath?.GetType().FullName,
+                                attribute = GetMember(payload, "Attribute")?.ToString(),
+                                attributeMask = GetMember(payload, "AttributeMask")?.ToString(),
+                                pushPlayerOut = GetMember(payload, "PushPlayerOut"),
+                                enabled = GetMember(parentData, "Enabled"),
+                                priority = GetMember(parentData, "Priority"),
+                                shape = GetMember(parentData, "TriggerBoxShape")?.ToString(),
+                                translation = ReadVector(GetMember(transform, "Translation")),
+                                scale = ReadVector(GetMember(transform, "Scale")),
+                                rotation = ReadVector(GetMember(transform, "Rotation")),
+                            });
+                        }
+                    }
+                }
+
+                layerSummaries.Add(new
+                {
+                    name = GetMember(layer, "Name")?.ToString() ?? "Unknown",
+                    layerType = layer?.GetType().FullName,
+                    objectCount = typeCounts.Values.Sum(),
+                    typeCounts,
+                    payloadTypes,
+                    collisionBoxes,
+                });
+            }
+        }
+
+        groupSummaries.Add(new
+        {
+            groupType = group?.GetType().FullName,
+            groupMembers = GetMemberNames(group),
+            layerCount = layerSummaries.Count,
+            layers = layerSummaries,
+        });
+    }
+
+    referencedSgbSummaries.Add(new
+    {
+        assetPath,
+        exists,
+        sgbTypeAvailable = true,
+        parsed = true,
+        exposedStructureOnly = true,
+        byteCount = referencedBytes?.Length,
+        dataSha256 = referencedBytes is null ? null : Convert.ToHexString(SHA256.HashData(referencedBytes)),
+        layerGroupCount = groupSummaries.Count,
+        layerGroups = groupSummaries,
+    });
+}
+
+var canonical = JsonSerializer.Serialize(new { summaries, countsByAssetType, objectTypeSummaries, roomCandidates, sharedGroupSummaries, referencedSgbSummaries });
 var canonicalHash = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(canonical)));
 var digest = Convert.ToHexString(SHA256.HashData(data));
 var result = new
@@ -133,6 +298,11 @@ var result = new
     layerCount = summaries.Count,
     layers = summaries,
     countsByAssetType,
+    collisionExcelTypes,
+    objectTypeSummaries,
+    sharedGroupCount = sharedGroupSummaries.Count,
+    sharedGroupSummaries,
+    referencedSgbSummaries,
     roomCandidateCount = roomCandidates.Count,
     usableTransformCount = usableTransforms,
     nonFiniteTransformCount = roomCandidates.Count - usableTransforms,
@@ -151,6 +321,21 @@ static object? GetMember(object? instance, string name)
     var type = instance.GetType();
     return type.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(instance)
         ?? type.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(instance);
+}
+
+static string[] GetMemberNames(object? instance)
+{
+    if (instance is null)
+        return [];
+
+    const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+    return instance.GetType()
+        .GetMembers(flags)
+        .Where(static member => member.MemberType is MemberTypes.Field or MemberTypes.Property)
+        .Select(static member => member.Name)
+        .Distinct(StringComparer.Ordinal)
+        .Order(StringComparer.Ordinal)
+        .ToArray();
 }
 
 static float[] ReadVector(object? value) =>

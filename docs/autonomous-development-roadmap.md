@@ -14,6 +14,7 @@ The long-term goal is a user-started system that can observe, plan, traverse, fi
 | Enemy/cast/mechanics | Partial | Public observation and EO Gancanagh AoE analyzer; not complete enemy threat/combat policy. |
 | Generic environment objects | Diagnostic only | Stage 5.6A/B records generic object and selected-object correlation. It does not infer chest/passage state or topology. |
 | Static room candidates | Extracted offline from the EO-associated `planmap.lgb` | 26 Room A + 27 Room B boxes, 21 distinct priorities in each; this does not identify the active template or live room. See `docs/phase5.6c-lumina-extraction-verification.md`. |
+| Referenced static collision records | One shared SGB referenced by 42 placements parses to 8 CollisionBox, 2 Sound, and 1 VFX record | The CollisionBox records have transforms and trigger-shape metadata, but no verified wall/passage/navmesh semantics or graph edges. They are not route input. |
 | Room graph and current room | Not available from verified public contract | No authoritative randomized floor graph/current-room value identified. One replay-to-box containment experiment was exploratory only (50 unique, 3 ambiguous, 13 unmatched; no room labels). Keep Unknown. |
 | BFS | Implemented as pure 5x5 room-graph search | `RoomPathfinder` requires a trustworthy complete graph; live observations do not currently provide it. |
 | Strategy | Implemented for synthetic complete state | `DeepDungeonStrategyEngine` returns advice; it is not connected to reliable live topology and does not execute. |

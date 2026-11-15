@@ -101,6 +101,24 @@ This is only a reproducible geometric candidate lookup over one replay and one s
 
 ## Static data versus dynamic floor state
 
+### Follow-up: referenced shared SGB and collision-box records (2026-11-16)
+
+The standalone probe was extended to inspect the `SharedGroup` references exposed by Lumina's parsed `LgbFile` and the parsed `SgbFile` layer objects. This remains an offline, read-only experiment; no asset bytes or full extraction output are committed.
+
+| Observation | Result |
+|---|---|
+| `planmap.lgb` SharedGroup records | 42 total: 21 in each of `LVD_zone_A` and `LVD_zone_B`; each record references the same SGB path below. |
+| Referenced SGB | `bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0945.sgb`; locally present and parsed by Lumina; 5,219 parsed data bytes; parsed-data SHA-256 `1C994B121673A1F60204F9DC42E0E61BD866090ADFC67CE0A740BE29724B47DD`. |
+| SGB structure exposed by Lumina | 1 layer group, 1 layer, 11 instance objects: 8 `CollisionBox`, 2 `Sound`, 1 `VFX`. |
+| CollisionBox fields | All 8 expose a box trigger shape, enabled parent data, transform, attributes, push-out value, and `CollisionAssetPath` string `9`. The boxes are thin and clustered near the SGB-local origin. |
+| Collision type names in local Lumina.Excel | Reflection found `CollisionIdPallet`, `SnipeCollision`, and `WKSZoneFloorCollision`; this probe did not establish a row mapping for the value `9`. |
+
+These are parsed static records, not proof that the boxes are walls, room boundaries, passage geometry, collision meshes, or walkable-space data. In particular, the shared asset path contains `for_vfx`, but its name alone does not prove the semantic purpose of every contained object. No `.pcb` mesh was resolved from the observed `CollisionAssetPath` value, and no collision topology or navigation surface was generated. Accordingly, this follow-up does not change the existing room/topology table or M0 verdict.
+
+An independent public tool, [TerritoryViewer](https://github.com/Enceladeum/TerritoryViewer), demonstrates a possible wider LGB/SGB/PCB extraction approach. Its own source comments describe custom SGB parsing by reverse-engineered offsets, and its README cautions that composed transforms are not exhaustively validated. It is evidence that further offline investigation may be possible, not validation of an official Lumina contract, DDCore's topology, or a safe-to-reuse parser. No code or dependency was copied from it.
+
+The latest probe output was run twice with identical complete JSON SHA-256 `C6E8323B8B6D9B0FBA8993BEDB32341FF59BF11AC31CB1076FBBCB2EC6DF774C`. A deliberately nonexistent virtual path returned `exists=false` and exit code 1. `dotnet build ... -c Release --no-restore` succeeded with 0 warnings/errors, and `dotnet format ... --verify-no-changes --no-restore` passed. The full DDCore plugin test suite and CI are not part of this isolated probe validation.
+
 | Question | Result | Evidence status |
 |---|---|---|
 | Can the room candidate geometry be loaded? | Yes: 26 A / 27 B EventRange boxes; 21 priorities per variant. | **Verified from installed real game data** |
