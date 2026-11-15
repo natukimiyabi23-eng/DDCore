@@ -4,7 +4,9 @@
 
 - Extended the standalone `tools/LuminaMapProbe` to follow the 42 `SharedGroup` records in EO `planmap.lgb` through Lumina's parsed `SgbFile` API. All 42 placements reference `bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0945.sgb` (21 under each zone layer).
 - The actual local SGB parsed as 1 layer group / 1 layer / 11 objects: 8 `CollisionBox`, 2 `Sound`, 1 `VFX`. The 8 collision boxes expose transform, box trigger shape, attributes and `CollisionAssetPath="9"`; no verified mapping or wall/passage/navmesh meaning was established.
-- Release probe build passed with 0 warnings/errors; `dotnet format ... --verify-no-changes --no-restore` passed; two complete JSON outputs had the same SHA-256 `C6E8323B8B6D9B0FBA8993BEDB32341FF59BF11AC31CB1076FBBCB2EC6DF774C`. Missing virtual asset was rejected with exit code 1.
+- Inspected the local Lumina.Excel collision-related row models. `CollisionIdPallet` has only row metadata and opaque `Unknown0..2` fields in this generated version; it did not resolve the `"9"` reference or establish a PCB path.
+- The probe emits the reflected Excel sheet API/type shape for reproducibility, without assigning meaning to opaque fields. Two full outputs had the same SHA-256 `0E74D2D66494624241174AE2C54741D7643F02059330AE49B0924B71072B3C6B`; a missing virtual asset was rejected with exit code 1.
+- Full Release build passed with 0 warnings/errors; all 360 tests passed; format and NuGet audits passed. The updated PR CI remains pending.
 - No raw game asset or generated JSON was added to Git. No runtime plugin, private API/memory access, BFS link, game operation, or automation was added. M0 remains UNKNOWN; active randomized layout, room/edge truth, collision mesh and walkable space remain unproven. See `docs/phase5.6c-lumina-extraction-verification.md`.
 
 ## 2026-11-16 — Exploratory EO static-box / replay-pose comparison

@@ -36,10 +36,28 @@ var optionsType = luminaAssembly.GetType("Lumina.LuminaOptions", throwOnError: t
 var options = Activator.CreateInstance(optionsType)!;
 var gameData = Activator.CreateInstance(gameDataType, sqpackDirectory, options)!;
 var excelAssembly = AssemblyLoadContext.Default.Assemblies.Single(assembly => assembly.GetName().Name == "Lumina.Excel");
+var excelModule = GetMember(gameData, "Excel");
+var excelApiMethods = excelModule?.GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+    .Where(static method => method.Name.Contains("Sheet", StringComparison.OrdinalIgnoreCase))
+    .Select(static method => method.ToString())
+    .Order(StringComparer.Ordinal)
+    .ToArray() ?? [];
 var collisionExcelTypes = excelAssembly.GetTypes()
     .Where(static type => type.Namespace == "Lumina.Excel.Sheets" && type.Name.Contains("Collision", StringComparison.OrdinalIgnoreCase))
-    .Select(static type => type.FullName)
-    .Order(StringComparer.Ordinal)
+    .Select(static type => new
+    {
+        fullName = type.FullName,
+        baseType = type.BaseType?.FullName,
+        properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Select(static property => new { property.Name, property.PropertyType.FullName })
+            .OrderBy(static property => property.Name, StringComparer.Ordinal)
+            .ToArray(),
+        fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Select(static field => new { field.Name, field.FieldType.FullName })
+            .OrderBy(static field => field.Name, StringComparer.Ordinal)
+            .ToArray(),
+    })
+    .OrderBy(static type => type.fullName, StringComparer.Ordinal)
     .ToArray();
 var fileExists = gameDataType.GetMethod("FileExists", [typeof(string)])!;
 var getFile = gameDataType.GetMethods().Single(method => method.Name == "GetFile" && method.IsGenericMethod);
@@ -298,6 +316,7 @@ var result = new
     layerCount = summaries.Count,
     layers = summaries,
     countsByAssetType,
+    excelApiMethods,
     collisionExcelTypes,
     objectTypeSummaries,
     sharedGroupCount = sharedGroupSummaries.Count,
