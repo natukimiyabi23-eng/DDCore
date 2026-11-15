@@ -13,6 +13,7 @@
 - One floorset, no ground truth, no code/asset committed. M0 remains UNKNOWN; no map or edge data is eligible for BFS.
 - Documentation/evidence commit `75ed3665e32bd7b14cb42a2a5805490eee05b8c8` passed CI run `43745937797`; the worktree was clean after push.
 - Extended `LuminaMapProbe` to report EO TerritoryType 1099's direct `Map` row reference. Installed game data returned row 0; two runs still loaded the known planmap and returned the same canonical summary hash `3F8BD88B7E901530BE08030429A059EFCA2D951350F2BFF01CFF72D041809151`. This rules out only a direct TerritoryType.Map-sheet link in this data, not alternate/static assets or dynamic map APIs. Release tool build passed with 0 warnings/errors.
+- Commit `4a494e737cc41cc0edce372f75d2e1ede3e890d0` passed PR CI run `43746937448` (build, tests, offline Lumina probe, and package steps).
 
 ## 2026-11-16 — Pinned BossMod EO static wall-template inspection
 
