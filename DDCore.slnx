@@ -6,4 +6,5 @@
   </Project>
   <Project Path="tests/DDCore.Core.Tests/DDCore.Core.Tests.csproj" />
   <Project Path="tests/DDCore.Observation.Tests/DDCore.Observation.Tests.csproj" />
+  <Project Path="tools/LuminaMapProbe.Tests/LuminaMapProbe.Tests.csproj" />
 </Solution>
