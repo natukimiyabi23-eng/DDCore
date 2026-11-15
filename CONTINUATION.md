@@ -1,7 +1,7 @@
 # DDCore continuation
 
-Status: in_progress
-Updated: 2026-11-15 JST (Stage 5.6B live-verification documents being finalized)
+Status: complete
+Updated: 2026-11-15 JST (Stage 5.6B live-verification documents and CI complete)
 
 ## Current continuation: Stage 5.6B live evidence update
 
@@ -9,7 +9,9 @@ Updated: 2026-11-15 JST (Stage 5.6B live-verification documents being finalized)
 - Branch/base PR: `phase5.6b/selected-object-correlation`, Draft PR #16 to `phase5.6a/environment-object-diagnostics`; implementation head before this documentation update was `c693ae9778ee6e4c59bc43ecd0664e9afe0fe599`.
 - Read-only source evidence re-read: local schema-2 environment diagnostic originals. 2007358 run `...135052...` has 69 exact matches (`obj-000005`, sequences 74-142); reproducer 2013286 run `...135332...` has 80 (`obj-000002`, seq 23-102); 2007357 run `...135426...` has 37 exact matches; separate transition run `...135441...` has 42 snapshots, targetability transition at seq 20 and disappearance at seq 40 for `obj-000001`, while same-BaseId `obj-000003` persists through seq 42. Cross-recording anonymous IDs are not continuity evidence. JSON remains unmodified and untracked.
 - Changed docs: `docs/phase5.6b-live-verification.md`, `docs/phase5.6b-object-correlation.md`, `docs/progress.md`. No source or test files changed.
-- Exact next step: run `git diff --check`, relevant existing Release tests without rebuilding, recheck original JSON hashes and PR #16 status, then commit/push these docs to the same branch and confirm PR remains Draft/open. Do not create a new PR or merge anything.
+- Verification: `git diff --check` passed; existing Release test assemblies passed without rebuilding (Core 197/197, Observation 163/163, 360 total); GitHub Actions run `43722744224` passed restore, Release build, tests and package step at final head `0e359b38ed7b161047d6c26cea611b09c2019eb2`. The five relevant original diagnostic JSONs were only read by commands; no JSON was staged or modified.
+- Completion: docs checkpoint commit `0e359b38ed7b161047d6c26cea611b09c2019eb2` pushed to the existing branch. PR #16 remains OPEN, Draft, unmerged, and targets `phase5.6a/environment-object-diagnostics`. Worktree clean after verification. No package was rebuilt or deployed by this docs-only update.
+- Next step: wait for user review; do not implement another stage or merge.
 - User verification still required: broader floors/DDs, floor transitions/re-entry, cross-session object identity, automatic reproducer activation-state, and causal proof that chest opening caused disappearance. Do not infer opening from targetability/disappearance. `exactFloor` remains null in JSON.
 
 ## Active Stage 5.6B objective
