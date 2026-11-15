@@ -7,7 +7,7 @@
 - Re-read the latest valid fixed-folder replay (`ddcore-export-20261108-143027-aa5cbe505b0848bfb5872ce9c0cf8566.replay.json`: schema 5, producer 0.5.3.0, 66 snapshots, `createdAtUtc` 2026-11-08 23:29:45.946997 +09:00, exact floor null, range 1-10). Read-only geometric overlay: 50 unique Room B candidates (cell 12: 22 samples, 17: 13, 18: 15), 3 ambiguous, 13 unmatched. The replay SHA-256 remained `0EB0B3B6D175CEFAD552F3440D7482B0F624BDD8034D0AD077E86D161E45DB71`.
 - No active variant, exact current room, connection state, or full trusted live BFS input is established. M0 stays UNKNOWN and live BFS remains disconnected. No plugin runtime, game, raw replay, or game asset was modified or committed.
 - Verification for this slice: solution Release build succeeded with 0 warnings/errors; Core 197/197 and Observation 163/163 tests passed; probe Release build succeeded with 0 warnings/errors; `dotnet format --verify-no-changes`, NuGet audit, and `git diff --check` passed. Two probe executions had identical canonical SHA-256 `160AC3FFA6EC9149ED23F96973796FCEDBEF15C82F4A5C8D522D3E5B7774A8E3`.
-- Follow-up branch: `research/phase56c-sharedgroup-inspection`, stacked on PR #21; update existing Draft PR #22 only. CI for this new evidence commit is pending until pushed.
+- Follow-up branch: `research/phase56c-sharedgroup-inspection`, stacked on PR #21; existing Draft PR #22 updated only. Commit `e9bb19d51fab3145409cc069a2d11b5a9a6ef08a` passed both `build-and-test` CI checks (runs `43749154250` and `43749147452`).
 
 ## 2026-11-16 — Dalamud public addon lifecycle map-data boundary
 
