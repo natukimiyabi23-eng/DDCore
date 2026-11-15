@@ -2,9 +2,9 @@ name: DDCore build
 
 on:
   pull_request:
-    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5.5b/implementation-plan, phase5.5b/b1-public-classification, phase5.5c/chat-floor-design, phase5.6/environment-research, phase5.6b/selected-object-correlation, planning/autonomous-development-roadmap, research/m0-eo-b1-map-feasibility]
+    branches: [main, phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5.5b/implementation-plan, phase5.5b/b1-public-classification, phase5.5c/chat-floor-design, phase5.6/environment-research, phase5.6b/selected-object-correlation, planning/autonomous-development-roadmap, research/m0-eo-b1-map-feasibility, research/phase56c-lumina-extraction]
   push:
-    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5/strategy-engine, phase5.5b/b1-public-classification, phase5.5b/b2-actor-spatial-schema5, phase5.5d/chat-floor-diagnostics, phase5.6/environment-research, phase5.6a/environment-object-diagnostics, phase5.6b/selected-object-correlation, planning/autonomous-development-roadmap, research/m0-eo-b1-map-feasibility, research/phase56c-static-map-feasibility]
+    branches: [phase2/plugin-foundation, phase3/mechanics-foundation, phase3/live-observation-adapter, phase3/diagnostics-and-recording, phase4/reuse-analysis, phase4.5/bossmod-integration-proof, phase5/strategy-engine, phase5.5b/b1-public-classification, phase5.5b/b2-actor-spatial-schema5, phase5.5d/chat-floor-diagnostics, phase5.6/environment-research, phase5.6a/environment-object-diagnostics, phase5.6b/selected-object-correlation, planning/autonomous-development-roadmap, research/m0-eo-b1-map-feasibility, research/phase56c-static-map-feasibility, research/phase56c-lumina-extraction]
 
 jobs:
   build-and-test:
@@ -33,6 +33,9 @@ jobs:
 
       - name: Test
         run: dotnet test DDCore.slnx --configuration Release --no-build --no-restore
+
+      - name: Build offline Lumina map probe
+        run: dotnet build tools/LuminaMapProbe/LuminaMapProbe.csproj --configuration Release
 
       - name: Store plugin package
         uses: actions/upload-artifact@v4

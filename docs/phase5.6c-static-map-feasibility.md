@@ -2,7 +2,7 @@
 
 ## Conclusion
 
-**Result: static data is locally available in an archive, but map extraction and EO B1 identification remain unverified. Overall map gate remains UNKNOWN.** The local FFXIV install has SqPack index/data archives and the Dalamud development tree has `Lumina.dll`; an individually extracted `planmap.lgb` was not found in the checked game/install folders. This proves neither that the target asset is present in a particular archive nor that it can identify the active randomized layout. No asset was extracted or added to the repository in this bounded pass.
+**Superseded by the follow-up extraction report:** `docs/phase5.6c-lumina-extraction-verification.md` records a successful, read-only Lumina extraction of the EO-associated `planmap.lgb` and 53 room-layer EventRange candidates. The earlier text below records the narrower prior pass only; its statement that extraction was not run is historical and no longer describes the latest Stage 5.6C result. The overall map gate remains **UNKNOWN** because current randomized layout, active A/B selection, current room, open connections, and validated BFS input remain unproven.
 
 The prior M0 result remains **UNKNOWN**. No current room, connection graph, collision map, active random-layout identity, or complete BFS input was demonstrated. No code, fixture, replay access, game interaction, native read, or BFS connection was performed.
 
