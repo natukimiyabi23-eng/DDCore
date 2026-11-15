@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-11-16 — EO B1 read-only integration status and data collection guide
+
+- Added `docs/eo-b1-readonly-integration.md` to distinguish plugin runtime observation, offline static map parsing, synthetic BFS, and the still-missing live graph. Added `docs/eo-b1-live-test-guide.md` describing privacy-preserving user labels for exact floor, layout family, room index, and visible passage state; it explicitly notes that current label validation does not validate edges.
+- Linked both documents from README. No plugin runtime code or game data was changed in this documentation slice; real-time map recognition and route preview remain unavailable.
+
 ## 2026-11-16 — EO static wall-template crosswalk across floor sets
 
 - Added an offline `--deep-dungeon-wall-crosswalk <Walls.json>` LuminaMapProbe mode and pure geometry metric tests. It compares every pinned BossMod EO wall template (`3.1`-`3.10`) with matching-index Room A/B planmap candidates; it does not copy BossMod code/data or affect plugin runtime.
