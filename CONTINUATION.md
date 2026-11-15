@@ -11,7 +11,8 @@ Updated: 2026-11-16 JST (Lumina public sheet surface audit)
 - Offline measurement: 20 EO A/B templates, 560 nonzero directional points; 53 planmap shapes / 42 variant-cell keys (10 keys have multiple shapes). Same-letter pairings were broadly closer than cross-letter pairings under an uncalibrated nearest infinite supporting-line metric; two runs matched summary SHA-256 `143768D54AA60197D2CC3A2CE903CF86DC3EB30CB4B0E0282B45F0F066C486D7`.
 - Interpretation: this is static family-level consistency only. It does not establish active randomized layout, current room, actual walls/open passages, collision, walkability, or a valid live BFS graph. M0 remains UNKNOWN.
 - Verification on this tree: Release solution build passed (0 warnings/errors); all 380 tests passed (197 Core, 163 Observation, 20 probe); `dotnet format ... --verify-no-changes --no-restore` passed; NuGet vulnerability audit found none in six projects; `git diff --check` passed; forbidden runtime/game-operation/private-memory scan found no matches in changed implementation files. Full offline probe rerun matched the recorded summary hash.
-- Exact next step: stage only the six listed changed files, commit and push to the existing PR #22 branch, then verify the resulting CI. Do not connect this metric to room identity, BFS, or plugin runtime.
+- Completed: committed as `08464f8c37e527273962dc491bfb941a732c4377` and pushed to the existing PR #22 branch. CI run `43765809122` succeeded (restore, Release build, tests, offline probe build, package artifact). PR #22 remains Open/Draft/unmerged; no deployment or in-game validation was performed.
+- Exact next step: retain M0 as UNKNOWN and require independently labelled live-layout and passage-state evidence before any room identity, BFS, or plugin-runtime connection. No game operation or automation is authorized by this evidence task.
 
 ## Current bounded audit result (2026-11-16)
 
