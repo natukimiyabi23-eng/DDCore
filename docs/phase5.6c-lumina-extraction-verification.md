@@ -155,6 +155,21 @@ The pinned BossMod source makes the distinction explicit: `Rooms.cs` lines 90-12
 
 **M0 remains UNKNOWN.** This pass resolves the previously unperformed static asset extraction and demonstrates reproducible room-box candidate parsing. It does not satisfy M0 requirements for multiple labelled layouts, live A/B selection, current-room ground truth, dynamic edges, verified obstacles, or complete BFS input. It is not a PASS and does not justify connecting static candidates to the strategy engine.
 
+## Follow-up: pinned BossMod EO wall templates (2026-11-16)
+
+At fixed BossMod commit `6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0`, the offline reference data [`Walls.json`](https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/BossMod.Modules/Global/DeepDungeon/Walls.json) contains EO keys `3.1` through `3.10`. A read-only parse of that pinned file found, for each key, 25 `RoomsA` slots and 25 `RoomsB` slots; each variant has 28 nonzero directional `Depth` entries. This is a count of entries in BossMod's embedded static template, not a count of confirmed live barriers.
+
+The consuming implementation explains the missing dynamic dependency. [`DeepDungeonState.cs` lines 8-15](https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/BossMod/Data/DeepDungeonState.cs#L8-L15) assigns EO enum value 3. [`Rooms.cs` lines 18-35](https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/BossMod.Modules/Global/DeepDungeon/Rooms.cs#L18-L35) selects a floor-set key from dungeon ID and floor band, then chooses A or B by the current tileset (tileset 2 returns without selecting either). [`Rooms.cs` lines 45-53](https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/BossMod.Modules/Global/DeepDungeon/Rooms.cs#L45-L53) suppresses a static wall candidate when the corresponding dynamic room connection flag is open; lines 148-155 use those connection flags for adjacency. [`AutoClear.cs` line 363](https://github.com/awgil/ffxiv_bossmod/blob/6e410ef8bb912fc70e3c1f97eedfb77a7dc4dfc0/BossMod.Modules/Global/DeepDungeon/AutoClear.cs#L363) turns remaining wall records into temporary obstacle hints.
+
+| Item | Confirmed from pinned source/data | Not established for DDCore live observation |
+|---|---|---|
+| EO static wall templates | 10 floor-set keys (`3.1`-`3.10`), with 25 A and 25 B room slots per key; 28 nonzero directional depth entries per A/B template | Which template is active in the user's current run |
+| Open passage / room adjacency | BossMod combines selected template with `Palace.Rooms` connection flags | Public API access to current EO room flags or current tileset was not established here |
+| Obstacle hints | BossMod emits remaining template walls as temporary rectangular obstacles | Validated collision shape, complete collision topology, or walkable/navmesh surface |
+| BFS graph | Static candidates and dynamic connection flags are separate inputs in the reference implementation | A complete, current, reciprocal, ground-truthed graph and endpoints for DDCore |
+
+This narrows the static-data question: a pinned reference contains per-floor-set A/B wall templates, but the live layout and edge-state inputs are separate. The template alone cannot prove a passage is open, a wall is currently present, or a location is traversable. No BossMod code/data was copied into DDCore, no runtime dependency was added, and no result was connected to BFS or strategy. **M0 remains UNKNOWN.** BossMod is BSD-3-Clause; this was source inspection and aggregate counting only, so no copied implementation or attribution change is needed.
+
 ## Next prerequisites
 
 1. Obtain multiple user-labelled EO layouts with player positions in the same coordinate frame, plus independent labels of room identity, active A/B template, and open passages. Keep samples anonymized and outside the plugin runtime.
