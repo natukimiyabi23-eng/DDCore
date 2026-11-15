@@ -4,7 +4,7 @@
 
 - Strengthened the offline EO graph-label format to schema 2. Each screenshot-backed room/passage claim now references its own SHA-256, and the validator requires those bytes plus the context screenshot to exist in a caller-selected local evidence directory. `LuminaMapProbe` checks supported image signatures, caps the scan at 256 files / 50 MiB per file / 250 MiB total, and emits no paths or image contents. It does not inspect image semantics; correctness of the visual claim remains user-asserted.
 - Preserved fail-closed behavior: unknown labels remain Unknown and cannot produce a route; the feature remains offline and disconnected from the plugin/strategy/execution.
-- Verification: locked restore, Release solution build (0 warnings/errors), all 396 tests (Core 197, Observation 163, probe 36), explicit probe Release build, format, NuGet audit (no vulnerable packages in six projects), forbidden-operation scan, and `git diff --check` passed. CI for this change is pending commit/push.
+- Verification: locked restore, Release solution build (0 warnings/errors), all 396 tests (Core 197, Observation 163, probe 36), explicit probe Release build, format, NuGet audit (no vulnerable packages in six projects), forbidden-operation scan, and `git diff --check` passed. CI runs `43772846171` and `43772851468` passed at source commit `10188d56255e687ec3d0b379adfc98debc397b4f`.
 - PR #24 is the only target; PR #23 and `main` remain untouched/unmerged. M0 remains UNKNOWN until independently labeled live room/passage evidence exists.
 
 ## 2026-11-16 — EO B1 read-only integration status and data collection guide
