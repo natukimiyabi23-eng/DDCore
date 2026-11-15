@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-11-16 — Stage 5.6C Lumina static map extraction
+
+- Used the installed Lumina 7.7.0 file build (`b92c0cb...`) and local game data marker `2026.11.03.0000.0000` to read TerritoryType 1099 and derive `bg/ex4/07_lak_l5/cnt/l5c1/level/planmap.lgb` using the exact path rule in pinned BossMod `Rooms.cs`.
+- Verified that the virtual asset exists in local SqPack and parses as an LGB: 19 layers, 55 EventRange records, 42 SharedGroup records, and 2 PopRange records. `LVD_Room_A/B` contain 26/27 box candidates with 21 distinct priorities each; all 53 transforms are finite.
+- Added an isolated, reflection-based offline probe at `tools/LuminaMapProbe`. Release build is clean; two runs emitted identical JSON and asset/summary hashes; an absent virtual path is rejected.
+- Recorded the decoded LGB data hash and limitations in `docs/phase5.6c-lumina-extraction-verification.md`. Raw game asset and extracted JSON were not added to Git.
+- Static room-box extraction is now verified, but active A/B selection, randomized layout identity, current room, edges/walls/walkability, labelled multiple layouts, and complete BFS input remain unknown. M0 remains UNKNOWN; no live strategy/BFS connection or gameplay operation was added.
+
 ## 2026-11-11 — Phase 5.6 environment-recognition research and design
 
 - Rechecked the installed Dalamud API 15.0.3.9 public contracts at product commit `17cd86dfacbc1016c6e5aac0d49833b774ce037c` for object, client, duty, framework, game-data and game-GUI observations.
