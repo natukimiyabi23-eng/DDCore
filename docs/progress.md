@@ -6,7 +6,7 @@
 - The actual local SGB parsed as 1 layer group / 1 layer / 11 objects: 8 `CollisionBox`, 2 `Sound`, 1 `VFX`. The 8 collision boxes expose transform, box trigger shape, attributes and `CollisionAssetPath="9"`; no verified mapping or wall/passage/navmesh meaning was established.
 - Inspected the local Lumina.Excel collision-related row models. `CollisionIdPallet` has only row metadata and opaque `Unknown0..2` fields in this generated version; it did not resolve the `"9"` reference or establish a PCB path.
 - The probe emits the reflected Excel sheet API/type shape for reproducibility, without assigning meaning to opaque fields. Two full outputs had the same SHA-256 `0E74D2D66494624241174AE2C54741D7643F02059330AE49B0924B71072B3C6B`; a missing virtual asset was rejected with exit code 1.
-- Full Release build passed with 0 warnings/errors; all 360 tests passed; format and NuGet audits passed. The updated PR CI remains pending.
+- Full Release build passed with 0 warnings/errors; all 360 tests passed; format and NuGet audits passed. Both CI runs on probe revision `60e14457f65cee5b1900fbd2c0ea026c9c8385b4` passed restore/build/tests/probe/package (`43740470962`, `43740475728`).
 - No raw game asset or generated JSON was added to Git. No runtime plugin, private API/memory access, BFS link, game operation, or automation was added. M0 remains UNKNOWN; active randomized layout, room/edge truth, collision mesh and walkable space remain unproven. See `docs/phase5.6c-lumina-extraction-verification.md`.
 
 ## 2026-11-16 — Exploratory EO static-box / replay-pose comparison
