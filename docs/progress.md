@@ -2,11 +2,11 @@
 
 ## 2026-11-16 — Read-only enemy combat observation summary
 
-- Added snapshot-level enemy diagnostics for confirmed resolved target-on-player count (nullable if local player is absent), known/unknown HP availability, status-effect count, and enemy coordinate usability. The Japanese UI now also shows a deterministic bounded sample of up to 40 enemies with HP, combat/dead/destroyed flags, target relation quality, cast action/lifecycle/time, status IDs, and coordinate quality. This does not infer hostility/threat or enable combat actions.
+- Added snapshot-level enemy diagnostics for confirmed resolved target-on-player count (nullable if local player is absent), known/unknown HP availability, status-effect count, and enemy coordinate usability. The Japanese UI shows a bounded sample of up to 40 enemies with HP, combat/dead/destroyed flags, target relation quality, cast action/lifecycle/time, status IDs, distance only when both positions are usable, and coordinate quality. This does not infer hostility/threat or enable combat actions.
 - Confirmed against the installed Dalamud API 15 XML that `IBattleChara.StatusList` exposes status ID/source/parameter/remaining time, with no documented explicit stack-count property. `Param` remains uninterpreted; stacks stay unknown.
 - Reviewed BossModReborn at `8d5ff8e2195ebbd519334852eab478414cdea67b`: its DD pathfinding/wall acquisition uses FFXIVClientStructs/native map state; no code/data copied. Live verification remains paused as requested.
 - Regression tests cover target relation and missing-player => Unknown, cast time, status IDs, HP availability, and spatial usability. Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); format passed; NuGet vulnerability scan found none in six projects. No live verification or deployment was done.
-- Follow-up commit `4fad432b6bff7b9ca46bd2528f256a8097dbe191` is pushed on `feature/enemy-observation-diagnostics`; Draft PR #25 targets `feature/offline-eo-graph-validation`. CI runs `43815088169` and `43815098073` passed on the exact head. PR #24 and main remain unchanged/unmerged.
+- Follow-up commit `4fad432b6bff7b9ca46bd2528f256a8097dbe191` is pushed on `feature/enemy-observation-diagnostics`; Draft PR #25 targets `feature/offline-eo-graph-validation`. Its CI runs `43815088169` and `43815098073` passed on that head. A further null-safe distance-to-player display is locally verified and awaiting its own push/CI. PR #24 and main remain unchanged/unmerged.
 
 ## 2026-11-16 — Bind screenshot labels to replay pose context
 

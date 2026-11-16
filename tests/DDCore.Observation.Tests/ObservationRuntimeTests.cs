@@ -87,7 +87,11 @@ public sealed class ObservationRuntimeTests
         using var runtime = new ObservationRuntime(
             tick,
             new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
-                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player(), targetedEnemy, unknownHealthEnemy]))),
+                LiveWorldSnapshotProviderTests.Frame(At, [
+                    LiveWorldSnapshotProviderTests.Player() with { Position = new RawPosition(1, 0, 1) },
+                    targetedEnemy with { Position = new RawPosition(4, 0, 5) },
+                    unknownHealthEnemy,
+                ]))),
             new AnalyzerRegistry([]));
 
         tick.Raise();
@@ -103,10 +107,12 @@ public sealed class ObservationRuntimeTests
         Assert.Equal((uint)4001, targetedRow.CastActionId);
         Assert.Equal(1.5, targetedRow.CastSecondsRemaining);
         Assert.Equal((uint)3001, Assert.Single(targetedRow.StatusIds));
+        Assert.Equal(5, targetedRow.DistanceToPlayer);
         var unknownRow = Assert.Single(runtime.Current.EnemySample, enemy => enemy.BaseId == 2002);
         Assert.Equal(EnemyTargetRelation.Unknown, unknownRow.TargetRelation);
         Assert.Equal(SpatialUsability.Missing, unknownRow.PositionQuality);
         Assert.Null(unknownRow.UsablePosition);
+        Assert.Null(unknownRow.DistanceToPlayer);
     }
 
     [Fact]

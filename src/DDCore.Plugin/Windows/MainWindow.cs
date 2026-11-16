@@ -147,7 +147,7 @@ internal sealed class MainWindow : Window, IDisposable
 
         if (!ImGui.BeginTable(
             "enemy-combat-diagnostics",
-            7,
+            8,
             ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY,
             new Vector2(0, 210)))
         {
@@ -160,6 +160,7 @@ internal sealed class MainWindow : Window, IDisposable
         ImGui.TableSetupColumn("ターゲット照合");
         ImGui.TableSetupColumn("詠唱");
         ImGui.TableSetupColumn("Status ID");
+        ImGui.TableSetupColumn("距離");
         ImGui.TableSetupColumn("座標");
         ImGui.TableHeadersRow();
         foreach (var enemy in diagnostics.EnemySample)
@@ -188,6 +189,8 @@ internal sealed class MainWindow : Window, IDisposable
                 ? "なし"
                 : enemy.StatusIds.Length > 4 ? $"{statuses} +{enemy.StatusIds.Length - 4}" : statuses);
             ImGui.TableSetColumnIndex(6);
+            ImGui.TextUnformatted(enemy.DistanceToPlayer is { } distance ? $"{distance:0.0}" : "不明");
+            ImGui.TableSetColumnIndex(7);
             ImGui.TextUnformatted(enemy.PositionQuality switch
             {
                 DDCore.Core.World.SpatialUsability.Usable when enemy.UsablePosition is { } position => $"使用可 ({position.X:0.0}, {position.Y:0.0})",

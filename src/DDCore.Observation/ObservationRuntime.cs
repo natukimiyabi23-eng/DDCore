@@ -40,6 +40,7 @@ public sealed record EnemyCombatDiagnosticRow(
     CastLifecycle? CastLifecycle,
     double? CastSecondsRemaining,
     ImmutableArray<uint> StatusIds,
+    double? DistanceToPlayer,
     Coordinate2D? UsablePosition,
     SpatialUsability PositionQuality,
     string? PositionReason);
@@ -257,6 +258,11 @@ public sealed class ObservationRuntime : IDisposable
                 var remaining = cast?.Lifecycle == CastLifecycle.Casting
                     ? Math.Max(0, (cast.FinishesAt - snapshot.CapturedAt).TotalSeconds)
                     : (double?)null;
+                var playerPosition = player?.Spatial.UsablePosition;
+                var enemyPosition = actor.Spatial.UsablePosition;
+                var distanceToPlayer = playerPosition is { } playerCoordinate && enemyPosition is { } enemyCoordinate
+                    ? Coordinate2D.Distance(playerCoordinate, enemyCoordinate)
+                    : (double?)null;
                 return new EnemyCombatDiagnosticRow(
                     actor.BaseId,
                     actor.CurrentHp,
@@ -269,6 +275,7 @@ public sealed class ObservationRuntime : IDisposable
                     cast?.Lifecycle,
                     remaining,
                     actor.Statuses.Select(status => status.StatusId).ToImmutableArray(),
+                    distanceToPlayer,
                     actor.Spatial.UsablePosition,
                     actor.Spatial.Usability,
                     actor.Spatial.ReasonCode);
