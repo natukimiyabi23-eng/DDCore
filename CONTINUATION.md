@@ -10,7 +10,7 @@
 - Verification complete: Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; NuGet vulnerability scan reported none across six projects; `git diff --check` passed. No package was deployed and no in-game verification occurred.
 - Commit/push: `bb5a8eb41865c47727b13578350fbeb2a218ed68`; Draft PR #25 `https://github.com/natukimiyabi23-eng/DDCore/pull/25` targets `feature/offline-eo-graph-validation`. Push CI run `43811530103` and PR CI run `43811539712` passed; only a Node.js 20 deprecation annotation remains.
 - Exact next step: confirm PR #25 CI, then preserve live-verification pause. Do not add movement, combat actions, target/input operations, native/private access, BFS wiring, or merge any PR/main.
-- Current FFXIV status is from the latest local FateFarmJP log only (not a live screen): at 14:37:22 JST the latest transition was `MovingToFate` for 湖沼の謝肉祭 at 492m. Latest voucher entry at 14:36:58 JST shows 42 `バイカラージェム納品証【黄金】`. Bicolor gemstone balance is not present in the inspected log and cannot be read without live UI, which is paused.
+- Current FFXIV status is from the latest local FateFarmJP log only (not a live screen): checked 14:41:36 JST; latest transition at 14:41:19 was `ApproachingEnemy -> Fighting` for 奸臣、非感心 at 73%. Latest voucher entry at 14:36:58 JST shows 42 `バイカラージェム納品証【黄金】`. Bicolor gemstone balance is not present in the inspected log and cannot be read without live UI, which is paused.
 
 ## Offline evidence-context hardening (2026-11-16)
 
