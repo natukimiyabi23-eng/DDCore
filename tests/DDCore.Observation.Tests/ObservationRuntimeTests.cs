@@ -132,6 +132,33 @@ public sealed class ObservationRuntimeTests
     }
 
     [Fact]
+    public void EnemySampleIsBoundedAndPrioritizesCombatActors()
+    {
+        var enemies = Enumerable.Range(0, 45)
+            .Select(index => LiveWorldSnapshotProviderTests.Enemy((uint)(index + 100), (uint)(2100 + index)) with { IsInCombat = false })
+            .ToArray();
+        enemies[43] = enemies[43] with { IsInCombat = true };
+        enemies[44] = enemies[44] with
+        {
+            IsInCombat = true,
+            Cast = new RawCastObservation(4002, 0.1, 2, null),
+        };
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player() with { Position = new RawPosition(1, 0, 1) }, .. enemies]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Equal(45, runtime.Current.EnemyCount);
+        Assert.Equal(40, runtime.Current.EnemySample.Length);
+        Assert.Equal((uint)2144, runtime.Current.EnemySample[0].BaseId);
+        Assert.Contains(runtime.Current.EnemySample, enemy => enemy.BaseId == 2143);
+    }
+
+    [Fact]
     public void DiagnosticLogRecordsChangesWithoutRepeatingIdenticalState()
     {
         var source = new LiveWorldSnapshotProviderTests.QueueSource(
