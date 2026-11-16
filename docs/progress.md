@@ -2,11 +2,11 @@
 
 ## 2026-11-16 — Read-only enemy combat observation summary
 
-- Added snapshot-level enemy diagnostics for target-on-player count (nullable if local player is absent), known/unknown HP availability, status-effect count, and enemy coordinate usability; exposed counts in the Japanese observation UI. This does not infer hostility/threat or enable combat actions.
+- Added snapshot-level enemy diagnostics for confirmed resolved target-on-player count (nullable if local player is absent), known/unknown HP availability, status-effect count, and enemy coordinate usability. The Japanese UI now also shows a deterministic bounded sample of up to 40 enemies with HP, combat/dead/destroyed flags, target relation quality, cast action/lifecycle/time, status IDs, and coordinate quality. This does not infer hostility/threat or enable combat actions.
 - Confirmed against the installed Dalamud API 15 XML that `IBattleChara.StatusList` exposes status ID/source/parameter/remaining time, with no documented explicit stack-count property. `Param` remains uninterpreted; stacks stay unknown.
 - Reviewed BossModReborn at `8d5ff8e2195ebbd519334852eab478414cdea67b`: its DD pathfinding/wall acquisition uses FFXIVClientStructs/native map state; no code/data copied. Live verification remains paused as requested.
-- Regression tests cover targeted enemy count, missing local player => Unknown, HP availability, statuses, and spatial usability. Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); format passed; NuGet vulnerability scan found none in six projects. No live verification or deployment was done.
-- Commit `bb5a8eb41865c47727b13578350fbeb2a218ed68` is pushed on `feature/enemy-observation-diagnostics`; Draft PR #25 targets `feature/offline-eo-graph-validation`. Push and PR CI runs `43811530103` and `43811539712` passed. PR #24 and main remain unchanged/unmerged.
+- Regression tests cover target relation and missing-player => Unknown, cast time, status IDs, HP availability, and spatial usability. Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); format passed; NuGet vulnerability scan found none in six projects. No live verification or deployment was done.
+- This follow-up is being added to `feature/enemy-observation-diagnostics`; existing Draft PR #25 targets `feature/offline-eo-graph-validation`. Previous push/PR CI runs `43811530103` and `43811539712` passed before this follow-up; exact updated-head CI is pending. PR #24 and main remain unchanged/unmerged.
 
 ## 2026-11-16 — Bind screenshot labels to replay pose context
 

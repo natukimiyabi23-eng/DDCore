@@ -71,10 +71,12 @@ public sealed class ObservationRuntimeTests
         var targetedEnemy = LiveWorldSnapshotProviderTests.Enemy(1, 2001) with
         {
             TargetObjectId = 10,
+            Cast = new RawCastObservation(4001, 0.5, 2, null),
             Statuses = [new(3001, 10, null, 5)],
         };
         var unknownHealthEnemy = LiveWorldSnapshotProviderTests.Enemy(2, 2002) with
         {
+            TargetObjectId = 999,
             MaximumHp = 0,
             CurrentHp = 0,
             Position = null,
@@ -90,12 +92,21 @@ public sealed class ObservationRuntimeTests
 
         tick.Raise();
 
-        Assert.Equal(1, runtime.Current.EnemiesTargetingPlayerCount);
+        Assert.Equal(1, runtime.Current.EnemiesConfirmedTargetingPlayerCount);
         Assert.Equal(1, runtime.Current.EnemiesWithKnownHealthCount);
         Assert.Equal(1, runtime.Current.EnemiesWithUnknownHealthCount);
         Assert.Equal(1, runtime.Current.EnemyStatusEffectCount);
         Assert.Equal(1, runtime.Current.EnemiesWithUsablePositionCount);
         Assert.Equal(1, runtime.Current.EnemiesWithUnavailablePositionCount);
+        var targetedRow = Assert.Single(runtime.Current.EnemySample, enemy => enemy.BaseId == 2001);
+        Assert.Equal(EnemyTargetRelation.LocalPlayer, targetedRow.TargetRelation);
+        Assert.Equal((uint)4001, targetedRow.CastActionId);
+        Assert.Equal(1.5, targetedRow.CastSecondsRemaining);
+        Assert.Equal((uint)3001, Assert.Single(targetedRow.StatusIds));
+        var unknownRow = Assert.Single(runtime.Current.EnemySample, enemy => enemy.BaseId == 2002);
+        Assert.Equal(EnemyTargetRelation.Unknown, unknownRow.TargetRelation);
+        Assert.Equal(SpatialUsability.Missing, unknownRow.PositionQuality);
+        Assert.Null(unknownRow.UsablePosition);
     }
 
     [Fact]
@@ -105,12 +116,13 @@ public sealed class ObservationRuntimeTests
         using var runtime = new ObservationRuntime(
             tick,
             new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
-                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Enemy(1, 2001)]))),
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Enemy(1, 2001) with { TargetObjectId = 10 }]))),
             new AnalyzerRegistry([]));
 
         tick.Raise();
 
-        Assert.Null(runtime.Current.EnemiesTargetingPlayerCount);
+        Assert.Null(runtime.Current.EnemiesConfirmedTargetingPlayerCount);
+        Assert.Equal(EnemyTargetRelation.Unknown, Assert.Single(runtime.Current.EnemySample).TargetRelation);
     }
 
     [Fact]

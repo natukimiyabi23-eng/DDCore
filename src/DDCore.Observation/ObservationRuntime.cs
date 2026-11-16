@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DDCore.Core.Geometry;
 using DDCore.Core.Logging;
 using DDCore.Core.Mechanics;
 using DDCore.Core.Model;
@@ -20,6 +21,29 @@ public enum LiveObservationState
     Invalid,
 }
 
+public enum EnemyTargetRelation
+{
+    Unknown,
+    LocalPlayer,
+    OtherObservedActor,
+}
+
+public sealed record EnemyCombatDiagnosticRow(
+    uint BaseId,
+    uint CurrentHp,
+    uint MaximumHp,
+    bool IsDead,
+    bool IsDestroyed,
+    bool IsInCombat,
+    EnemyTargetRelation TargetRelation,
+    uint? CastActionId,
+    CastLifecycle? CastLifecycle,
+    double? CastSecondsRemaining,
+    ImmutableArray<uint> StatusIds,
+    Coordinate2D? UsablePosition,
+    SpatialUsability PositionQuality,
+    string? PositionReason);
+
 public sealed record LiveObservationDiagnostics(
     LiveObservationState State,
     DeepDungeonKind DungeonKind,
@@ -27,7 +51,8 @@ public sealed record LiveObservationDiagnostics(
     DeepDungeonFloorRange? FloorRange,
     int EnemyCount,
     int CastingEnemyCount,
-    int? EnemiesTargetingPlayerCount,
+    ImmutableArray<EnemyCombatDiagnosticRow> EnemySample,
+    int? EnemiesConfirmedTargetingPlayerCount,
     int EnemiesWithKnownHealthCount,
     int EnemiesWithUnknownHealthCount,
     int EnemyStatusEffectCount,
@@ -49,6 +74,7 @@ public sealed record LiveObservationDiagnostics(
         null,
         0,
         0,
+        [],
         null,
         0,
         0,
@@ -149,7 +175,8 @@ public sealed class ObservationRuntime : IDisposable
                 snapshot.Dungeon.FloorRange,
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Cast?.Lifecycle == CastLifecycle.Casting),
-                CountEnemiesTargetingPlayer(snapshot),
+                BuildEnemySample(snapshot, maximumRows: 40),
+                CountEnemiesConfirmedTargetingPlayer(snapshot),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.MaximumHp > 0),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.MaximumHp == 0),
                 snapshot.Actors.Where(actor => actor.Kind == ActorKind.Enemy).Sum(actor => actor.Statuses.Length),
@@ -176,6 +203,7 @@ public sealed class ObservationRuntime : IDisposable
                 null,
                 0,
                 0,
+                [],
                 null,
                 0,
                 0,
@@ -201,12 +229,51 @@ public sealed class ObservationRuntime : IDisposable
         }
     }
 
-    private static int? CountEnemiesTargetingPlayer(WorldSnapshot snapshot)
+    private static int? CountEnemiesConfirmedTargetingPlayer(WorldSnapshot snapshot)
     {
         var player = snapshot.Actors.FirstOrDefault(actor => actor.Kind == ActorKind.Player);
         return player is null
             ? null
             : snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Target == player.Identity);
+    }
+
+    private static ImmutableArray<EnemyCombatDiagnosticRow> BuildEnemySample(WorldSnapshot snapshot, int maximumRows)
+    {
+        var player = snapshot.Actors.FirstOrDefault(actor => actor.Kind == ActorKind.Player);
+        return snapshot.Actors
+            .Where(actor => actor.Kind == ActorKind.Enemy)
+            .OrderByDescending(actor => actor.IsInCombat)
+            .ThenByDescending(actor => actor.Cast?.Lifecycle == CastLifecycle.Casting)
+            .ThenBy(actor => actor.BaseId)
+            .Take(maximumRows)
+            .Select(actor =>
+            {
+                var cast = actor.Cast;
+                var targetRelation = player is null || actor.Target is null
+                    ? EnemyTargetRelation.Unknown
+                    : actor.Target == player.Identity
+                        ? EnemyTargetRelation.LocalPlayer
+                        : EnemyTargetRelation.OtherObservedActor;
+                var remaining = cast?.Lifecycle == CastLifecycle.Casting
+                    ? Math.Max(0, (cast.FinishesAt - snapshot.CapturedAt).TotalSeconds)
+                    : (double?)null;
+                return new EnemyCombatDiagnosticRow(
+                    actor.BaseId,
+                    actor.CurrentHp,
+                    actor.MaximumHp,
+                    actor.IsDead,
+                    actor.IsDestroyed,
+                    actor.IsInCombat,
+                    targetRelation,
+                    cast?.ActionId,
+                    cast?.Lifecycle,
+                    remaining,
+                    actor.Statuses.Select(status => status.StatusId).ToImmutableArray(),
+                    actor.Spatial.UsablePosition,
+                    actor.Spatial.Usability,
+                    actor.Spatial.ReasonCode);
+            })
+            .ToImmutableArray();
     }
 
     private void RecordStateChange(
@@ -226,7 +293,7 @@ public sealed class ObservationRuntime : IDisposable
             diagnostics.FloorRange,
             diagnostics.EnemyCount,
             diagnostics.CastingEnemyCount,
-            diagnostics.EnemiesTargetingPlayerCount,
+            diagnostics.EnemiesConfirmedTargetingPlayerCount,
             diagnostics.EnemiesWithKnownHealthCount,
             diagnostics.EnemiesWithUnknownHealthCount,
             diagnostics.EnemyStatusEffectCount,
@@ -253,7 +320,7 @@ public sealed class ObservationRuntime : IDisposable
                 : DiagnosticSeverity.Information;
         var floorRange = diagnostics.FloorRange is { } range ? $"{range.Start}-{range.End}" : "unknown";
         var message = $"state={diagnostics.State}, dungeon={diagnostics.DungeonKind}, floor={diagnostics.Floor?.ToString() ?? "unknown"}, floorRange={floorRange}, "
-            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, targetingPlayer={diagnostics.EnemiesTargetingPlayerCount?.ToString() ?? "unknown"}, "
+            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, confirmedTargetingPlayer={diagnostics.EnemiesConfirmedTargetingPlayerCount?.ToString() ?? "unknown"}, "
             + $"enemyHpKnown={diagnostics.EnemiesWithKnownHealthCount}, enemyHpUnknown={diagnostics.EnemiesWithUnknownHealthCount}, statuses={diagnostics.EnemyStatusEffectCount}, "
             + $"enemyPositionUsable={diagnostics.EnemiesWithUsablePositionCount}, enemyPositionUnavailable={diagnostics.EnemiesWithUnavailablePositionCount}, "
             + $"spatialUsable={diagnostics.UsableSpatialCount}, "
