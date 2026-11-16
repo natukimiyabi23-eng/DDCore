@@ -1,5 +1,16 @@
 # DDCore continuation
 
+## Current objective: read-only enemy/combat observation improvement (2026-11-16)
+
+- User asked to pause live/in-game verification and prioritize enemy/combat data, including analysis of BossModReborn where BossMod information appears unavailable.
+- Starting state: `feature/offline-eo-graph-validation`, `19ac415e549b90f5ea7a8a45bdcc7e5e1c67d8ae`, clean; PR #24 remains Open/Draft/unmerged. No game or Dalamud UI operated.
+- Read-only change: live diagnostics/UI now report enemy count targeting local player (null if player actor missing), known/unknown HP availability, observed status count, and enemy usable/unusable position counts. Synthetic regression tests pass (165 in Observation tests).
+- API evidence: installed Dalamud API 15 `Dalamud.xml` documents `IBattleChara.StatusList` and `IStatus.StatusId`, `Param`, `SourceId`, `RemainingTime`; no explicit stack-count property is documented. Do not reinterpret `Param` as stacks.
+- BossModReborn public source snapshot reviewed at `8d5ff8e2195ebbd519334852eab478414cdea67b`; DD graph/wall acquisition depends on FFXIVClientStructs/native `RoomFlags`/`Palace` state, so it does not provide a permitted public-API substitute. No BMR code or data copied. Combat `AutoClear` gameplay logic is out of scope.
+- Verification complete: Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); `dotnet format DDCore.slnx --verify-no-changes --no-restore` passed; NuGet vulnerability scan reported none across six projects; `git diff --check` passed. Push CI is pending; no package was deployed and no in-game verification occurred.
+- Exact next step: final source-safety/diff review, commit and push on `feature/enemy-observation-diagnostics`, open a Draft PR stacked on `feature/offline-eo-graph-validation`, and confirm CI. Keep live verification paused; do not add movement, combat actions, target/input operations, native/private access, BFS wiring, or merge any PR/main.
+- Current FFXIV status is based only on the latest local FateFarmJP log (not a live screen): latest state transition logged `MovingToFate`, target FATE distance 716m at 14:22:57 JST. Latest voucher log 14:21:58 JST shows 42 `バイカラージェム納品証【黄金】`. Bicolor gemstone balance is not present in the inspected log and remains unavailable without live UI, which is paused.
+
 ## Offline evidence-context hardening (2026-11-16)
 
 - Public static-grid recheck: reran the installed Lumina `--deep-dungeon-grids` probe read-only. All 10 EO floor sets still share the same 21 occupied 5x5 indices for both A/B variants; the canonical summary hash remains `60EAC0302AD572CAD6870BAEC84CF4411DB766A4CBB031AECF5F32874B076ACC`. This confirms static candidate-cell consistency only; it does not identify the active layout, open passages, or walkability. No source replay or asset was changed.

@@ -66,6 +66,54 @@ public sealed class ObservationRuntimeTests
     }
 
     [Fact]
+    public void ReportsEnemyCombatObservationWithoutInferringMissingData()
+    {
+        var targetedEnemy = LiveWorldSnapshotProviderTests.Enemy(1, 2001) with
+        {
+            TargetObjectId = 10,
+            Statuses = [new(3001, 10, null, 5)],
+        };
+        var unknownHealthEnemy = LiveWorldSnapshotProviderTests.Enemy(2, 2002) with
+        {
+            MaximumHp = 0,
+            CurrentHp = 0,
+            Position = null,
+            Rotation = null,
+            SpatialMissingReason = "test.position.missing",
+        };
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player(), targetedEnemy, unknownHealthEnemy]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Equal(1, runtime.Current.EnemiesTargetingPlayerCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithKnownHealthCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUnknownHealthCount);
+        Assert.Equal(1, runtime.Current.EnemyStatusEffectCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUsablePositionCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUnavailablePositionCount);
+    }
+
+    [Fact]
+    public void TargetingCountIsUnknownWhenLocalPlayerIsAbsent()
+    {
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Enemy(1, 2001)]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Null(runtime.Current.EnemiesTargetingPlayerCount);
+    }
+
+    [Fact]
     public void DiagnosticLogRecordsChangesWithoutRepeatingIdenticalState()
     {
         var source = new LiveWorldSnapshotProviderTests.QueueSource(

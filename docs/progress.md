@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-11-16 — Read-only enemy combat observation summary
+
+- Added snapshot-level enemy diagnostics for target-on-player count (nullable if local player is absent), known/unknown HP availability, status-effect count, and enemy coordinate usability; exposed counts in the Japanese observation UI. This does not infer hostility/threat or enable combat actions.
+- Confirmed against the installed Dalamud API 15 XML that `IBattleChara.StatusList` exposes status ID/source/parameter/remaining time, with no documented explicit stack-count property. `Param` remains uninterpreted; stacks stay unknown.
+- Reviewed BossModReborn at `8d5ff8e2195ebbd519334852eab478414cdea67b`: its DD pathfinding/wall acquisition uses FFXIVClientStructs/native map state; no code/data copied. Live verification remains paused as requested.
+- Regression tests cover targeted enemy count, missing local player => Unknown, HP availability, statuses, and spatial usability. Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); format passed; NuGet vulnerability scan found none in six projects. No live verification or deployment was done.
+
 ## 2026-11-16 — Bind screenshot labels to replay pose context
 
 - On `feature/offline-eo-graph-validation` / Draft PR #24, graph label schema 3 adds `evidenceSnapshotIndex` to each `userScreenshot` room/passage row. The validator requires that replay snapshot to exist, match the graph's EO floor band, contain trusted direct public pose, and map uniquely to the selected Room A/B family. This is provenance/context consistency only; image meaning and the user-authored label remain unverified.

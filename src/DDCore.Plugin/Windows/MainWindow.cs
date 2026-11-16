@@ -102,6 +102,10 @@ internal sealed class MainWindow : Window, IDisposable
         DrawValue("DD種別・階層", DungeonText(diagnostics));
         DrawValue("観測した敵", $"{diagnostics.EnemyCount}体");
         DrawValue("詠唱中の敵", $"{diagnostics.CastingEnemyCount}体");
+        DrawValue("プレイヤーをターゲット中", diagnostics.EnemiesTargetingPlayerCount is { } targeting ? $"{targeting}体" : "プレイヤー未観測のため不明");
+        DrawValue("敵HPの取得状況", $"取得あり {diagnostics.EnemiesWithKnownHealthCount}体 / 不明 {diagnostics.EnemiesWithUnknownHealthCount}体");
+        DrawValue("敵の状態効果", $"{diagnostics.EnemyStatusEffectCount}件（スタック数は未取得）");
+        DrawValue("敵の座標", $"使用可 {diagnostics.EnemiesWithUsablePositionCount}体 / 使用不可 {diagnostics.EnemiesWithUnavailablePositionCount}体");
         DrawValue("Actor座標", $"使用可 {diagnostics.UsableSpatialCount} / 隔離 {diagnostics.QuarantinedSpatialCount} / 欠損 {diagnostics.MissingSpatialCount}");
         DrawValue("最新の座標隔離理由", diagnostics.LatestSpatialReason ?? "なし");
         DrawValue("検出したAoE", $"{diagnostics.HazardCount}件");

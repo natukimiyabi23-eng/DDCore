@@ -27,6 +27,12 @@ public sealed record LiveObservationDiagnostics(
     DeepDungeonFloorRange? FloorRange,
     int EnemyCount,
     int CastingEnemyCount,
+    int? EnemiesTargetingPlayerCount,
+    int EnemiesWithKnownHealthCount,
+    int EnemiesWithUnknownHealthCount,
+    int EnemyStatusEffectCount,
+    int EnemiesWithUsablePositionCount,
+    int EnemiesWithUnavailablePositionCount,
     int UsableSpatialCount,
     int QuarantinedSpatialCount,
     int MissingSpatialCount,
@@ -41,6 +47,12 @@ public sealed record LiveObservationDiagnostics(
         DeepDungeonKind.None,
         null,
         null,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
         0,
         0,
         0,
@@ -137,6 +149,12 @@ public sealed class ObservationRuntime : IDisposable
                 snapshot.Dungeon.FloorRange,
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy),
                 snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Cast?.Lifecycle == CastLifecycle.Casting),
+                CountEnemiesTargetingPlayer(snapshot),
+                snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.MaximumHp > 0),
+                snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.MaximumHp == 0),
+                snapshot.Actors.Where(actor => actor.Kind == ActorKind.Enemy).Sum(actor => actor.Statuses.Length),
+                snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Spatial.Usability == SpatialUsability.Usable),
+                snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Spatial.Usability != SpatialUsability.Usable),
                 snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Usable),
                 snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Quarantined),
                 snapshot.Actors.Count(actor => actor.Spatial.Usability == SpatialUsability.Missing),
@@ -158,6 +176,12 @@ public sealed class ObservationRuntime : IDisposable
                 null,
                 0,
                 0,
+                null,
+                0,
+                0,
+                0,
+                0,
+                0,
                 0,
                 0,
                 0,
@@ -177,6 +201,14 @@ public sealed class ObservationRuntime : IDisposable
         }
     }
 
+    private static int? CountEnemiesTargetingPlayer(WorldSnapshot snapshot)
+    {
+        var player = snapshot.Actors.FirstOrDefault(actor => actor.Kind == ActorKind.Player);
+        return player is null
+            ? null
+            : snapshot.Actors.Count(actor => actor.Kind == ActorKind.Enemy && actor.Target == player.Identity);
+    }
+
     private void RecordStateChange(
         WorldSnapshot snapshot,
         MechanicFrame frame,
@@ -194,6 +226,12 @@ public sealed class ObservationRuntime : IDisposable
             diagnostics.FloorRange,
             diagnostics.EnemyCount,
             diagnostics.CastingEnemyCount,
+            diagnostics.EnemiesTargetingPlayerCount,
+            diagnostics.EnemiesWithKnownHealthCount,
+            diagnostics.EnemiesWithUnknownHealthCount,
+            diagnostics.EnemyStatusEffectCount,
+            diagnostics.EnemiesWithUsablePositionCount,
+            diagnostics.EnemiesWithUnavailablePositionCount,
             diagnostics.UsableSpatialCount,
             diagnostics.QuarantinedSpatialCount,
             diagnostics.MissingSpatialCount,
@@ -215,7 +253,10 @@ public sealed class ObservationRuntime : IDisposable
                 : DiagnosticSeverity.Information;
         var floorRange = diagnostics.FloorRange is { } range ? $"{range.Start}-{range.End}" : "unknown";
         var message = $"state={diagnostics.State}, dungeon={diagnostics.DungeonKind}, floor={diagnostics.Floor?.ToString() ?? "unknown"}, floorRange={floorRange}, "
-            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, spatialUsable={diagnostics.UsableSpatialCount}, "
+            + $"enemies={diagnostics.EnemyCount}, casts={diagnostics.CastingEnemyCount}, targetingPlayer={diagnostics.EnemiesTargetingPlayerCount?.ToString() ?? "unknown"}, "
+            + $"enemyHpKnown={diagnostics.EnemiesWithKnownHealthCount}, enemyHpUnknown={diagnostics.EnemiesWithUnknownHealthCount}, statuses={diagnostics.EnemyStatusEffectCount}, "
+            + $"enemyPositionUsable={diagnostics.EnemiesWithUsablePositionCount}, enemyPositionUnavailable={diagnostics.EnemiesWithUnavailablePositionCount}, "
+            + $"spatialUsable={diagnostics.UsableSpatialCount}, "
             + $"spatialQuarantined={diagnostics.QuarantinedSpatialCount}, spatialMissing={diagnostics.MissingSpatialCount}, "
             + $"spatialReason={diagnostics.LatestSpatialReason ?? "none"}, hazards={diagnostics.HazardCount}, safety={diagnostics.Safety}";
         if (frame.Hazards.Length > 0)
