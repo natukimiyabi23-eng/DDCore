@@ -4,12 +4,14 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using DDCore.Core.Modes;
 using DDCore.Observation;
+using DDCore.Plugin.Observation;
 
 namespace DDCore.Plugin.Windows;
 
 internal sealed class MainWindow : Window, IDisposable
 {
     private readonly Plugin plugin;
+    private readonly DalamudCombatNameResolver combatNameResolver;
     private bool exportPreviewConfirmed;
     private bool deletionConfirmed;
     private bool chatFloorExportConfirmed;
@@ -17,10 +19,11 @@ internal sealed class MainWindow : Window, IDisposable
     private bool environmentObjectExportConfirmed;
     private bool environmentObjectDeletionConfirmed;
 
-    public MainWindow(Plugin plugin)
+    public MainWindow(Plugin plugin, DalamudCombatNameResolver combatNameResolver)
         : base("DDCore##Main")
     {
         this.plugin = plugin;
+        this.combatNameResolver = combatNameResolver;
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(600, 720),
@@ -102,9 +105,14 @@ internal sealed class MainWindow : Window, IDisposable
         DrawValue("DD種別・階層", DungeonText(diagnostics));
         DrawValue("観測した敵", $"{diagnostics.EnemyCount}体");
         DrawValue("詠唱中の敵", $"{diagnostics.CastingEnemyCount}体");
+        DrawValue("プレイヤー対象と照合済み", diagnostics.EnemiesConfirmedTargetingPlayerCount is { } targeting ? $"{targeting}体（確認できた分のみ）" : "プレイヤー未観測のため不明");
+        DrawValue("敵HPの取得状況", $"取得あり {diagnostics.EnemiesWithKnownHealthCount}体 / 不明 {diagnostics.EnemiesWithUnknownHealthCount}体");
+        DrawValue("敵の状態効果", $"{diagnostics.EnemyStatusEffectCount}件（スタック数は未取得）");
+        DrawValue("敵の座標", $"使用可 {diagnostics.EnemiesWithUsablePositionCount}体 / 使用不可 {diagnostics.EnemiesWithUnavailablePositionCount}体");
         DrawValue("Actor座標", $"使用可 {diagnostics.UsableSpatialCount} / 隔離 {diagnostics.QuarantinedSpatialCount} / 欠損 {diagnostics.MissingSpatialCount}");
         DrawValue("最新の座標隔離理由", diagnostics.LatestSpatialReason ?? "なし");
         DrawValue("検出したAoE", $"{diagnostics.HazardCount}件");
+        DrawEnemyCombatSample(diagnostics);
         DrawValue("安全判定", diagnostics.Safety switch
         {
             DDCore.Core.Mechanics.MechanicSafetyAssessment.HazardsKnown => "既知の危険を解析済み",
@@ -127,6 +135,82 @@ internal sealed class MainWindow : Window, IDisposable
 
             ImGui.TreePop();
         }
+    }
+
+    private void DrawEnemyCombatSample(LiveObservationDiagnostics diagnostics)
+    {
+        ImGui.Spacing();
+        ImGui.TextUnformatted($"敵データ（最大{diagnostics.EnemySample.Length}体表示 / 全{diagnostics.EnemyCount}体）");
+        ImGui.TextDisabled("表示は観測値のみです。ターゲット不明・座標隔離・状態効果スタック数未取得を推測で補いません。");
+        if (diagnostics.EnemySample.IsEmpty)
+        {
+            ImGui.TextDisabled("このスナップショットに敵Actorはありません。");
+            return;
+        }
+
+        if (!ImGui.BeginTable(
+            "enemy-combat-diagnostics",
+            8,
+            ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY,
+            new Vector2(0, 210)))
+        {
+            return;
+        }
+
+        ImGui.TableSetupColumn("BaseId");
+        ImGui.TableSetupColumn("HP");
+        ImGui.TableSetupColumn("状態");
+        ImGui.TableSetupColumn("ターゲット照合");
+        ImGui.TableSetupColumn("詠唱");
+        ImGui.TableSetupColumn("Status ID");
+        ImGui.TableSetupColumn("距離");
+        ImGui.TableSetupColumn("座標");
+        ImGui.TableHeadersRow();
+        foreach (var enemy in diagnostics.EnemySample)
+        {
+            ImGui.TableNextRow();
+            ImGui.TableSetColumnIndex(0);
+            ImGui.TextUnformatted($"{enemy.BaseId:X8}");
+            ImGui.TableSetColumnIndex(1);
+            ImGui.TextUnformatted(enemy.MaximumHp > 0 ? $"{enemy.CurrentHp}/{enemy.MaximumHp}" : "不明");
+            ImGui.TableSetColumnIndex(2);
+            ImGui.TextUnformatted(enemy.IsDead ? "死亡" : enemy.IsDestroyed ? "消滅" : enemy.IsInCombat ? "戦闘中" : "非戦闘");
+            ImGui.TableSetColumnIndex(3);
+            ImGui.TextUnformatted(enemy.TargetRelation switch
+            {
+                EnemyTargetRelation.LocalPlayer => "プレイヤー",
+                EnemyTargetRelation.OtherObservedActor => "別Actor",
+                _ => "不明",
+            });
+            ImGui.TableSetColumnIndex(4);
+            ImGui.TextUnformatted(enemy.CastActionId is { } actionId
+                ? $"{combatNameResolver.FormatAction(actionId)} {CastText(enemy)}"
+                : "なし");
+            ImGui.TableSetColumnIndex(5);
+            var statuses = string.Join(",", enemy.StatusIds.Take(4).Select(combatNameResolver.FormatStatus));
+            ImGui.TextUnformatted(enemy.StatusIds.IsEmpty
+                ? "なし"
+                : enemy.StatusIds.Length > 4 ? $"{statuses} +{enemy.StatusIds.Length - 4}" : statuses);
+            ImGui.TableSetColumnIndex(6);
+            ImGui.TextUnformatted(enemy.DistanceToPlayer is { } distance ? $"{distance:0.0}" : "不明");
+            ImGui.TableSetColumnIndex(7);
+            ImGui.TextUnformatted(enemy.PositionQuality switch
+            {
+                DDCore.Core.World.SpatialUsability.Usable when enemy.UsablePosition is { } position => $"使用可 ({position.X:0.0}, {position.Y:0.0})",
+                DDCore.Core.World.SpatialUsability.Quarantined => $"隔離: {enemy.PositionReason ?? "理由不明"}",
+                _ => $"欠損: {enemy.PositionReason ?? "理由不明"}",
+            });
+        }
+
+        ImGui.EndTable();
+
+        static string CastText(EnemyCombatDiagnosticRow enemy) => enemy.CastLifecycle switch
+        {
+            DDCore.Core.World.CastLifecycle.Casting when enemy.CastSecondsRemaining is { } remaining => $"詠唱中 {remaining:0.0}s",
+            DDCore.Core.World.CastLifecycle.Interrupted => "中断",
+            DDCore.Core.World.CastLifecycle.Completed => "完了",
+            _ => "状態不明",
+        };
     }
 
     private static void DrawValue(string label, string value)

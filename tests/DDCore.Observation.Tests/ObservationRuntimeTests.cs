@@ -66,6 +66,99 @@ public sealed class ObservationRuntimeTests
     }
 
     [Fact]
+    public void ReportsEnemyCombatObservationWithoutInferringMissingData()
+    {
+        var targetedEnemy = LiveWorldSnapshotProviderTests.Enemy(1, 2001) with
+        {
+            TargetObjectId = 10,
+            Cast = new RawCastObservation(4001, 0.5, 2, null),
+            Statuses = [new(3001, 10, null, 5)],
+        };
+        var unknownHealthEnemy = LiveWorldSnapshotProviderTests.Enemy(2, 2002) with
+        {
+            TargetObjectId = 999,
+            MaximumHp = 0,
+            CurrentHp = 0,
+            Position = null,
+            Rotation = null,
+            SpatialMissingReason = "test.position.missing",
+        };
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [
+                    LiveWorldSnapshotProviderTests.Player() with { Position = new RawPosition(1, 0, 1) },
+                    targetedEnemy with { Position = new RawPosition(4, 0, 5) },
+                    unknownHealthEnemy,
+                ]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Equal(1, runtime.Current.EnemiesConfirmedTargetingPlayerCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithKnownHealthCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUnknownHealthCount);
+        Assert.Equal(1, runtime.Current.EnemyStatusEffectCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUsablePositionCount);
+        Assert.Equal(1, runtime.Current.EnemiesWithUnavailablePositionCount);
+        var targetedRow = Assert.Single(runtime.Current.EnemySample, enemy => enemy.BaseId == 2001);
+        Assert.Equal(EnemyTargetRelation.LocalPlayer, targetedRow.TargetRelation);
+        Assert.Equal((uint)4001, targetedRow.CastActionId);
+        Assert.Equal(1.5, targetedRow.CastSecondsRemaining);
+        Assert.Equal((uint)3001, Assert.Single(targetedRow.StatusIds));
+        Assert.Equal(5, targetedRow.DistanceToPlayer);
+        var unknownRow = Assert.Single(runtime.Current.EnemySample, enemy => enemy.BaseId == 2002);
+        Assert.Equal(EnemyTargetRelation.Unknown, unknownRow.TargetRelation);
+        Assert.Equal(SpatialUsability.Missing, unknownRow.PositionQuality);
+        Assert.Null(unknownRow.UsablePosition);
+        Assert.Null(unknownRow.DistanceToPlayer);
+    }
+
+    [Fact]
+    public void TargetingCountIsUnknownWhenLocalPlayerIsAbsent()
+    {
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Enemy(1, 2001) with { TargetObjectId = 10 }]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Null(runtime.Current.EnemiesConfirmedTargetingPlayerCount);
+        Assert.Equal(EnemyTargetRelation.Unknown, Assert.Single(runtime.Current.EnemySample).TargetRelation);
+    }
+
+    [Fact]
+    public void EnemySampleIsBoundedAndPrioritizesCombatActors()
+    {
+        var enemies = Enumerable.Range(0, 45)
+            .Select(index => LiveWorldSnapshotProviderTests.Enemy((uint)(index + 100), (uint)(2100 + index)) with { IsInCombat = false })
+            .ToArray();
+        enemies[43] = enemies[43] with { IsInCombat = true };
+        enemies[44] = enemies[44] with
+        {
+            IsInCombat = true,
+            Cast = new RawCastObservation(4002, 0.1, 2, null),
+        };
+        var tick = new FakeTickSource();
+        using var runtime = new ObservationRuntime(
+            tick,
+            new LiveWorldSnapshotProvider(new LiveWorldSnapshotProviderTests.QueueSource(
+                LiveWorldSnapshotProviderTests.Frame(At, [LiveWorldSnapshotProviderTests.Player() with { Position = new RawPosition(1, 0, 1) }, .. enemies]))),
+            new AnalyzerRegistry([]));
+
+        tick.Raise();
+
+        Assert.Equal(45, runtime.Current.EnemyCount);
+        Assert.Equal(40, runtime.Current.EnemySample.Length);
+        Assert.Equal((uint)2144, runtime.Current.EnemySample[0].BaseId);
+        Assert.Contains(runtime.Current.EnemySample, enemy => enemy.BaseId == 2143);
+    }
+
+    [Fact]
     public void DiagnosticLogRecordsChangesWithoutRepeatingIdenticalState()
     {
         var source = new LiveWorldSnapshotProviderTests.QueueSource(
