@@ -31,6 +31,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private static ICondition Condition { get; set; } = null!;
     [PluginService] private static IFramework Framework { get; set; } = null!;
     [PluginService] private static IChatGui ChatGui { get; set; } = null!;
+    [PluginService] private static IDataManager DataManager { get; set; } = null!;
 
     private readonly Stack<Action> cleanupActions = new();
     private IDDLogger logger = NullDDLogger.Instance;
@@ -103,7 +104,7 @@ public sealed class Plugin : IDalamudPlugin
             cleanupActions.Push(environmentObjectSource.Dispose);
 
             windowSystem = new WindowSystem("DDCore");
-            mainWindow = new MainWindow(this);
+            mainWindow = new MainWindow(this, new DalamudCombatNameResolver(DataManager));
             cleanupActions.Push(mainWindow.Dispose);
             configurationWindow = new ConfigurationWindow(this);
             cleanupActions.Push(configurationWindow.Dispose);

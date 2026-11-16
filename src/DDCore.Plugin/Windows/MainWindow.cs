@@ -4,12 +4,14 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using DDCore.Core.Modes;
 using DDCore.Observation;
+using DDCore.Plugin.Observation;
 
 namespace DDCore.Plugin.Windows;
 
 internal sealed class MainWindow : Window, IDisposable
 {
     private readonly Plugin plugin;
+    private readonly DalamudCombatNameResolver combatNameResolver;
     private bool exportPreviewConfirmed;
     private bool deletionConfirmed;
     private bool chatFloorExportConfirmed;
@@ -17,10 +19,11 @@ internal sealed class MainWindow : Window, IDisposable
     private bool environmentObjectExportConfirmed;
     private bool environmentObjectDeletionConfirmed;
 
-    public MainWindow(Plugin plugin)
+    public MainWindow(Plugin plugin, DalamudCombatNameResolver combatNameResolver)
         : base("DDCore##Main")
     {
         this.plugin = plugin;
+        this.combatNameResolver = combatNameResolver;
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(600, 720),
@@ -134,7 +137,7 @@ internal sealed class MainWindow : Window, IDisposable
         }
     }
 
-    private static void DrawEnemyCombatSample(LiveObservationDiagnostics diagnostics)
+    private void DrawEnemyCombatSample(LiveObservationDiagnostics diagnostics)
     {
         ImGui.Spacing();
         ImGui.TextUnformatted($"敵データ（最大{diagnostics.EnemySample.Length}体表示 / 全{diagnostics.EnemyCount}体）");
@@ -181,10 +184,10 @@ internal sealed class MainWindow : Window, IDisposable
             });
             ImGui.TableSetColumnIndex(4);
             ImGui.TextUnformatted(enemy.CastActionId is { } actionId
-                ? $"{actionId} {CastText(enemy)}"
+                ? $"{combatNameResolver.FormatAction(actionId)} {CastText(enemy)}"
                 : "なし");
             ImGui.TableSetColumnIndex(5);
-            var statuses = string.Join(",", enemy.StatusIds.Take(4));
+            var statuses = string.Join(",", enemy.StatusIds.Take(4).Select(combatNameResolver.FormatStatus));
             ImGui.TextUnformatted(enemy.StatusIds.IsEmpty
                 ? "なし"
                 : enemy.StatusIds.Length > 4 ? $"{statuses} +{enemy.StatusIds.Length - 4}" : statuses);
