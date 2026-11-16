@@ -6,7 +6,7 @@
 - Confirmed against the installed Dalamud API 15 XML that `IBattleChara.StatusList` exposes status ID/source/parameter/remaining time, with no documented explicit stack-count property. `Param` remains uninterpreted; stacks stay unknown.
 - Reviewed BossModReborn at `8d5ff8e2195ebbd519334852eab478414cdea67b`: its DD pathfinding/wall acquisition uses FFXIVClientStructs/native map state; no code/data copied. Live verification remains paused as requested.
 - Regression tests cover targeted enemy count, missing local player => Unknown, HP availability, statuses, and spatial usability. Release solution build passed with 0 warnings/errors; all 401 tests passed (197 Core, 165 Observation, 39 LuminaMapProbe); format passed; NuGet vulnerability scan found none in six projects. No live verification or deployment was done.
-- Commit `2d3e56e6a0c0bc16f16e24853605dc9ecbd2ae02` is pushed on `feature/enemy-observation-diagnostics`; Draft PR #25 targets `feature/offline-eo-graph-validation`. CI was pending at last check. PR #24 and main remain unchanged/unmerged.
+- Commit `bb5a8eb41865c47727b13578350fbeb2a218ed68` is pushed on `feature/enemy-observation-diagnostics`; Draft PR #25 targets `feature/offline-eo-graph-validation`. Push and PR CI runs `43811530103` and `43811539712` passed. PR #24 and main remain unchanged/unmerged.
 
 ## 2026-11-16 — Bind screenshot labels to replay pose context
 
