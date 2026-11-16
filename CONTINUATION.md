@@ -2,6 +2,7 @@
 
 ## Offline evidence-context hardening (2026-11-16)
 
+- Public static-grid recheck: reran the installed Lumina `--deep-dungeon-grids` probe read-only. All 10 EO floor sets still share the same 21 occupied 5x5 indices for both A/B variants; the canonical summary hash remains `60EAC0302AD572CAD6870BAEC84CF4411DB766A4CBB031AECF5F32874B076ACC`. This confirms static candidate-cell consistency only; it does not identify the active layout, open passages, or walkability. No source replay or asset was changed.
 - Objective: require every screenshot-backed graph row to point at a schema-5 replay snapshot whose trusted direct pose and compatible floor context support the selected static A/B family. This checks provenance/context only; it does not verify screenshot pixels or user labels and remains offline-only.
 - Branch/PR: `feature/offline-eo-graph-validation`, stacked Draft PR #24 over #23; no merge. Latest commit `37acf2307b9185de7055a0538d760e322bd65409` is pushed; CI runs `43776511646` and `43776519031` passed.
 - Changed: `ManualRoomGraphValidator` schema 3 adds `evidenceSnapshotIndex`; screenshot rows are rejected for missing, negative, or out-of-range indices, incompatible floor/direct-pose context, ambiguous pose, or a conflicting A/B family. Tests cover these cases plus per-row wrong-floor, untrusted-pose, and unusable-pose rejection. Updated `docs/eo-b1-live-test-guide.md` and `docs/eo-b1-readonly-integration.md`.
