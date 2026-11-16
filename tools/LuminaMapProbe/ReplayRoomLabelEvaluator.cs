@@ -220,7 +220,7 @@ public static class ReplayRoomLabelEvaluator
             throw new InvalidDataException("Only schema-5 replay data with a snapshots array is supported.");
     }
 
-    private static bool TryReadFloorRange(JsonElement snapshot, out string floorRange)
+    internal static bool TryReadFloorRange(JsonElement snapshot, out string floorRange)
     {
         floorRange = string.Empty;
         if (snapshot.ValueKind != JsonValueKind.Object
@@ -243,7 +243,7 @@ public static class ReplayRoomLabelEvaluator
         return true;
     }
 
-    private static bool HasCompatibleContext(JsonElement snapshot, int exactFloor)
+    internal static bool HasCompatibleContext(JsonElement snapshot, int exactFloor)
     {
         if (snapshot.ValueKind != JsonValueKind.Object
             || !snapshot.TryGetProperty("dungeon", out var dungeon)
@@ -266,7 +266,7 @@ public static class ReplayRoomLabelEvaluator
             || (currentFloor.ValueKind == JsonValueKind.Number && currentFloor.TryGetInt32(out var recordedFloor) && recordedFloor == exactFloor);
     }
 
-    private static bool TryReadPose(JsonElement snapshot, out double x, out double z)
+    internal static bool TryReadPose(JsonElement snapshot, out double x, out double z)
     {
         x = 0;
         z = 0;
@@ -288,7 +288,7 @@ public static class ReplayRoomLabelEvaluator
         return true;
     }
 
-    private static bool HasTrustedPoseMetadata(JsonElement snapshot) =>
+    internal static bool HasTrustedPoseMetadata(JsonElement snapshot) =>
         snapshot.TryGetProperty("playerPose", out var pose)
         && pose.ValueKind == JsonValueKind.Object
         && pose.TryGetProperty("metadata", out var metadata)

@@ -6,7 +6,7 @@ using System.Text.Json;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--replay-room-box-trace <replay.json>]");
+    Console.Error.WriteLine("Usage: LuminaMapProbe <Lumina.dll-directory> <sqpack-directory> [virtual-path|--public-api-surface|--deep-dungeon-grids|--deep-dungeon-sheet-surface|--deep-dungeon-room-levels|--deep-dungeon-wall-crosswalk <Walls.json>|--replay-room-candidates <export-directory>|--validate-room-labels <replay.json> <labels.json>|--create-manual-room-graph-template <replay.json> <snapshot-index> <new-output.json>|--validate-manual-room-graph <graph.json> <replay.json> <destination-room> <evidence-directory>|--replay-room-box-trace <replay.json>]");
     return 2;
 }
 
@@ -19,8 +19,10 @@ var deepDungeonRoomLevelsOnly = args.Length > 2 && args[2] == "--deep-dungeon-ro
 var deepDungeonWallCrosswalk = args.Length > 2 && args[2] == "--deep-dungeon-wall-crosswalk";
 var replayRoomCandidates = args.Length > 2 && args[2] == "--replay-room-candidates";
 var validateRoomLabels = args.Length > 2 && args[2] == "--validate-room-labels";
+var createManualRoomGraphTemplate = args.Length > 2 && args[2] == "--create-manual-room-graph-template";
+var validateManualRoomGraph = args.Length > 2 && args[2] == "--validate-manual-room-graph";
 var replayRoomBoxTrace = args.Length > 2 && args[2] == "--replay-room-box-trace";
-var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !deepDungeonWallCrosswalk && !replayRoomCandidates && !validateRoomLabels && !replayRoomBoxTrace ? args[2] : null;
+var virtualPath = args.Length > 2 && !apiSurfaceOnly && !deepDungeonGridsOnly && !deepDungeonSheetSurfaceOnly && !deepDungeonRoomLevelsOnly && !deepDungeonWallCrosswalk && !replayRoomCandidates && !validateRoomLabels && !createManualRoomGraphTemplate && !validateManualRoomGraph && !replayRoomBoxTrace ? args[2] : null;
 if (deepDungeonWallCrosswalk && args.Length < 4)
 {
     Console.Error.WriteLine("--deep-dungeon-wall-crosswalk requires a pinned BossMod Walls.json path.");
@@ -34,6 +36,16 @@ if (replayRoomCandidates && args.Length < 4)
 if (validateRoomLabels && args.Length < 5)
 {
     Console.Error.WriteLine("--validate-room-labels requires a replay JSON and a user-authored labels JSON.");
+    return 2;
+}
+if (createManualRoomGraphTemplate && args.Length < 6)
+{
+    Console.Error.WriteLine("--create-manual-room-graph-template requires a schema-5 replay, snapshot index, and new output path.");
+    return 2;
+}
+if (validateManualRoomGraph && args.Length < 7)
+{
+    Console.Error.WriteLine("--validate-manual-room-graph requires a graph JSON, schema-5 replay, destination room index, and local evidence-image directory.");
     return 2;
 }
 if (replayRoomBoxTrace && args.Length < 4)
@@ -447,7 +459,7 @@ foreach (var assetPath in sharedGroupAssetPaths)
     });
 }
 
-if (replayRoomCandidates || validateRoomLabels || replayRoomBoxTrace)
+if (replayRoomCandidates || validateRoomLabels || createManualRoomGraphTemplate || validateManualRoomGraph || replayRoomBoxTrace)
 {
     var gridReport = ReadEurekaOrthosGrids(gameData, gameDataType, excelAssembly);
     object report;
@@ -459,6 +471,70 @@ if (replayRoomCandidates || validateRoomLabels || replayRoomBoxTrace)
             var replayReport = ReadReplayRoomCandidateCollection(args[3], roomCandidates, gridReport.FloorSets);
             report = replayReport.Report;
             resultCount = replayReport.SelectedReplayCount;
+        }
+        else if (createManualRoomGraphTemplate)
+        {
+            var replayBytes = File.ReadAllBytes(args[3]);
+            using var replayDocument = JsonDocument.Parse(replayBytes);
+            if (!int.TryParse(args[4], out var snapshotIndex))
+                throw new InvalidDataException("The snapshot index must be an integer.");
+            var template = ManualRoomGraphValidator.CreateUnknownTemplate(
+                Convert.ToHexString(SHA256.HashData(replayBytes)),
+                planmapSha256,
+                replayDocument.RootElement,
+                snapshotIndex);
+            var templateBytes = JsonSerializer.SerializeToUtf8Bytes(template, new JsonSerializerOptions(ManualRoomGraphValidator.JsonOptions) { WriteIndented = true });
+            using (var output = new FileStream(Path.GetFullPath(args[5]), FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                output.Write(templateBytes);
+            report = new
+            {
+                created = true,
+                schemaVersion = template.SchemaVersion,
+                roomLabelCount = template.Rooms.Count,
+                passageLabelCount = template.Passages.Count,
+                initialState = "unknown; no route can be generated until labels are completed",
+            };
+            resultCount = 1;
+        }
+        else if (validateManualRoomGraph)
+        {
+            var graphBytes = File.ReadAllBytes(args[3]);
+            using var graphDocument = JsonDocument.Parse(graphBytes);
+            var graphLabels = JsonSerializer.Deserialize<ManualRoomGraphLabelSet>(graphDocument.RootElement.GetRawText(), ManualRoomGraphValidator.JsonOptions)
+                ?? throw new InvalidDataException("The graph labels JSON was empty.");
+            var replayBytes = File.ReadAllBytes(args[4]);
+            using var replayDocument = JsonDocument.Parse(replayBytes);
+            if (!int.TryParse(args[5], out var destinationRoom))
+                throw new InvalidDataException("The destination room must be an integer grid index.");
+            var evidenceHashes = ManualEvidenceCatalog.ReadSha256(args[6]);
+            var boxes = roomCandidates.Select(candidate =>
+            {
+                var bounds = GetAnonymousProperty<object>(candidate, "boundsUsingBossModConvention");
+                return new ReplayRoomCandidateBox(
+                    GetAnonymousProperty<string>(candidate, "layer"),
+                    GetAnonymousProperty<int>(candidate, "priority") - 100,
+                    Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minX")),
+                    Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxX")),
+                    Convert.ToDouble(GetAnonymousProperty<object>(bounds, "minZ")),
+                    Convert.ToDouble(GetAnonymousProperty<object>(bounds, "maxZ")));
+            }).Where(static box => box.Index is >= 0 and < 25).ToArray();
+            var validation = ManualRoomGraphValidator.Evaluate(
+                graphLabels,
+                Convert.ToHexString(SHA256.HashData(replayBytes)),
+                planmapSha256,
+                replayDocument.RootElement,
+                boxes,
+                evidenceHashes,
+                destinationRoom);
+            report = new
+            {
+                outputSchemaVersion = 1,
+                graphSchemaVersion = graphLabels.SchemaVersion,
+                evidenceMode = "local image files are signature-checked and SHA-256 matched per label; semantic correspondence remains a user assertion; graph and route are offline-only; never a live route",
+                evidenceImageCount = evidenceHashes.Count,
+                validation,
+            };
+            resultCount = 1;
         }
         else
         {
